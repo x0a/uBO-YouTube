@@ -12,14 +12,14 @@ fs.readFile(documentRoot + "\\shared\\manifest.json", "utf-8", function(err, con
   delete manifest["applications"];
   if(fs.existsSync(documentRoot + "\\dist\\chrome\\manifest.json"))
     fs.unlinkSync(documentRoot + "\\dist\\chrome\\manifest.json");
-  fs.writeFileSync(documentRoot + "\\dist\\chrome\\manifest.json", JSON.stringify(manifest));
+  fs.writeFileSync(documentRoot + "\\dist\\chrome\\manifest.json", JSON.stringify(manifest, null, 4), "utf8");
 })
 
 var dateAndTime = new Date();
-var fileName = documentRoot + "\\dist\\chrome\\" + dateAndTime.toLocaleString("en-us", {month: "short"}) + " " + dateAndTime.getDate() + " - " + dateAndTime.toLocaleString('en-US', { hour: 'numeric', hour12: true }) + ".crx";
+var fileName = documentRoot + "\\dist\\chrome\\" + dateAndTime.toLocaleString("en-us", {month: "short"}) + " " + dateAndTime.getDate() + " - " + dateAndTime.toLocaleString('en-US', { hour: 'numeric', hour12: true }) + ".zip";
 if(fs.existsSync(fileName)){
   if(!fs.unlinkSync(fileName)){
-    console.log("Error removing old zip: ", err);
+    console.log("Error removing old zip");
   }
 }
 exec("7z a -tzip \"" + fileName + "\" \"" + documentRoot + "\\src\\*\" \"" + documentRoot + "\\dist\\chrome\\manifest.json\" \"" + documentRoot + "\\lib\\*\"", "", function(err, stdout){
