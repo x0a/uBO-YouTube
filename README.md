@@ -5,7 +5,7 @@
 ### Firefox
 [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtube-channel-whitelist/)
 
-## Compilation instructions
+## Packaging instructions
 Start by replacing the applications.gecko.id key in ```/shared/manifest.json``` with either your own key or a string in email format (e.g. "test@test.com")
 
 To build a Chrome-compatible package, run ```node /tools/create_chrome_package.js```
