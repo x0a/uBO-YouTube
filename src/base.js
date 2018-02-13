@@ -7,9 +7,10 @@
 
 	browser.storage.sync.get(null, function(items){
 		settings = items ? items : {};
-		console.log(settings);
 		if(!settings.whitelisted) settings.whitelisted = [];
 		if(!settings.blacklisted) settings.blacklisted = [];
+
+		console.log(settings);
 
 		browser.runtime.onMessage.addListener(function(message, sender, sendResponse){
 			if(message.action === "get"){
@@ -25,6 +26,7 @@
 				sendResponse(recentads);
 			}
 		});
+
 		browser.webRequest.onBeforeSendHeaders.addListener(function(details){
 			if(details.tabId === -1) return;
 			var cancel = false;
