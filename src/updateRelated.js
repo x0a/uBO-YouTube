@@ -27,7 +27,13 @@ window.addEventListener("message", function(event) {
 					for(var link of links){
 						link.setAttribute("href", link.getAttribute("href") + "&disableadblock=1")
 					}
-					video.data.navigationEndpoint.webNavigationEndpointData.url += "&disableadblock=1";
+
+					if(video.data.navigationEndpoint){
+						if(video.data.navigationEndpoint.webNavigationEndpointData && video.data.navigationEndpoint.webNavigationEndpointData.url)
+							video.data.navigationEndpoint.webNavigationEndpointData.url += "&disableadblock=1";
+						if(video.data.navigationEndpoint.commandMetadata && video.data.navigationEndpoint.commandMetadata.webCommandMetadata && video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url)
+							video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url += "&disableadblock=1";
+					}
 				}
 				video.data.processed = true;
 			}

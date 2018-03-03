@@ -48,13 +48,10 @@
 					if(mode === video){
 						//console.log("video page");
 						if(mutation.target.id === "movie_player"
-							/*|| (
+							|| (
 								mutation.target.id === "player-container"
 								&& mutation.addedNodes.length
-								&& mutation.addedNodes[0].id === "movie_player"
-								&& (found = true)
-								&& false //nvm bro
-							)*/
+								&& mutation.addedNodes[0].id === "movie_player")
 							|| mutation.target.className === "ytp-title-channel-name"
 						){
 							//console.log("+video player");
