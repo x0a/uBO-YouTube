@@ -14,8 +14,16 @@ window.addEventListener("message", function(event) {
 	//Solution is to transfer the UCID from JS variables to DOM for continuity
 	if(event.data.updateChannel){
 		var container = document.querySelector("ytd-browse");
-		var link = document.querySelector("link[rel='canonical']")
-		if(link && container && container.data && container.data.metadata && container.data.metadata.channelMetadataRenderer && container.data.metadata.channelMetadataRenderer.channelUrl){
+		
+		if(container && container.data && container.data.metadata && container.data.metadata.channelMetadataRenderer && container.data.metadata.channelMetadataRenderer.channelUrl){
+			var link = document.querySelector("link[rel='canonical']");
+			
+			if(!link){
+				link = document.createElement("link");
+				link.rel = "canonical";
+				document.head.appendChild(link);
+			}
+
 			link.href = container.data.metadata.channelMetadataRenderer.channelUrl;
 		}else{
 			console.error("link[rel=canonical] not found. Or ytd-browse missing information")
