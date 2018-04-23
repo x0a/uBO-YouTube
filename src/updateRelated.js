@@ -15,7 +15,7 @@ window.addEventListener("message", function(event) {
 	if(event.data.updateChannel){
 		var container = document.querySelector("ytd-browse");
 		
-		if(container && container.data && container.data.metadata && container.data.metadata.channelMetadataRenderer && container.data.metadata.channelMetadataRenderer.channelUrl){
+		if(container && objGet(container, "data.metadata.channelMetadataRenderer.channelUrl")){
 			var link = document.querySelector("link[rel='canonical']");
 			
 			if(!link){
@@ -25,8 +25,6 @@ window.addEventListener("message", function(event) {
 			}
 
 			link.href = container.data.metadata.channelMetadataRenderer.channelUrl;
-		}else{
-			console.error("link[rel=canonical] not found. Or ytd-browse missing information")
 		}
 	}else if(event.data.updateRelated || event.data.updateLists){
 		var videos;
@@ -40,34 +38,47 @@ window.addEventListener("message", function(event) {
 		for(video of videos){
 			var user;
 			if(video.data.processed) continue;
-			if(channel || (video.data &&
-				video.data.shortBylineText &&
-				video.data.shortBylineText.runs &&
-				video.data.shortBylineText.runs[0] &&
-				video.data.shortBylineText.runs[0].navigationEndpoint &&
-				video.data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint &&
-				video.data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId &&
-				(user = video.data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId)
-			)){
+			if(channel || (user = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId"))){
 				if(channel || (inwhitelist({id: user}) !== -1)){
-					var links = video.querySelectorAll("a[href^='/watch?']");
+					var url, links = video.querySelectorAll("a[href^='/watch?']");
 					for(var link of links){
 						link.setAttribute("href", link.getAttribute("href") + "&disableadblock=1")
 					}
 
-					if(video.data.navigationEndpoint){
-						if(video.data.navigationEndpoint.webNavigationEndpointData && video.data.navigationEndpoint.webNavigationEndpointData.url)
-							video.data.navigationEndpoint.webNavigationEndpointData.url += "&disableadblock=1";
-						if(video.data.navigationEndpoint.commandMetadata && video.data.navigationEndpoint.commandMetadata.webCommandMetadata && video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url)
-							video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url += "&disableadblock=1";
-					}
+					if(url = objGet(video, "data.navigationEndpoint.webNavigationEndpointData.url"))
+						objGet(video, "data.navigationEndpoint.webNavigationEndpointData.url", url + "&disableadblock=1");
+					if(url = objGet(video, "data.navigationEndpoint.commandMetadata.webCommandMetadata.url"))
+						objGet(video, "data.navigationEndpoint.commandMetadata.webCommandMetadata.url", url + "&disableadblock=1");
 				}
 				video.data.processed = true;
 			}
 
 		}
 	}
+	function objGet(object, key, newVal){
+		var levels = key.split(/[\[\]\.]+/);
+		var parent = object;
+		var lastlevel;
+		var current = object;
 
+		for(level of levels){
+			if(!level) continue;
+			if(current[level] !== undefined){
+				parent = current;
+				lastlevel = level;
+				current = current[level];
+			}
+			else{
+				//console.log("Failed at", level);
+				return;
+			}
+		}
+
+		if(newVal){
+			parent[lastlevel] = newVal;
+		}
+		return parent[lastlevel];
+	}
 	function inwhitelist(search){
 		for(var index in event.data.settings.whitelisted){
 			for(var id in search){

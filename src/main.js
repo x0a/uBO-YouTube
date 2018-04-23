@@ -28,7 +28,7 @@
 			document.styleSheets[0].insertRule("html[dark] .UBO-button.UBO-poly {color: rgba(255, 255, 255, 0.26)}",0);
 			document.styleSheets[0].insertRule("html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {rgba(255, 255, 255, 0.498)}",0);
 			document.styleSheets[0].insertRule("#BLK-button {display: none; }",0);
-			document.styleSheets[0].insertRule("#movie_player.ad-showing #BLK-button {display: inline-block !important;}", 0);
+			document.styleSheets[0].insertRule("#movie_player.ad-interrupting #BLK-button {display: inline-block !important;}", 0);
 			document.styleSheets[0].insertRule("#BLK-button .BLK-container {height: 100%; width: 100%; position:relative}",0);
 			document.styleSheets[0].insertRule("#BLK-button .BLK-container img {position: absolute; top: 50%; left: 50%; margin-top: -8px; margin-left: -8px;}",0);
 			//document.styleSheets[0].insertRule("button#blockads { background: transparent; border: transparent; cursor: pointer; }", 0);
