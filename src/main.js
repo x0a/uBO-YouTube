@@ -108,16 +108,22 @@
 							mutation.type === "attributes"
 							&& mutation.target.localName === "yt-page-navigation-progress"
 							&& mutation.attributeName === "hidden"
-							&& mutation.oldValue === null
 						){
-							found = lpoly;
-						}
-						for(var node of mutation.addedNodes){
-							if(node.localName === "yt-page-navigation-progress"){
-								//console.log("Progress bar first created");
+							//done loading
+							if(mutation.oldValue === null)
 								found = lpoly;
-								break;
-							}
+						}else if(mutation.target.id === "subscriber-count"){
+							//update the UCID in the dom
+							window.postMessage({updateChannel: true}, "*");
+						}
+
+						for(var node of mutation.addedNodes){
+							break;
+							//started loading (progressbar first created)
+							//if(node.localName === "yt-page-navigation-progress" && mode === channel){
+							//	window.postMessage({updateChannel: true}, "*");
+							//	break;
+							//}
 						}
 						//oldlayout
 						for(var node of mutation.removedNodes){
@@ -193,7 +199,7 @@
 			}
 
 		}
-
+		
 		if(channelId.id || channelId.username)
 			return channelId;
 		else

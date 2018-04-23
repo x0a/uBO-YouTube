@@ -1,15 +1,34 @@
+/*
+	This script is injected into the YT page so that we
+	can access local JS variables rather than just the dom.
+	This is important because the new Polymer design puts
+	a lot of important information out of reach and in
+	Polymer.
+
+*/
 window.addEventListener("message", function(event) {
 	// We only accept messages from ourselves
-
-	if(event.data && (event.data.updateRelated || event.data.updateLists)){
-		var videos;
-		if(event.data.updateRelated){
-			videos = document.querySelectorAll("ytd-compact-video-renderer");
-		}else if(event.data.updateLists){
-			videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer");
+	if(!event.data) return;
+	//For some reason, YouTube doesn't update the <link> tag when switching channel page,
+	//and doesn't provide the UCID anywhere in the page except for in local JS variables.
+	//Solution is to transfer the UCID from JS variables to DOM for continuity
+	if(event.data.updateChannel){
+		var container = document.querySelector("ytd-browse");
+		var link = document.querySelector("link[rel='canonical']")
+		if(link && container && container.data && container.data.metadata && container.data.metadata.channelMetadataRenderer && container.data.metadata.channelMetadataRenderer.channelUrl){
+			link.href = container.data.metadata.channelMetadataRenderer.channelUrl;
+		}else{
+			console.error("link[rel=canonical] not found. Or ytd-browse missing information")
 		}
+	}else if(event.data.updateRelated || event.data.updateLists){
+		var videos;
 		var channel = (event.data.channelId ? inwhitelist(event.data.channelId) !== -1 : false);
 
+		if(event.data.updateRelated)
+			videos = document.querySelectorAll("ytd-compact-video-renderer");
+		else if(event.data.updateLists)
+			videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer");
+		
 		for(video of videos){
 			var user;
 			if(video.data.processed) continue;
