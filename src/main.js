@@ -13,25 +13,20 @@
 	var settings = {whitelisted: [], blacklisted: []};
 	browser.runtime.sendMessage({action: "get"}, function(response){
 		settings = response;
+		//allows us to access local javascript variables, needed to pre-append &disable flag to video lists
+		var head = document.documentElement;
+		var relatedScript = document.createElement("script");
+		relatedScript.setAttribute("type", "text/javascript");
+		relatedScript.setAttribute("src", browser.runtime.getURL("agent.js")); 
+		head.appendChild(relatedScript);
+		//adding styles for UBO button
+		var styleSheet = document.createElement("link");
+		styleSheet.setAttribute("rel", "stylesheet");
+		styleSheet.setAttribute("type", "text/css");
+		styleSheet.setAttribute("href", browser.runtime.getURL("style.css"));
+		head.appendChild(styleSheet);
 
 		document.addEventListener("DOMContentLoaded", function(){
-			//allows us to access local javascript variables, needed to pre-append &disable flag to video lists
-			var head = document.getElementsByTagName("head")[0];
-			var relatedScript = document.createElement('script');
-			relatedScript.setAttribute('type', 'text/javascript');
-			relatedScript.setAttribute('src', browser.runtime.getURL("updateRelated.js")); 
-			head.appendChild(relatedScript);
-			//adding styles for UBO button
-			document.styleSheets[0].insertRule(".UBO-button.UBO-old { margin-left: 5px; padding: 0 5.5px 0px 6px !important;}", 0);
-			document.styleSheets[0].insertRule(".UBO-button.UBO-poly { margin-top: 6px; color: rgba(17, 17, 17, 0.298); outline: none; background:transparent; padding: 10px 16px; border: none; cursor: pointer; font-family: 'Roboto', 'Noto', sans-serif; font-size: 14px; font-weight:500; letter-spacing: 0.007px; text-transform: uppercase; border-radius: 2px; -webkit-font-smoothing: antialiased; whitespace: nowrap}", 0);
-			document.styleSheets[0].insertRule(".UBO-button.UBO-poly.yt-uix-button-toggled {color: rgba(17, 17, 17, 0.6);border-bottom: 2px solid darkseagreen; }", 0);
-			document.styleSheets[0].insertRule("html[dark] .UBO-button.UBO-poly {color: rgba(255, 255, 255, 0.26)}",0);
-			document.styleSheets[0].insertRule("html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {rgba(255, 255, 255, 0.498)}",0);
-			document.styleSheets[0].insertRule("#BLK-button {display: none; }",0);
-			document.styleSheets[0].insertRule("#movie_player.ad-interrupting #BLK-button {display: inline-block !important;}", 0);
-			document.styleSheets[0].insertRule("#BLK-button .BLK-container {height: 100%; width: 100%; position:relative}",0);
-			document.styleSheets[0].insertRule("#BLK-button .BLK-container img {position: absolute; top: 50%; left: 50%; margin-top: -8px; margin-left: -8px;}",0);
-			//document.styleSheets[0].insertRule("button#blockads { background: transparent; border: transparent; cursor: pointer; }", 0);
 			//in case we ever want to capture ad from video page 
 			browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
 		    	//console.log(sender, requestData);
@@ -114,7 +109,7 @@
 								found = lpoly;
 						}else if(mutation.target.id === "subscriber-count"){
 							//update the UCID in the dom
-							window.postMessage({updateChannel: true}, "*");
+							callAgent("updateChannel");//, {}, function(channelId){console.log("new id", channelId);})
 						}
 
 						for(var node of mutation.addedNodes){
@@ -306,7 +301,7 @@
 	function updateRelated(layout){
 		if(layout === lpoly){
 			//update via local JS variables on the page
-			window.postMessage({settings: settings, updateRelated: true}, "*");
+			callAgent("updateVideoLists", {settings: settings, type: "related"})
 		}else if(layout === lbasic){
 			//update via information available on the DOM
 			var videos = document.querySelectorAll(".video-list-item");
@@ -357,7 +352,7 @@
 		//videos from places like the home page, channel page, search results, etc.
 		//basically anything that isn't the /watch?v= page
 		if(layout === lpoly){
-			window.postMessage({settings: settings, updateLists: true, channelId: channelId}, "*")
+			callAgent("updateVideoLists", {settings: settings, channelId: channelId, type: "general"});
 		}else if(layout === lbasic){
 			var videos = document.querySelectorAll(".yt-lockup-video");
 
@@ -404,42 +399,27 @@
 			container.insertBefore(blacklistButton, container.firstChild);
 		}
 	}
-/*
-	function updateAdShowing(player){
-		//try to add our adblock button 
-		var adlink = player.querySelector(".ytp-title-channel-name");
-		var locations = [player.querySelector(".videoAdUiBottomBarText"), player.querySelector(".ytp-title-subtext")];
-		var channelId = getChannelId(adlink, ad);
 
-		if(adlink && channelId){ //only way to get the channelId is if youtube put it in the DOM
-			var newDiv = parseHTML('<div class="videoAdUiAttributionContainer videoAdUiWtaClickable"><button id="blockads" class="yt-uix-tooltip" data-tooltip-text="Block this advertiser"><img src="'+browser.runtime.getURL("img/icon_16.png")+'"></button></div>')
-			var blockButton = newDiv.querySelector("#blockads");
+	function callAgent(externalFunction, data, callback){
+		var msgFunc;
+		var callbackId = "";
 
-			blockButton.addEventListener("click", function(){
-				var channelId = getChannelId(adlink, ad);
-
-				if(channelId && inblacklist(channelId) === -1){
-					settings.blacklisted.push(channelId);
-					browser.runtime.sendMessage({action: "update", settings: settings}, function(response){
-						if(response) console.log(response)
-						location.reload();
-					})
-				}
-			})
-
-			for(var i = 0; i < locations.length; i++){
-				if(!isHidden(locations[i]) && !locations[i].querySelector("#blockads")){
-					locations[i].appendChild(newDiv);
-					break;
-				}
+		if(callback){
+			if(typeof callback !== "function"){
+				console.error("Callback supplied is not a function");
+				return false;
 			}
-
-			if(i === locations.length) console.error("No place to put adblock button")
-		}else{
-			console.error(".ytp-title-channel-name not available.")
+			callbackId = Math.random().toString(36).substring(7); //random 7 char string
+			window.addEventListener("message", msgFunc = function(event){
+				if(event.data.origin || !event.data.callbackId || event.data.callbackId !== callbackId) return;
+				callback(event.data.callbackMessage);
+				window.removeEventListener("message", msgFunc);
+			});
 		}
+		//external for us, means internal for them
+		window.postMessage({internalFunction: externalFunction, message: data, callbackId: callbackId, origin: true}, "*");
 	}
-*/
+
 	function verifyDisabled(){
 		setTimeout(function(){
 			var iframe = document.createElement("iframe");
@@ -458,24 +438,10 @@
 		}, 800)
 	}
 
-	function isHidden(el){
-		return (el.offsetParent === null)
-	}
-
 	function inwhitelist(search){
 		for(var index in settings.whitelisted){
 			for(var id in search){
 				if(id !== "display" && settings.whitelisted[index][id] === search[id] && search[id].length)
-				return index;
-			}
-		}
-		return -1;
-	}
-
-	function inblacklist(search){
-		for(var index in settings.blacklisted){
-			for(var id in search){
-				if(id !== "display" && settings.blacklisted[index][id] === search[id] && search[id].length)
 				return index;
 			}
 		}

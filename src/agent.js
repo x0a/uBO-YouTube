@@ -6,15 +6,31 @@
 	Polymer.
 
 */
-window.addEventListener("message", function(event) {
-	// We only accept messages from ourselves
-	if(!event.data) return;
-	//For some reason, YouTube doesn't update the <link> tag when switching channel page,
-	//and doesn't provide the UCID anywhere in the page except for in local JS variables.
-	//Solution is to transfer the UCID from JS variables to DOM for continuity
-	if(event.data.updateChannel){
+(function(){
+	function Agent(){
+		var internalFunctions = {};
+
+		this.registerListener = function(name, func){
+			internalFunctions[name] = func;
+			return this;
+		};
+
+		window.addEventListener("message", function(event){
+			if(!event.data || !event.data.internalFunction) return;
+
+			if(event.data.internalFunction in internalFunctions){
+				var ret = internalFunctions[event.data.internalFunction](event.data.message);
+
+				if(event.data.callbackId)
+					window.postMessage({callbackId: event.data.callbackId, callbackMessage: ret}, event.origin);
+				
+			}
+		})
+	}
+
+	new Agent().registerListener("updateChannel", function(){
 		var container = document.querySelector("ytd-browse");
-		
+			
 		if(container && objGet(container, "data.metadata.channelMetadataRenderer.channelUrl")){
 			var link = document.querySelector("link[rel='canonical']");
 			
@@ -25,21 +41,24 @@ window.addEventListener("message", function(event) {
 			}
 
 			link.href = container.data.metadata.channelMetadataRenderer.channelUrl;
+			return link.href;
 		}
-	}else if(event.data.updateRelated || event.data.updateLists){
+		return false;
+	}).registerListener("updateVideoLists", function(args){
 		var videos;
-		var channel = (event.data.channelId ? inwhitelist(event.data.channelId) !== -1 : false);
-
-		if(event.data.updateRelated)
+		var channel = (args.channelId ? inwhitelist(args.channelId, args.settings.whitelisted) !== -1 : false);
+		
+		if(args.type === "related"){
 			videos = document.querySelectorAll("ytd-compact-video-renderer");
-		else if(event.data.updateLists)
+		}else if(args.type === "general"){
 			videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer");
+		}
 		
 		for(video of videos){
 			var user;
 			if(video.data.processed) continue;
 			if(channel || (user = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId"))){
-				if(channel || (inwhitelist({id: user}) !== -1)){
+				if(channel || (inwhitelist({id: user}, args.settings.whitelisted) !== -1)){
 					var url, links = video.querySelectorAll("a[href^='/watch?']");
 					for(var link of links){
 						link.setAttribute("href", link.getAttribute("href") + "&disableadblock=1")
@@ -54,7 +73,8 @@ window.addEventListener("message", function(event) {
 			}
 
 		}
-	}
+	});
+
 	function objGet(object, key, newVal){
 		var levels = key.split(/[\[\]\.]+/);
 		var parent = object;
@@ -79,13 +99,14 @@ window.addEventListener("message", function(event) {
 		}
 		return parent[lastlevel];
 	}
-	function inwhitelist(search){
-		for(var index in event.data.settings.whitelisted){
+	function inwhitelist(search, whitelist){
+		for(var index in whitelist){
 			for(var id in search){
-				if(id !== "display" && event.data.settings.whitelisted[index][id] === search[id] && search[id].length)
+				if(id !== "display" && whitelist[index][id] === search[id] && search[id].length)
 				return index;
 			}
 		}
 		return -1;
 	}
-}, false);
+
+})();
