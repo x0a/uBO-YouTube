@@ -27,29 +27,27 @@
 		head.appendChild(styleSheet);
 
 		document.addEventListener("DOMContentLoaded", function(){
-			//in case we ever want to capture ad from video page 
-			browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
-		    	//console.log(sender, requestData);
-			});
-
 			var mode = getMode();
 			var layout = document.querySelector("ytd-app") ? lpoly : lbasic; //dirty, but just for the initial load
 			var prevurl = location.href;
 
-			if(mode === video) updateVideoPage(layout);
-			else if(mode === channel) updateChannelPage(layout);
-			else if(mode === allelse) updateVideolists(layout);
+			updatePage(mode, layout);
+			//in case of settings change due to activity in another tab
+			browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
+		    	if(requestData.action === "update"){
+					settings = requestData.settings;
+					updatePage(mode, layout);
+				}
+			});
 
-			var observer = new MutationObserver(function(mutations) {
+			(new MutationObserver(function(mutations) {
 				if(location.href !== prevurl){
 					mode = getMode();
 					prevurl = location.href;
 				}
 
-				var found = false;
 				for(var mutation of mutations){
 					if(mode === video){
-						//console.log("video page");
 						if(mutation.target.id === "movie_player"
 							|| (
 								mutation.target.id === "player-container"
@@ -57,22 +55,19 @@
 								&& mutation.addedNodes[0].id === "movie_player")
 							|| mutation.target.className === "ytp-title-channel-name"
 						){
-							//console.log("+video player");
+							//video player update, or first added
 							var player = mutation.target.id === "movie_player" ? mutation.target : document.querySelector("#movie_player");
 							if(player.classList.contains("ad-showing")){
-								console.log("Found ad, trying to add button.");
 								updateAdShowing(player);
 							}
 						}else{
-							//console.log("!video player")
 							if(
 								mutation.type === "attributes"
 								&& mutation.attributeName === "href"
 								&& mutation.target.classList[0] === "yt-simple-endpoint"
 								&& mutation.target.parentNode.id === "owner-name"
 							){
-								//new layout, name property changes
-								//console.log("Username changed");
+								//new layout, username property changed
 								updateVideoPage(lpoly);
 							}else if(
 								mutation.type === "attributes"
@@ -80,8 +75,6 @@
 								&& mutation.attributeName === "hidden"
 							){
 								//new layout, related has finished loading
-								//console.log("Related has finished loading");
-
 								updateVideoPage(lpoly);
 							}else{
 								for(var node of mutation.addedNodes){
@@ -89,8 +82,7 @@
 										node.id === "watch7-main-container"
 										|| node.localName === "ytd-video-secondary-info-renderer"
 									){
-										//old layout, and newlayout on first load
-										//console.log("Username created");
+										//username created, old layout, and newlayout on first load
 										updateVideoPage(lbasic, node);
 									}
 								}
@@ -99,6 +91,8 @@
 						}
 					}else if(mode === channel || mode === allelse){
 						//these are all about detecting that loading has finished.
+						var finishedLoading = 0;
+
 						if(
 							mutation.type === "attributes"
 							&& mutation.target.localName === "yt-page-navigation-progress"
@@ -106,39 +100,31 @@
 						){
 							//done loading
 							if(mutation.oldValue === null)
-								found = lpoly;
+								finishedLoading = lpoly;
 						}else if(mutation.target.id === "subscriber-count"){
 							//update the UCID in the dom
 							callAgent("updateChannel");//, {}, function(channelId){console.log("new id", channelId);})
 						}
 
-						for(var node of mutation.addedNodes){
-							break;
-							//started loading (progressbar first created)
-							//if(node.localName === "yt-page-navigation-progress" && mode === channel){
-							//	window.postMessage({updateChannel: true}, "*");
-							//	break;
-							//}
-						}
 						//oldlayout
 						for(var node of mutation.removedNodes){
 							if(node.id === "progress"){
-								found = lbasic;
+								finishedLoading = lbasic;
 								break;
 							}
 						}
+
+						if(finishedLoading){
+							if(mode === channel)
+								updateChannelPage(finishedLoading);
+							else if(mode === allelse)
+								updateVideolists(finishedLoading);
+							break;
+						}
 					}
 
-					if(found){
-						if(mode === channel)
-							updateChannelPage(found);
-						else if(mode === allelse)
-							updateVideolists(found);
-						break;
-					}
 				}
-			});
-			observer.observe(document.body, {
+			})).observe(document.body, {
 				childList: true,
 				subtree: true,
 				attributes: true,
@@ -219,6 +205,13 @@
 			}else return false;
 		}
 	}
+
+	function updatePage(mode, layout){
+		if(mode === video) updateVideoPage(layout);
+		else if(mode === channel) updateChannelPage(layout);
+		else if(mode === allelse) updateVideolists(layout);
+	}
+
 	function whitelistButton(layout, toggled, ref){
 		if(ref){
 			//button already exists, update whitelist toggle on pre-existing button rather than create new one
@@ -376,6 +369,7 @@
 			}
 		}
 	}
+
 	function updateAdShowing(player){
 		var container, blacklistButton;
 

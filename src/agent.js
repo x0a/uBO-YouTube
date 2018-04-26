@@ -6,7 +6,9 @@
 	Polymer.
 
 */
-(function(){
+'use strict';
+
+(function(window, document, undefined){
 	function Agent(){
 		var internalFunctions = {};
 
@@ -29,6 +31,7 @@
 	}
 
 	new Agent().registerListener("updateChannel", function(){
+		//make UCID available in the DOM
 		var container = document.querySelector("ytd-browse");
 			
 		if(container && objGet(container, "data.metadata.channelMetadataRenderer.channelUrl")){
@@ -45,16 +48,17 @@
 		}
 		return false;
 	}).registerListener("updateVideoLists", function(args){
-		var videos;
+		//channel = are we on a whitelisted channel page?
 		var channel = (args.channelId ? inwhitelist(args.channelId, args.settings.whitelisted) !== -1 : false);
+		var videos;
 		
 		if(args.type === "related"){
-			videos = document.querySelectorAll("ytd-compact-video-renderer");
+			videos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer");
 		}else if(args.type === "general"){
 			videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer");
 		}
 		
-		for(video of videos){
+		for(var video of videos){
 			var user;
 			if(video.data.processed) continue;
 			if(channel || (user = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId"))){
@@ -81,7 +85,7 @@
 		var lastlevel;
 		var current = object;
 
-		for(level of levels){
+		for(var level of levels){
 			if(!level) continue;
 			if(current[level] !== undefined){
 				parent = current;
@@ -99,6 +103,7 @@
 		}
 		return parent[lastlevel];
 	}
+	
 	function inwhitelist(search, whitelist){
 		for(var index in whitelist){
 			for(var id in search){
@@ -109,4 +114,4 @@
 		return -1;
 	}
 
-})();
+})(window, document);

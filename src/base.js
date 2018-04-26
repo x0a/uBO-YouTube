@@ -5,9 +5,10 @@
 	var recentads = [];
 	var blacklisted = [];
 	
-	function saveSettings(){
+	function saveSettings(callback){
 		browser.storage.sync.set(settings, function(){
 			console.log(settings);
+			callback();
 			//console.log(browser.runtime.lastError);
 		})
 	}
@@ -24,8 +25,16 @@
 				sendResponse(settings);
 			}else if(message.action === "update"){
 				settings = message.settings;
-				saveSettings();
-
+				saveSettings(function(){
+					//send the updated settings to the rest of the tabs
+					chrome.tabs.query({discarded: false}, function(tabs) {
+						for(var t of tabs)
+							if(t.id !== sender.tab.id)
+								chrome.tabs.sendMessage(t.id, {action: "update", settings: settings}, function(response) {
+									//console.log(response);
+								});
+					  });
+				});
 			}else if(message.action === "recentads"){
 				sendResponse(recentads);
 			}else if(message.action === "blacklist"){
@@ -55,13 +64,13 @@
 		});
 
 		browser.webRequest.onBeforeSendHeaders.addListener(function(details){
-			if(details.tabId === -1) return;
+			if(details.tabId === -1) return; //we dont want to process our own requests
+
 			var cancel = false;
 			var url = parseURL(details.url);
 			var request = new XMLHttpRequest();
 			var adinfo = {};
 
-			console.log(details);
 			if(url.pathname === "/get_video_info"){
 				if(url.searchObject.video_id && blacklisted.indexOf(url.searchObject.video_id) !== -1){
 					cancel = true;
@@ -93,7 +102,7 @@
 			adinfo.searchObject.details = details;
 			recentads.push(adinfo.searchObject);
 
-			console.log("Blocked:", cancel);
+			console.log("Blocked:", cancel, adinfo);
 			return {cancel: cancel};
 
 		}, {urls: ["*://www.youtube.com/get_video_info?*"]}, ["blocking"])

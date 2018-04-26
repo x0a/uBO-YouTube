@@ -17,4 +17,4 @@ The resulting packages will be created in ```/dist/```, ready for submission as 
 ## Debugging
 To temporarily install the extension on Firefox, you need to first enter the "Debug Addons" page, available through the menu on the Addons page. Then click "Load Temporary Addon", and point to the created XPI.
 
-To temporarily install the extension on Chrome, you need to extract the package, enter developer mode on Chrome and point it to the extracted directory.
+To temporarily install the extension on Chrome, you can load ```/dist/chrome/debug``` as an unpacked extension
