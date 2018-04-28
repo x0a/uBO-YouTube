@@ -29,9 +29,9 @@
 					//send the updated settings to the rest of the tabs
 					chrome.tabs.query({discarded: false}, function(tabs) {
 						console.log(tabs);
-						for(var t of tabs)
-							if(!sender.tab || t.id !== sender.tab.id) //send to every tab if it came from popup window
-								chrome.tabs.sendMessage(t.id, {action: "update", settings: settings}, function(response) {
+						for(let tab of tabs)
+							if(!sender.tab || tab.id !== sender.tab.id) //send to every tab if it came from popup window
+								chrome.tabs.sendMessage(tab.id, {action: "update", settings: settings}, function(response) {
 									//console.log(response);
 								});
 					  });
@@ -72,8 +72,8 @@
 			var request = new XMLHttpRequest();
 			var adinfo = {};
 
-			if(url.pathname === "/get_video_info"){
-				if(url.searchObject.video_id && blacklisted.indexOf(url.searchObject.video_id) !== -1){
+			if(url.pathname === "/get_video_info" && url.params.video_id){
+				if(blacklisted.indexOf(url.params.video_id) !== -1){
 					cancel = true;
 				}else{
 					request.open('GET', details.url, false);  // `false` makes the request synchronous
@@ -82,37 +82,38 @@
 					if (request.status === 200) {
 						adinfo = parseURL("?" + request.responseText);
 
-						if(adinfo.searchObject
-							&& url.searchObject.video_id
+						if(adinfo.params
 							&& (
-									(adinfo.searchObject.ucid && inblacklist(adinfo.searchObject.ucid) !== -1)
+									(adinfo.params.ucid && inblacklist(adinfo.params.ucid) !== -1)
 									||
-									(adinfo.searchObject.channel_url && inblacklist(parseChannel(adinfo.searchObject.channel_url)) !== -1)
+									(adinfo.params.channel_url && inblacklist(parseChannel(adinfo.params.channel_url)) !== -1)
 								 )
 							){
-							blacklisted.push(url.searchObject.video_id);
+							//block, and also add video id to the list so that we dont do this synchrous request again
+							blacklisted.push(url.params.video_id);
 							cancel = true;
 						}
 					}
 				}
 			}
-			adinfo.searchObject.details = details;
-			var adindex = recentads.push(adinfo.searchObject);
 
-			if(!adinfo.searchObject.author){
+			if(!adinfo.params.author){
 				//get the author title
 				request.onreadystatechange = function() {
 					if(this.readyState == 4 && this.status == 200){
 					   var matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
 					   if(matches && matches[1]){
-						   adinfo.searchObject.author = matches[1];
+						   adinfo.params.author = matches[1];
 					   }
 					}
 				};
-				request.open("GET", "https://www.youtube.com/channel/" + adinfo.searchObject.ucid, true);
+				request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.ucid, true);
 				request.send();
 			}
 
+			adinfo.details = details;
+			recentads.push(adinfo.params);
+			
 			console.log("Blocked:", cancel, adinfo);
 			return {cancel: cancel};
 
@@ -138,7 +139,7 @@
 
 	function parseURL(url) {
 	    var parser = document.createElement('a'),
-	        searchObject = {},
+	        params = {},
 	        queries, split, i;
 	    // Let the browser do the work
 	    parser.href = url.replace(/\+/g, '%20');
@@ -146,7 +147,7 @@
 	    queries = parser.search.replace(/^\?/, '').split('&');
 	    for( i = 0; i < queries.length; i++ ) {
 	        split = queries[i].split('=');
-	        searchObject[split[0]] = split[1];
+	        params[split[0]] = split[1];
 	    }
 	    return {
 	        protocol: parser.protocol,
@@ -155,7 +156,7 @@
 	        port: parser.port,
 	        pathname: parser.pathname,
 	        search: parser.search,
-	        searchObject: searchObject,
+	        params: params,
 	        hash: parser.hash
 	    };
 	}

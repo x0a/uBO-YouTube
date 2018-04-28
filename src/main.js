@@ -36,7 +36,7 @@
 			browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
 		    	if(requestData.action === "update"){
 					settings = requestData.settings;
-					updatePage(mode, layout);
+					updatePage(mode, layout, true);
 				}
 			});
 
@@ -206,10 +206,10 @@
 		}
 	}
 
-	function updatePage(mode, layout){
-		if(mode === video) updateVideoPage(layout);
-		else if(mode === channel) updateChannelPage(layout);
-		else if(mode === allelse) updateVideolists(layout);
+	function updatePage(mode, layout, forceUpdate){
+		if(mode === video) updateVideoPage(layout, undefined, forceUpdate);
+		else if(mode === channel) updateChannelPage(layout, undefined, forceUpdate);
+		else if(mode === allelse) updateVideolists(layout, undefined, forceUpdate);
 	}
 
 	function whitelistButton(layout, toggled, ref){
@@ -263,7 +263,7 @@
 			return button;
 		}
 	}
-	function updateVideoPage(layout, element){
+	function updateVideoPage(layout, element, forceUpdate){
 		var container;
 
 		if(layout === lpoly){
@@ -288,19 +288,19 @@
 			}
 		}
 
-		updateRelated(layout);
+		updateRelated(layout, forceUpdate);
 	}
 
-	function updateRelated(layout){
+	function updateRelated(layout, forceUpdate){
 		if(layout === lpoly){
 			//update via local JS variables on the page
-			callAgent("updateVideoLists", {settings: settings, type: "related"})
+			callAgent("updateVideoLists", {settings: settings, type: "related", forceUpdate: forceUpdate})
 		}else if(layout === lbasic){
 			//update via information available on the DOM
 			var videos = document.querySelectorAll(".video-list-item");
 
 			for(var vid of videos){
-				if(vid.processed) continue;
+				if(!forceUpdate && vid.processed) continue;
 
 				var user = vid.querySelector("[data-ytid]");
 				if(!user)
@@ -320,7 +320,7 @@
 		}
 	}
 
-	function updateChannelPage(layout){
+	function updateChannelPage(layout, forceUpdate){
 
 		var channelId = getChannelId();
 		var whitelisted = updateURL(false, channelId);
@@ -337,20 +337,20 @@
 			container.appendChild(button); //add only if it doesn't already exist
 
 		if(whitelisted){
-			updateVideolists(layout, channelId);
+			updateVideolists(layout, channelId, forceUpdate);
 		}
 	}
 
-	function updateVideolists(layout, channelId){
+	function updateVideolists(layout, channelId, forceUpdate){
 		//videos from places like the home page, channel page, search results, etc.
 		//basically anything that isn't the /watch?v= page
 		if(layout === lpoly){
-			callAgent("updateVideoLists", {settings: settings, channelId: channelId, type: "general"});
+			callAgent("updateVideoLists", {settings: settings, channelId: channelId, type: "general", forceUpdate: forceUpdate});
 		}else if(layout === lbasic){
 			var videos = document.querySelectorAll(".yt-lockup-video");
 
 			for(var vid of videos){
-				if(vid.processed) continue;
+				if(!forceUpdate && vid.processed) continue;
 				var user = vid.querySelector(".g-hovercard.yt-uix-sessionlink");
 				var values = {id: ""};
 				if(!user || !(values.id = user.getAttribute("data-ytid")))

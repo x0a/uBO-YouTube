@@ -51,6 +51,7 @@
 		//channel = are we on a whitelisted channel page?
 		var channel = (args.channelId ? inwhitelist(args.channelId, args.settings.whitelisted) !== -1 : false);
 		var videos;
+		var forceUpdate = args.forceUpdate ? true : false;
 		
 		if(args.type === "related"){
 			videos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer");
@@ -60,7 +61,7 @@
 		
 		for(var video of videos){
 			var user;
-			if(video.data.processed) continue;
+			if(!forceUpdate && video.data.processed) continue;
 			if(channel || (user = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId"))){
 				if(channel || (inwhitelist({id: user}, args.settings.whitelisted) !== -1)){
 					var url, links = video.querySelectorAll("a[href^='/watch?']");
