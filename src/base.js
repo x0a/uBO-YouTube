@@ -28,8 +28,9 @@
 				saveSettings(function(){
 					//send the updated settings to the rest of the tabs
 					chrome.tabs.query({discarded: false}, function(tabs) {
+						console.log(tabs);
 						for(var t of tabs)
-							if(t.id !== sender.tab.id)
+							if(!sender.tab || t.id !== sender.tab.id) //send to every tab if it came from popup window
 								chrome.tabs.sendMessage(t.id, {action: "update", settings: settings}, function(response) {
 									//console.log(response);
 								});
@@ -81,10 +82,6 @@
 					if (request.status === 200) {
 						adinfo = parseURL("?" + request.responseText);
 
-						browser.tabs.sendMessage(details.tabId, adinfo, function(response){
-							//console.log(response);
-						});
-
 						if(adinfo.searchObject
 							&& url.searchObject.video_id
 							&& (
@@ -100,7 +97,21 @@
 				}
 			}
 			adinfo.searchObject.details = details;
-			recentads.push(adinfo.searchObject);
+			var adindex = recentads.push(adinfo.searchObject);
+
+			if(!adinfo.searchObject.author){
+				//get the author title
+				request.onreadystatechange = function() {
+					if(this.readyState == 4 && this.status == 200){
+					   var matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
+					   if(matches && matches[1]){
+						   adinfo.searchObject.author = matches[1];
+					   }
+					}
+				};
+				request.open("GET", "https://www.youtube.com/channel/" + adinfo.searchObject.ucid, true);
+				request.send();
+			}
 
 			console.log("Blocked:", cancel, adinfo);
 			return {cancel: cancel};
