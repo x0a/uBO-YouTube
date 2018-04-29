@@ -1,9 +1,10 @@
 "use strict";
 
 (function(browser, angular){
-	var app = angular.module("uYtPlug", []);
+	let app = angular.module("uYtPlug", []);
+
 	app.filter('decodeURIComponent', function() {
-			return window.decodeURIComponent;
+		return window.decodeURIComponent;
 	});
 	app.controller("main", function($scope){
 		$scope.settings = {whitelisted: [], blacklisted: []};
@@ -30,7 +31,7 @@
 
 		$scope.removewhite = function(index){
 			if(!confirm("Are you sure you want to re-enable adblock for '" + $scope.settings.whitelisted[index].display + "'?"))
-				return;
+				return; //user changed their mind
 			$scope.settings.whitelisted.splice(index, 1);
 			$scope.save();
 		}
@@ -42,11 +43,10 @@
 			$scope.save();
 		}
 		$scope.addblack = function(index){
-			var ad = $scope.recentads[$scope.recentads.length - index - 1],
-					display = "";
-			for(var i = 0; i < $scope.settings.blacklisted.length; i++)
+			let ad = $scope.recentads[$scope.recentads.length - index - 1], display = "";
+			for(let i = 0; i < $scope.settings.blacklisted.length; i++)
 				if(ad.ucid === $scope.settings.blacklisted[i].id)
-					return;
+					return; // already exists
 
 			if(ad.author)
 				display = decodeURIComponent(ad.author);

@@ -1,9 +1,9 @@
 "use strict";
 
 (function(window, browser, undefined){
-	var settings;
-	var recentads = [];
-	var blacklisted = [];
+	let settings;
+	let recentads = [];
+	let blacklisted = [];
 	
 	function saveSettings(callback){
 		browser.storage.sync.set(settings, function(){
@@ -28,7 +28,6 @@
 				saveSettings(function(){
 					//send the updated settings to the rest of the tabs
 					chrome.tabs.query({discarded: false}, function(tabs) {
-						console.log(tabs);
 						for(let tab of tabs)
 							if(!sender.tab || tab.id !== sender.tab.id) //send to every tab if it came from popup window
 								chrome.tabs.sendMessage(tab.id, {action: "update", settings: settings}, function(response) {
@@ -39,10 +38,10 @@
 			}else if(message.action === "recentads"){
 				sendResponse(recentads);
 			}else if(message.action === "blacklist"){
-				for(var ad of recentads.slice().reverse()){
+				for(let ad of recentads.slice().reverse()){
 					//find the last intercepted ad from this tab
 					if(ad.details.tabId === sender.tab.id){
-						var channelId = {id: "", display: "", username: ""};
+						let channelId = {id: "", display: "", username: ""};
 
 						if(ad.ucid && inblacklist(ad.ucid) === -1){
 							channelId.id = ad.ucid
@@ -67,10 +66,10 @@
 		browser.webRequest.onBeforeSendHeaders.addListener(function(details){
 			if(details.tabId === -1) return; //we dont want to process our own requests
 
-			var cancel = false;
-			var url = parseURL(details.url);
-			var request = new XMLHttpRequest();
-			var adinfo = {};
+			let cancel = false;
+			let url = parseURL(details.url);
+			let request = new XMLHttpRequest();
+			let adinfo = {};
 
 			if(url.pathname === "/get_video_info" && url.params.video_id){
 				if(blacklisted.indexOf(url.params.video_id) !== -1){
@@ -95,13 +94,15 @@
 						}
 					}
 				}
+			}else{
+				console.log("Invalid request", url);
 			}
 
 			if(!adinfo.params.author){
 				//get the author title
 				request.onreadystatechange = function() {
 					if(this.readyState == 4 && this.status == 200){
-					   var matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
+					   let matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
 					   if(matches && matches[1]){
 						   adinfo.params.author = matches[1];
 					   }
@@ -121,7 +122,7 @@
 	});
 
 	function inblacklist(search){
-		for(var index in settings.blacklisted){
+		for(let index in settings.blacklisted){
 			if(settings.blacklisted[index].id === search)
 				return index;
 		}
@@ -129,7 +130,7 @@
 	}
 
 	function parseChannel(search){
-		var matches = search.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/);
+		let matches = search.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/);
 
 		if(matches && matches[2])
 			return matches[2];
@@ -138,15 +139,15 @@
 	}
 
 	function parseURL(url) {
-	    var parser = document.createElement('a'),
+	    let parser = document.createElement('a'),
 	        params = {},
-	        queries, split, i;
+	        queries, split;
 	    // Let the browser do the work
 	    parser.href = url.replace(/\+/g, '%20');
 	    // Convert query string to object
 	    queries = parser.search.replace(/^\?/, '').split('&');
-	    for( i = 0; i < queries.length; i++ ) {
-	        split = queries[i].split('=');
+	    for(let i = 0; i < queries.length; i++ ) {
+	        let split = queries[i].split('=');
 	        params[split[0]] = split[1];
 	    }
 	    return {
