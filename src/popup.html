@@ -78,7 +78,7 @@
 					</td>
 				</tr>
 				<tr ng-if="!settings.blacklisted.length"><td class="empty">None.</td></tr>
-				<tr><th>Recently detected ads</th></tr>
+				<tr><th>Recently detected advertisers</th></tr>
 				<tr ng-repeat="item in recentads | orderBy: '-' | limitTo: 5  track by $index">
 					<td>
 						<a ng-click="open(item.ucid)" href>{{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}</a>

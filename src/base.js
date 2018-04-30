@@ -66,9 +66,9 @@
 		browser.webRequest.onBeforeSendHeaders.addListener(function(details){
 			if(details.tabId === -1) return; //we dont want to process our own requests
 
-			let cancel = false;
-			let url = parseURL(details.url);
 			let request = new XMLHttpRequest();
+			let url = parseURL(details.url);
+			let cancel = false;
 			let adinfo = {};
 
 			if(url.pathname === "/get_video_info" && url.params.video_id){
@@ -80,14 +80,9 @@
 
 					if (request.status === 200) {
 						adinfo = parseURL("?" + request.responseText);
+						adinfo.params.ucid = adinfo.params.ucid || parseChannel(adinfo.params.channel_url);
 
-						if(adinfo.params
-							&& (
-									(adinfo.params.ucid && inblacklist(adinfo.params.ucid) !== -1)
-									||
-									(adinfo.params.channel_url && inblacklist(parseChannel(adinfo.params.channel_url)) !== -1)
-								 )
-							){
+						if(adinfo.params.ucid && inblacklist(adinfo.params.ucid) !== -1){
 							//block, and also add video id to the list so that we dont do this synchrous request again
 							blacklisted.push(url.params.video_id);
 							cancel = true;
@@ -99,7 +94,9 @@
 			}
 
 			if(!adinfo.params.author){
-				//get the author title
+				//asynchrously get the author title, very messy but it's the best way 
+				//the json method requires sending special headers
+				request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.ucid, true);
 				request.onreadystatechange = function() {
 					if(this.readyState == 4 && this.status == 200){
 					   let matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
@@ -108,13 +105,15 @@
 					   }
 					}
 				};
-				request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.ucid, true);
 				request.send();
 			}
 
 			adinfo.details = details;
+
+			while(recentads.length > 20) //limit recentads to 20
+				recentads.shift();
 			recentads.push(adinfo.params);
-			
+
 			console.log("Blocked:", cancel, adinfo);
 			return {cancel: cancel};
 
@@ -130,6 +129,8 @@
 	}
 
 	function parseChannel(search){
+		if(!search) return false;
+
 		let matches = search.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/);
 
 		if(matches && matches[2])
