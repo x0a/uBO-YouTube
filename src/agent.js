@@ -95,29 +95,21 @@
 		}
 	});
 
-	function objGet(object, key, newVal){
+	function objGet(object, key){
 		let levels = key.split(/[\[\]\.]+/);
-		let parent = object;
-		let lastlevel;
 		let current = object;
 
 		for(let level of levels){
-			if(!level) continue;
+			if(level.length === 0) continue;
 			if(current[level] !== undefined){
-				parent = current;
-				lastlevel = level;
 				current = current[level];
-			}
-			else{
+			}else{
 				//console.log("Failed at", level);
 				return;
 			}
 		}
 
-		if(newVal){
-			parent[lastlevel] = newVal;
-		}
-		return parent[lastlevel];
+		return current;
 	}
 	
 	function inwhitelist(search, whitelist){
