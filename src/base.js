@@ -29,7 +29,7 @@
 					//send the updated settings to the rest of the tabs
 					chrome.tabs.query({discarded: false}, function(tabs) {
 						for(let tab of tabs)
-							if(!sender.tab || tab.id !== sender.tab.id) //send to every tab if it came from popup window
+							if(!sender.tab || tab.id !== sender.tab.id) //!sender.tab means it came from popup.html
 								chrome.tabs.sendMessage(tab.id, {action: "update", settings: settings}, function(response) {
 									//console.log(response);
 								});
@@ -64,7 +64,7 @@
 		});
 
 		browser.webRequest.onBeforeSendHeaders.addListener(function(details){
-			if(details.tabId === -1) return; //we dont want to process our own requests
+			if(details.tabId === -1) return; //probably came from an extension, which we don't want to process
 
 			let request = new XMLHttpRequest();
 			let url = parseURL(details.url);
@@ -98,7 +98,7 @@
 				//the json method requires sending special headers
 				request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.ucid, true);
 				request.onreadystatechange = function() {
-					if(this.readyState == 4 && this.status == 200){
+					if(this.readyState === 4 && this.status === 200){
 					   let matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
 					   if(matches && matches[1]){
 						   adinfo.params.author = matches[1];
@@ -108,10 +108,10 @@
 				request.send();
 			}
 
-			adinfo.details = details;
+			adinfo.params.details = details;
 
-			while(recentads.length > 20) //limit recentads to 20
-				recentads.shift();
+			while(recentads.length > 20) 
+				recentads.shift(); //just trim a little off the top fam
 			recentads.push(adinfo.params);
 
 			console.log("Blocked:", cancel, adinfo);
