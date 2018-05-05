@@ -15,7 +15,7 @@
 		"js": ["main.js"],
 		"run_at": "document_start"
 	}],
-	"permissions": ["storage", "webRequest", "webRequestBlocking", "*://*.youtube.com/"],
+	"permissions": ["storage", "webRequest", "webRequestBlocking", "downloads", "*://*.youtube.com/"],
 	"background": {
 		"scripts": ["base.js"]
 	},
