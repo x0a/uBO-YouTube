@@ -166,7 +166,11 @@
 		}
 
 		$scope.export = function(){
-			browser.downloads.download({url: URL.createObjectURL(new Blob([JSON.stringify($scope.settings)], {type : 'application/json'})), saveAs: true, filename: "ublock-youtube.json"})
+			let objURL = URL.createObjectURL(new Blob([JSON.stringify($scope.settings)], {type : 'application/json'}));
+			let link = document.createElement("a");
+			link.href = objURL;
+			link.download = "ublock-youtube.json";
+			link.click();
 		}
 		
 		$scope.open = function(id){

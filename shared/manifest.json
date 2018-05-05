@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "YouTube Channel Whitelist for uBlock Origin",
-	"version": "0.4.7",
+	"version": "0.4.8",
 	"browser_action": {
 		"default_icon": "./img/icon_128.png",
 		"default_title": "YouTube Channel Whitelist",
@@ -15,7 +15,7 @@
 		"js": ["main.js"],
 		"run_at": "document_start"
 	}],
-	"permissions": ["storage", "webRequest", "webRequestBlocking", "downloads", "*://*.youtube.com/"],
+	"permissions": ["storage", "webRequest", "webRequestBlocking", "*://*.youtube.com/"],
 	"background": {
 		"scripts": ["base.js"]
 	},
