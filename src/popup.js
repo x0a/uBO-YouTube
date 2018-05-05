@@ -2,12 +2,16 @@
 
 (function(browser, angular){
 	let app = angular.module("uYtPlug", []);
-	app.directive('onFileChange', function() {
+	app.directive('onFileChange', function($parse) {
 		return {
 			restrict: 'A',
 			link: function (scope, element, attrs) {
-				var onChangeHandler = scope.$eval(attrs.onFileChange);
-				element.on('change', onChangeHandler);
+				var onChangeHandler = $parse(attrs.onFileChange);
+				element.on('change', function(event){
+					scope.$apply(function(){
+						onChangeHandler(scope, {$event:event});
+					})
+				});
 				element.on('$destroy', function() {
 					element.off();
 				});
@@ -17,6 +21,17 @@
 	app.filter('decodeURIComponent', function() {
 		return window.decodeURIComponent;
 	});
+
+	((parse) => {
+		JSON.parse = (string, reviver) => {
+			try{
+				return parse(string, reviver)
+			}catch(e){
+				return undefined;
+			}
+		}
+	})(JSON.parse);
+
 	app.controller("main", function($scope, $q){
 		$scope.settings = {whitelisted: [], blacklisted: []};
 		$scope.recentads = [];
@@ -107,17 +122,17 @@
 			return -1;
 		}
 		
-		$scope.import = function(receivedFile){
+		$scope.import = function(receivedFile, event){
 			let fileimport = document.querySelector("#import");
 			if(receivedFile){
 				if(!event.target.files.length) return;
 				let file = event.target.files[0];
-				if(file.type === "application/json"){
+				if(file.type === "application/json" || file.type === ""){
 					let reader = new FileReader();
 					reader.onload = () => {
-						let results = JSON.parse(reader.result);
+						let results;
 
-						if(results.blacklisted && results.whitelisted){
+						if((results = JSON.parse(reader.result)) && typeof results === "object" && results.blacklisted && results.whitelisted){
 							for(let i = 0; i < results.blacklisted.length; i++)
 								if($scope.inblacklist(results.blacklisted[i].id) !== -1){
 									results.blacklisted.splice(i, 1);
@@ -139,22 +154,18 @@
 									$scope.save();
 								});
 						}else{
-							$scope.createAlert("File has incorrect data");
+							$scope.createAlert("File is likely not valid JSON, or missing data.");
 						}
 						$scope.$digest();
 					}
 					reader.readAsText(file);
 				}else{
-					$scope.createAlert("File needs to be application/json, detected \"" + file.type + "\" instead");
+					$scope.createAlert("File needs to be of type \"application/json\", detected \"" + file.type + "\" instead");
 				}
 				fileimport.value = "";
 			}else{
 				fileimport.click();
 			}
-			$scope.$digest();
-		}
-		$scope.importfile = function(){
-			$scope.import(true);
 		}
 
 		$scope.clearsettings = function(){
@@ -170,7 +181,12 @@
 			let link = document.createElement("a");
 			link.href = objURL;
 			link.download = "ublock-youtube.json";
-			link.click();
+			document.body.appendChild(link)
+
+			setTimeout(function(){
+				link.click();
+				document.body.removeChild(link);
+			}, 0);
 		}
 		
 		$scope.open = function(id){
