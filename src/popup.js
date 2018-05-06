@@ -152,6 +152,9 @@
 									for(let channel of results.blacklisted)
 										$scope.settings.blacklisted.push(channel);
 									$scope.save();
+									
+									if(window.firefox_workaround)
+										$scope.createAlert("Added. You may close this tab now.");
 								});
 						}else{
 							$scope.createAlert("File is likely not valid JSON, or missing data.");
@@ -164,7 +167,14 @@
 				}
 				fileimport.value = "";
 			}else{
-				fileimport.click();
+				if(browser.runtime.getBrowserInfo && !window.firefox_workaround){ //Workaround for Firefox bug
+					browser.tabs.create({
+						active: true,
+						url:  'firefox_workaround/import.html'
+					}, null);
+					$scope.close();
+				}else
+					fileimport.click();
 			}
 		}
 
@@ -193,6 +203,18 @@
 			browser.tabs.create({url: "https://youtube.com/channel/" + id});
 		}
 
+		$scope.close = function(){
+			window.close();
+		}
+
 		$scope.refresh();
+
+		browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
+			if(requestData.action === "update"){
+				console.log('update');
+				$scope.settings = requestData.settings;
+				$scope.$digest();
+			}
+		});
 	})
 })(chrome ? chrome: browser, angular);
