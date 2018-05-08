@@ -18,13 +18,13 @@
 		let head = document.documentElement;
 		let relatedScript = document.createElement("script");
 		relatedScript.setAttribute("type", "text/javascript");
-		relatedScript.setAttribute("src", browser.runtime.getURL("agent.js")); 
+		relatedScript.setAttribute("src", browser.runtime.getURL("inject.js")); 
 		head.appendChild(relatedScript);
 		//adding styles for UBO button
 		let styleSheet = document.createElement("link");
 		styleSheet.setAttribute("rel", "stylesheet");
 		styleSheet.setAttribute("type", "text/css");
-		styleSheet.setAttribute("href", browser.runtime.getURL("style.css"));
+		styleSheet.setAttribute("href", browser.runtime.getURL("inject.css"));
 		head.appendChild(styleSheet);
 
 		document.addEventListener("DOMContentLoaded", function(){
