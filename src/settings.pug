@@ -3,7 +3,7 @@ html(ng-app='uYtPlug')
 	head
 		title Settings - YouTube Whitelister for uBlock Origin
 		link(rel='stylesheet', href='font-awesome-5/css/fontawesome-all.min.css')
-		link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css', integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm', crossorigin='anonymous')
+		link(rel='stylesheet', href='bootstrap.min.css', integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm', crossorigin='anonymous')
 		link(rel="icon", href="/img/icon_16.png")
 		meta(charset="utf-8")
 		meta(name="viewport", content="width=device-width, initial-scale=1, shrink-to-fit=no")
@@ -87,7 +87,8 @@ html(ng-app='uYtPlug')
 								a.text-danger.float-right(href='', ng-click='removewhite($index)', title='Remove from whitelist')
 									i.fas.fa-minus-circle(aria-hidden='true')
 						tr(ng-if='!settings.whitelisted.length')
-							td.empty None.
+							td.text-muted None.
+							td
 				.col-md
 					h4 Blacklisted advertisers
 					table.table.table-striped.table-sm
@@ -103,6 +104,7 @@ html(ng-app='uYtPlug')
 									i.fas.fa-minus-circle(aria-hidden='true')
 						tr(ng-if='!settings.blacklisted.length')
 							td.text-muted None.
+							td
 					h4 Recently detected ads
 					table.table.table-striped.table-sm
 						thead.thead-dark
