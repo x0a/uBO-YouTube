@@ -1,5 +1,6 @@
 let fs = require("fs-extra");
 let path = require("path");
+let pug = require("pug");
 let exec = require('child_process').exec;
 let documentRoot = path.resolve("..");
 
@@ -7,7 +8,6 @@ let documentRoot = path.resolve("..");
 ((parse)=>{JSON.parse=(string,reviver)=>{try{return parse(string,reviver)}catch(e){return undefined}}})(JSON.parse)
 fs.ensureDirSync(documentRoot + "/dist/chrome/debug");
 
-//process.chdir(documentRoot + "/dist/chrome");
 let versionChanged = false;
 fs.readFile(documentRoot + "/shared/manifest.json", "utf-8", function(err, contents){
 	let manifest = JSON.parse(contents);
@@ -23,7 +23,13 @@ fs.readFile(documentRoot + "/shared/manifest.json", "utf-8", function(err, conte
 	}
 	
 	fs.writeFileSync(documentRoot + "/dist/chrome/debug/manifest.json", JSON.stringify(manifest, null, 4), "utf8");
-	fs.copySync(documentRoot + "/src/", documentRoot + "/dist/chrome/debug/", {overwrite: true});
+	fs.copySync(documentRoot + "/src/", documentRoot + "/dist/chrome/debug/", {overwrite: true, filter: (src, dst) => {
+		let isPug = src.endsWith(".pug");
+		if(isPug){
+			fs.outputFileSync(dst.slice(0, -3) + "html", pug.renderFile(src), {overwrite: true});
+			return false;
+		}else return true;
+	}});
 	fs.copySync(documentRoot + "/lib/", documentRoot + "/dist/chrome/debug/", {overwrite: true});
 
 	if(versionChanged) 
@@ -38,7 +44,7 @@ fs.readFile(documentRoot + "/shared/manifest.json", "utf-8", function(err, conte
 		}
 	}
 
-	exec("7z a -tzip \"" + fileName + "\" \"" + documentRoot + "/src/*\" \"" + documentRoot + "/dist/chrome/debug/manifest.json\" \"" + documentRoot + "/lib/*\"", "", function(err, stdout){
+	exec("7z a -tzip \"" + fileName + "\" \"" + documentRoot + "/dist/chrome/debug/*\" \"", "", function(err, stdout){
 		if(err)
 			console.log("Error creating zip: ", err);
 

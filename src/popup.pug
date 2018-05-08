@@ -1,0 +1,109 @@
+doctype html
+html(ng-app='uYtPlug')
+	head
+		link(rel='stylesheet', href='font-awesome-4.7.0/css/font-awesome.css')
+		link(rel='stylesheet', href='bootstrap.css')
+		style(type='text/css').
+			body{
+				background-color:  #EEEEEE;
+				font-family: "Segoe UI", Tahoma, sans-serif;
+				font-size: 75%;
+			}
+			.main{
+				width: 300px;
+				height: 300px;
+				overflow-y: auto;
+				position: relative;
+			}
+			.table-container{
+				width: 100%;
+				min-height: 230px;
+			}
+			table{
+				width: 100%;
+			}
+			a{
+				color: blue;
+			}
+			a.remove{
+				color: red;
+			}
+			th:first-of-type{
+				padding-top: 0px !important;
+			}
+			th{
+				padding-top: 10px;
+				padding-bottom:10px;
+			}
+			.btn-pressed{
+				color: grey;
+			}
+			.empty{
+				color: grey;
+			}
+			.alert{
+				min-width: 380px;
+				max-width: 430px;
+				text-align: center;
+				padding: 10px;
+				overflow: auto;
+			}
+		script(type='text/javascript', src='angular.min.js')
+		script(type='text/javascript', src='popup.js')
+	body(ng-controller='main')
+		.alert(ng-show='alert.active')
+			span.bold {{alert.text}}
+			br
+			br
+			.align-right
+				button.btn.btn-sm(type='button', ng-class="{'btn-danger': alert.confirmDanger, 'btn-primary': !alert.confirmDanger}", ng-click='alert.active = false;alert.confirm()') OK
+				| 
+				button.btn.btn-sm.btn-secondary(type='button', ng-show='alert.cancelButton', ng-click='alert.active = false;alert.reject()') Cancel
+		.main(ng-hide='alert.active')
+			.table-container
+				table
+					tr
+						th Whitelisted Channels
+						th
+							a(href='', ng-click='refresh()', ng-class="{'btn-pressed': refreshPressed}", ng-mousedown='refreshPressed=true', ng-mouseup='refreshPressed=false')
+								i.fa.fa-refresh(aria-hidden='true')
+					tr(ng-repeat='item in settings.whitelisted track by $index')
+						td
+							a(ng-click='open(item.id)', href='') {{item.display}}
+						td
+							a.remove(href='', ng-click='removewhite($index)', title='Remove from whitelist')
+								i.fa.fa-minus-circle(aria-hidden='true')
+					tr(ng-if='!settings.whitelisted.length')
+						td.empty None.
+					tr
+						th Blacklisted Advertisers
+					tr(ng-repeat='item in settings.blacklisted track by $index')
+						td
+							a(ng-click='open(item.id)', href='') {{item.display}}
+						td
+							a.remove(href='', ng-click='removeblack($index)', title='Remove from blacklist')
+								i.fa.fa-minus-circle(aria-hidden='true')
+					tr(ng-if='!settings.blacklisted.length')
+						td.empty None.
+					tr
+						th Recently detected advertisers
+					tr(ng-repeat="item in recentads | orderBy: '-' | limitTo: 5  track by $index")
+						td
+							a(ng-click='open(item.ucid)', href='') {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
+						td
+							a.remove(ng-click='addblack($index)', href='', title='Add to blacklist')
+								i.fa.fa-ban(aria-hidden='true')
+					tr(ng-if='!recentads.length')
+						td.empty None.
+			.bottom
+				hr
+				button.btn.btn-primary.btn-sm(type='button', ng-click='export()', title='Export settings to file')
+					i.fa.fa-upload
+					|  Export
+				| 
+				button.btn.btn-primary.btn-sm(type='button', ng-click='import()', title='Import settings from file')
+					i.fa.fa-download
+					|  Import
+				button.btn.btn-danger.btn-sm.align-right(type='button', ng-click='clearsettings()', title='Clear all settings')
+					i.fa.fa-trash
+				input#import(type='file', on-file-change='import(true, $event)', ng-model='fileimport', style='display: none')

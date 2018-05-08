@@ -1,0 +1,94 @@
+doctype html
+html(ng-app='uYtPlug')
+	head
+		link(rel='stylesheet', href='font-awesome-4.7.0/css/font-awesome.css')
+		link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css', integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm', crossorigin='anonymous')
+		style(type='text/css').
+			body{
+				background-color: #f8f9fa!important;
+				margin-top: 40px;
+			}
+			.alert{
+				min-width: 380px;
+				max-width: 430px;
+				text-align: center;
+				padding: 10px;
+				overflow: auto;
+			}
+			table{
+				width: 100%;
+			}
+		script(type='text/javascript', src='angular.min.js')
+		script(type='text/javascript', src='popup.js')
+	body(ng-controller='main')
+		.alert(ng-show='alert.active')
+			span.bold {{alert.text}}
+			br
+			br
+			.align-right
+				button.btn.btn-sm(type='button', ng-class="{'btn-danger': alert.confirmDanger, 'btn-primary': !alert.confirmDanger}", ng-click='alert.active = false;alert.confirm()') OK
+				button.btn.btn-sm.btn-secondary(type='button', ng-show='alert.cancelButton', ng-click='alert.active = false;alert.reject()') Cancel
+		.container(ng-hide='alert.active')
+			.row
+				.col-md
+					h4
+						| Whitelisted Channels
+						a(href='', ng-click='refresh()', ng-class="{'btn-pressed': refreshPressed}", ng-mousedown='refreshPressed=true', ng-mouseup='refreshPressed=false')
+							i.fa.fa-refresh(aria-hidden='true')
+					table.table.table-striped.table-sm
+						thead.thead-dark
+							tr
+								th Channel
+								th Remove
+						tr(ng-repeat='item in settings.whitelisted track by $index')
+							td
+								a(ng-href="{{'https://youtube.com/channel/' + item.id}}") {{item.display}}
+							td
+								a.text-danger.float-right(href='', ng-click='removewhite($index)', title='Remove from whitelist')
+									i.fa.fa-minus-circle(aria-hidden='true')
+						tr(ng-if='!settings.whitelisted.length')
+							td.empty None.
+				.col-md
+					h4 Blacklisted advertisers
+					table.table.table-striped.table-sm
+						thead.thead-dark
+							tr
+								th Advertiser
+								th Remove
+						tr(ng-repeat='item in settings.blacklisted track by $index')
+							td
+								a(ng-click='open(item.id)', href='') {{item.display}}
+							td
+								a.text-danger.float-right(href='', ng-click='removeblack($index)', title='Remove from blacklist')
+									i.fa.fa-minus-circle(aria-hidden='true')
+						tr(ng-if='!settings.blacklisted.length')
+							td.text-muted None.
+				.col-md
+					h4 Recently detected ads
+					table.table.table-striped.table-sm
+						thead.thead-dark
+							tr
+								th Advertiser
+								th Blacklist
+						tr(ng-repeat="item in recentads | orderBy: '-' | limitTo: 5  track by $index")
+							td
+								a(ng-click='open(item.ucid)', href='') {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
+							td
+								a.text-danger.float-right(ng-click='addblack($index)', href='', title='Add to blacklist')
+									i.fa.fa-ban(aria-hidden='true')
+						tr(ng-if='!recentads.length')
+							td.text-muted None.
+							td
+			.bottom
+				hr
+				button.btn.btn-primary.btn-sm(type='button', ng-click='export()', title='Export settings to file')
+					i.fa.fa-upload
+					|  Export
+				| 
+				button.btn.btn-primary.btn-sm(type='button', ng-click='import()', title='Import settings from file')
+					i.fa.fa-download
+					|  Import
+				| 
+				button.btn.btn-danger.btn-sm.align-right(type='button', ng-click='clearsettings()', title='Clear all settings')
+					i.fa.fa-trash
+				input#import(type='file', on-file-change='import(true, $event)', ng-model='fileimport', style='display: none')
