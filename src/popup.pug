@@ -1,7 +1,7 @@
 doctype html
 html(ng-app='uYtPlug')
 	head
-		link(rel='stylesheet', href='font-awesome-4.7.0/css/font-awesome.css')
+		link(rel='stylesheet', href='font-awesome-5/css/fontawesome-all.min.css')
 		link(rel='stylesheet', href='bootstrap.css')
 		style(type='text/css').
 			body{
@@ -66,13 +66,13 @@ html(ng-app='uYtPlug')
 						th Whitelisted Channels
 						th
 							a(href='', ng-click='refresh()', ng-class="{'btn-pressed': refreshPressed}", ng-mousedown='refreshPressed=true', ng-mouseup='refreshPressed=false')
-								i.fa.fa-refresh(aria-hidden='true')
+								i.fas.fa-sync(aria-hidden='true')
 					tr(ng-repeat='item in settings.whitelisted track by $index')
 						td
 							a(ng-click='open(item.id)', href='') {{item.display}}
 						td
 							a.remove(href='', ng-click='removewhite($index)', title='Remove from whitelist')
-								i.fa.fa-minus-circle(aria-hidden='true')
+								i.fas.fa-minus-circle(aria-hidden='true')
 					tr(ng-if='!settings.whitelisted.length')
 						td.empty None.
 					tr
@@ -82,7 +82,7 @@ html(ng-app='uYtPlug')
 							a(ng-click='open(item.id)', href='') {{item.display}}
 						td
 							a.remove(href='', ng-click='removeblack($index)', title='Remove from blacklist')
-								i.fa.fa-minus-circle(aria-hidden='true')
+								i.fas.fa-minus-circle(aria-hidden='true')
 					tr(ng-if='!settings.blacklisted.length')
 						td.empty None.
 					tr
@@ -92,18 +92,23 @@ html(ng-app='uYtPlug')
 							a(ng-click='open(item.ucid)', href='') {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
 						td
 							a.remove(ng-click='addblack($index)', href='', title='Add to blacklist')
-								i.fa.fa-ban(aria-hidden='true')
+								i.fas.fa-ban(aria-hidden='true')
 					tr(ng-if='!recentads.length')
 						td.empty None.
-			.bottom
+			.bottom(ng-hide="settingsPage")
 				hr
 				button.btn.btn-primary.btn-sm(type='button', ng-click='export()', title='Export settings to file')
-					i.fa.fa-upload
+					i.fas.fa-upload
 					|  Export
 				| 
 				button.btn.btn-primary.btn-sm(type='button', ng-click='import()', title='Import settings from file')
-					i.fa.fa-download
+					i.fas.fa-download
 					|  Import
 				button.btn.btn-danger.btn-sm.align-right(type='button', ng-click='clearsettings()', title='Clear all settings')
-					i.fa.fa-trash
-				input#import(type='file', on-file-change='import(true, $event)', ng-model='fileimport', style='display: none')
+					i.fas.fa-trash
+				input#import(type='file', accept=".json", on-file-change='import(true, $event)', ng-model='fileimport', style='display: none')
+			.bottom(ng-show="settingsPage")
+				hr
+				button.btn.btn-primary.btn-sm.align-right(type='button', ng-click='opensettings()', title='Access all settings')
+					i.fas.fa-cog
+					|  Settings
