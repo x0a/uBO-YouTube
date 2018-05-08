@@ -383,7 +383,7 @@
 				return;
 			}
 
-			blacklistButton = parseHTML('<button class="ytp-button" title="Blacklist this advertiser" id="BLK-button"><div class="BLK-container"><img src="' + browser.runtime.getURL("img/icon_16.png") + '"></div></button>').querySelector("#BLK-button");
+			blacklistButton = parseHTML('<button class="ytp-button" id="BLK-button"><span class="BLK-tooltip">Blacklist this advertiser</span><div class="BLK-container"><img src="' + browser.runtime.getURL("img/icon_16.png") + '"></div></button>').querySelector("#BLK-button");
 			blacklistButton.addEventListener("click", function(){
 				browser.runtime.sendMessage({action: "blacklist"}, function(response){
 					if(response.error) 

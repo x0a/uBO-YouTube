@@ -1,4 +1,4 @@
-.UBO-button.UBO-old {
+ .UBO-button.UBO-old {
 	margin-left: 5px;
 	padding: 0 5.5px 0px 6px !important;
 }
@@ -31,6 +31,8 @@
 }
  #BLK-button {
 	display: none;
+	overflow: visible;
+	position: relative;
 }
  #movie_player.ad-interrupting #BLK-button {
 	display: inline-block !important;
@@ -47,4 +49,24 @@
 	margin-top: -8px;
 	margin-left: -8px;
 }
- 
+ #BLK-button .BLK-tooltip {
+    visibility: hidden;
+    background-color: rgba(28,28,28,0.9);
+    color: rgb(238, 238, 238);
+    text-align: center;
+    border-radius: 2px;
+    padding: 5px 9px;
+    position: absolute;
+    z-index: 1001;
+	bottom: 140%;
+	font-weight: 500;
+	line-height: 15px;
+    left: -50%;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .5s;
+}
+ #BLK-button:hover .BLK-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
