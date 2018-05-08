@@ -152,9 +152,6 @@
 									for(let channel of results.blacklisted)
 										$scope.settings.blacklisted.push(channel);
 									$scope.save();
-									
-									if(window.firefox_workaround)
-										$scope.createAlert("Added. You may close this tab now.");
 								});
 						}else{
 							$scope.createAlert("File is likely not valid JSON, or missing data.");
@@ -167,15 +164,15 @@
 				}
 				fileimport.value = "";
 			}else{
-				if(browser.runtime.getBrowserInfo && !window.firefox_workaround){ //Workaround for Firefox bug
-					browser.tabs.create({
-						active: true,
-						url:  'firefox_workaround/import.html'
-					}, null);
-					$scope.close();
-				}else
-					fileimport.click();
+				fileimport.click();
 			}
+		}
+		$scope.opensettings = function(){
+			browser.tabs.create({
+				active: true,
+				url:  'settings.html'
+			}, null);
+			$scope.close();
 		}
 
 		$scope.clearsettings = function(){
@@ -208,6 +205,9 @@
 		}
 
 		$scope.refresh();
+		
+		//Show settings if Firefox or not Windows. Circumvents bug
+		$scope.settingsPage = browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1;
 
 		browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
 			if(requestData.action === "update"){
