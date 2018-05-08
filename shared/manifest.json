@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "YouTube Channel Whitelist for uBlock Origin",
-	"version": "0.5.2",
+	"version": "0.5.3",
 	"browser_action": {
 		"default_icon": "./img/icon_128.png",
 		"default_title": "YouTube Channel Whitelist",
@@ -23,6 +23,10 @@
 		"gecko": {
 			"id":"{ea0ef8bb-6734-4970-b574-2099e836d636}"
 		}
+	},
+	"options_ui": {
+		"page": "settings.html",
+		"open_in_tab": true
 	},
 	"web_accessible_resources": ["img/icon_16.png", "inject.js", "inject.css"]
 }
