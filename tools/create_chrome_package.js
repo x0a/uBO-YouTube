@@ -33,8 +33,11 @@ fs.readFile(documentRoot + "/shared/manifest.json", "utf-8", function(err, conte
 	fs.copySync(documentRoot + "/lib/", documentRoot + "/dist/chrome/debug/", {overwrite: true});
 
 	if(versionChanged) 
-		console.log("Version changed, creating package");
-	else return;
+		console.log("New version, creating package");
+	else{
+		console.log("No version change, will not create new package");
+		return;
+	}
 
 	var dateAndTime = new Date();
 	var fileName = documentRoot + "/dist/chrome/" + manifest.version + " " + dateAndTime.toLocaleString("en-us", {month: "short"}) + " " + dateAndTime.getDate() + " - " + dateAndTime.toLocaleString('en-US', { hour: 'numeric', hour12: true }) + ".zip";
@@ -44,7 +47,7 @@ fs.readFile(documentRoot + "/shared/manifest.json", "utf-8", function(err, conte
 		}
 	}
 
-	exec("7z a -tzip \"" + fileName + "\" \"" + documentRoot + "/dist/chrome/debug/*\" \"", "", function(err, stdout){
+	exec("7z a -tzip \"" + fileName + "\" \"" + documentRoot + "/dist/chrome/debug/*\"", "", function(err, stdout){
 		if(err)
 			console.log("Error creating zip: ", err);
 

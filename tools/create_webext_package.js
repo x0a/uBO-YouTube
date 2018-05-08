@@ -34,7 +34,10 @@ fs.readFile(documentRoot + "/shared/manifest.json", "utf-8", function(err, conte
 
 	if(versionChanged) 
 		console.log("Version changed, creating package");
-	else return;
+	else{
+		console.log("No version change, will not create new package");
+		return;
+	}
 
 	let dateAndTime = new Date();
 	let fileName = documentRoot + "/dist/webext/" + manifest.version + " " + dateAndTime.toLocaleString("en-us", {month: "short"}) + " " + dateAndTime.getDate() + " - " + dateAndTime.toLocaleString('en-US', { hour: 'numeric', hour12: true }) + ".xpi";
@@ -44,7 +47,7 @@ fs.readFile(documentRoot + "/shared/manifest.json", "utf-8", function(err, conte
 		}
 	}
 
-	exec("7z a -tzip \"" + fileName + "\" \"" + documentRoot + "/dist/webext/debug/*\" \"", "", function(err, stdout){
+	exec("7z a -tzip \"" + fileName + "\" \"" + documentRoot + "/dist/webext/debug/*\"", "", function(err, stdout){
 		if(err)
 			console.log("Error creating zip: ", err);
 
