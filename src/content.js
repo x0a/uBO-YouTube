@@ -1,6 +1,6 @@
 'use strict';
 
-(function(window, document, browser, undefined){
+((window, document, browser, undefined) => {
 	const video = 1;
 	const channel = 2;
 	const search = 3;
@@ -12,7 +12,7 @@
 
 	let settings = {whitelisted: [], blacklisted: []};
 
-	browser.runtime.sendMessage({action: "get"}, function(response){
+	browser.runtime.sendMessage({action: "get"}, response => {
 		settings = response;
 		//allows us to access local javascript variables, needed to pre-append &disable flag to video lists
 		let head = document.documentElement;
@@ -27,21 +27,21 @@
 		styleSheet.setAttribute("href", browser.runtime.getURL("inject.css"));
 		head.appendChild(styleSheet);
 
-		document.addEventListener("DOMContentLoaded", function(){
+		document.addEventListener("DOMContentLoaded", () => {
 			let mode = getMode();
 			let layout = document.querySelector("ytd-app") ? lpoly : lbasic; //dirty, but just for the initial load
 			let prevurl = location.href;
 
 			updatePage(mode, layout);
 			//in case of settings change due to activity in another tab
-			browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
+			browser.runtime.onMessage.addListener((requestData, sender, sendResponse) =>  {
 		    	if(requestData.action === "update"){
 					settings = requestData.settings;
 					updatePage(mode, layout, true);
 				}
 			});
 
-			(new MutationObserver(function(mutations) {
+			(new MutationObserver(mutations =>  {
 				if(location.href !== prevurl){
 					mode = getMode();
 					prevurl = location.href;
@@ -104,7 +104,7 @@
 								finishedLoading = lpoly;
 						}else if(mutation.target.id === "subscriber-count"){
 							//update the UCID in the dom
-							callAgent("updateChannel");//, {}, function(channelId){console.log("new id", channelId);})
+							callAgent("updateChannel");//, {}, (channelId){console.log("new id", channelId);}) => 
 						}
 
 						//oldlayout
@@ -229,7 +229,7 @@
 
 		let button = document.createElement("button");
 		button.className = "UBO-button";
-		button.addEventListener("click", function(event){
+		button.addEventListener("click", event => {
 			let channelId = getChannelId(), button = event.target; //allow parent scope to be discarded
 			if(inwhitelist(channelId) !== -1){
 				let index;
@@ -243,7 +243,7 @@
 				button.classList.add("yt-uix-button-toggled");
 			}
 
-			browser.runtime.sendMessage({action: "update", settings: settings}, function(response){
+			browser.runtime.sendMessage({action: "update", settings: settings}, response => {
 				if(response) console.log(response)
 			})
 			updateURL(true, channelId);
@@ -384,8 +384,8 @@
 			}
 
 			blacklistButton = parseHTML('<button class="ytp-button" id="BLK-button"><span class="BLK-tooltip">Blacklist this advertiser</span><div class="BLK-container"><img src="' + browser.runtime.getURL("img/icon_16.png") + '"></div></button>').querySelector("#BLK-button");
-			blacklistButton.addEventListener("click", function(){
-				browser.runtime.sendMessage({action: "blacklist"}, function(response){
+			blacklistButton.addEventListener("click", () => {
+				browser.runtime.sendMessage({action: "blacklist"}, response => {
 					if(response.error) 
 						console.error(response.error, response);
 					else
@@ -406,7 +406,7 @@
 				return false;
 			}
 			callbackId = Math.random().toString(36).substring(7); //random 7 char string
-			window.addEventListener("message", msgFunc = function(event){
+			window.addEventListener("message", msgFunc = event => {
 				if(event.data.origin || !event.data.callbackId || event.data.callbackId !== callbackId) return;
 				callback(event.data.callbackMessage);
 				window.removeEventListener("message", msgFunc);
@@ -417,7 +417,7 @@
 	}
 
 	function verifyDisabled(){
-		setTimeout(function(){
+		setTimeout(() => {
 			let iframe = document.createElement("iframe");
 			iframe.height = "1px";
 			iframe.width = "1px";
@@ -425,7 +425,7 @@
 			iframe.src = "https://googleads.g.doubleclick.net/pagead/";
 
 			document.body.appendChild(iframe);
-			setTimeout(function(){
+			setTimeout(() => {
 				let iframe = document.getElementById("ads-text-iframe");
 				if(iframe.style.display == "none" || iframe.style.display == "hidden" || iframe.style.visibility == "hidden" || iframe.offsetHeight == 0)
 					prompt("Ads may still be blocked, make sure you've added the following rule to your adblocker whitelist", "*youtube.com/*&disableadblock=1");

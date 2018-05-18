@@ -12,12 +12,12 @@
 	},
 	"content_scripts": [{
 		"matches": ["*://www.youtube.com/*"],
-		"js": ["main.js"],
+		"js": ["content.js"],
 		"run_at": "document_start"
 	}],
 	"permissions": ["storage", "webRequest", "webRequestBlocking", "*://*.youtube.com/"],
 	"background": {
-		"scripts": ["base.js"]
+		"scripts": ["background.js"]
 	},
 	"applications": {
 		"gecko": {

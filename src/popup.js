@@ -1,24 +1,26 @@
 "use strict";
 
-(function(browser, angular){
+((browser, angular) => {
 	let app = angular.module("uYtPlug", []);
-	app.directive('onFileChange', function($parse) {
+
+	app.directive('onFileChange', ["$parse", $parse => {
 		return {
 			restrict: 'A',
-			link: function (scope, element, attrs) {
+			link: (scope, element, attrs) => {
 				var onChangeHandler = $parse(attrs.onFileChange);
-				element.on('change', function(event){
-					scope.$apply(function(){
+				element.on('change', event => {
+					scope.$apply(() => {
 						onChangeHandler(scope, {$event:event});
 					})
 				});
-				element.on('$destroy', function() {
+				element.on('$destroy', () => {
 					element.off();
 				});
 			}
 		};
-	});
-	app.filter('decodeURIComponent', function() {
+	}]);
+
+	app.filter('decodeURIComponent', () => {
 		return window.decodeURIComponent;
 	});
 
@@ -32,7 +34,7 @@
 		}
 	})(JSON.parse);
 
-	app.controller("main", function($scope, $q){
+	app.controller("main", ["$scope", "$q", ($scope, $q) => {
 		$scope.settings = {whitelisted: [], blacklisted: []};
 		$scope.recentads = [];
 		
@@ -45,7 +47,7 @@
 			text: ""
 		}
 
-		$scope.createAlert = function(text, confirm, danger){
+		$scope.createAlert = (text, confirm, danger) => {
 			$scope.alert.text = text;
 			$scope.alert.confirmDanger = danger || false;
 			$scope.alert.cancelButton = confirm || false;
@@ -57,10 +59,10 @@
 			});
 		}
 
-		$scope.refresh = function(callback){
-			browser.runtime.sendMessage({action: "get"}, function(response){
+		$scope.refresh = callback => {
+			browser.runtime.sendMessage({action: "get"}, response => {
 				$scope.settings = response;
-				browser.runtime.sendMessage({action: "recentads"}, function(response){
+				browser.runtime.sendMessage({action: "recentads"}, response => {
 					$scope.recentads = response;
 					$scope.$digest();
 					if(callback) callback();
@@ -69,27 +71,27 @@
 			})
 		}
 
-		$scope.save = function(){
-			browser.runtime.sendMessage({action: "update", settings: $scope.settings}, function(response){
+		$scope.save = () => {
+			browser.runtime.sendMessage({action: "update", settings: $scope.settings}, response => {
 				if(response) 
 					console.log(response);
 			})
 		}
 
-		$scope.removewhite = function(index){
+		$scope.removewhite = index => {
 			$scope.createAlert("Are you sure you want to re-enable adblock for '" + $scope.settings.whitelisted[index].display + "'?", true).then(() => {
 				$scope.settings.whitelisted.splice(index, 1);
 				$scope.save();
 			})
 		}
 
-		$scope.removeblack = function(index){
+		$scope.removeblack = index => {
 			$scope.createAlert("Are you sure you want to unblock '" + $scope.settings.blacklisted[index].display + "'?", true).then(() => {
 				$scope.settings.blacklisted.splice(index, 1);
 				$scope.save();
 			})
 		}
-		$scope.addblack = function(index){
+		$scope.addblack = index => {
 			let ad = $scope.recentads[$scope.recentads.length - index - 1], display = "";
 			for(let i = 0; i < $scope.settings.blacklisted.length; i++)
 				if(ad.ucid === $scope.settings.blacklisted[i].id)
@@ -106,7 +108,7 @@
 			$scope.save();
 		}
 
-		$scope.inblacklist = function(channelId){
+		$scope.inblacklist = channelId => {
 			for(let channel = 0; channel < $scope.settings.blacklisted.length; channel++){
 				if($scope.settings.blacklisted[channel].id === channelId) 
 					return channel;
@@ -114,7 +116,7 @@
 			return -1;
 		}
 
-		$scope.inwhitelist = function(channelId){
+		$scope.inwhitelist = channelId => {
 			for(let channel = 0; channel < $scope.settings.whitelisted.length; channel++){
 				if($scope.settings.whitelisted[channel].id === channelId) 
 					return channel;
@@ -122,7 +124,7 @@
 			return -1;
 		}
 		
-		$scope.import = function(receivedFile, event){
+		$scope.import = (receivedFile, event) => {
 			let fileimport = document.querySelector("#import");
 			if(receivedFile){
 				if(!event.target.files.length) return;
@@ -167,7 +169,7 @@
 				fileimport.click();
 			}
 		}
-		$scope.opensettings = function(){
+		$scope.opensettings = () => {
 			browser.tabs.create({
 				active: true,
 				url:  'settings.html'
@@ -175,32 +177,32 @@
 			$scope.close();
 		}
 
-		$scope.clearsettings = function(){
-			$scope.createAlert("This will delete " + $scope.settings.whitelisted.length + " whitelisted items, and " + $scope.settings.blacklisted.length + " blacklisted items. You can backup your settings if you don't want to lose them. Do you want to continue?", true, true).then(function(){
+		$scope.clearsettings = () => {
+			$scope.createAlert("This will delete " + $scope.settings.whitelisted.length + " whitelisted items, and " + $scope.settings.blacklisted.length + " blacklisted items. You can backup your settings if you don't want to lose them. Do you want to continue?", true, true).then(() => {
 				$scope.settings = {whitelisted: [], blacklisted: []};
 				$scope.recentads = [];
 				$scope.save();
 			})
 		}
 
-		$scope.export = function(){
+		$scope.export = () => {
 			let objURL = URL.createObjectURL(new Blob([JSON.stringify($scope.settings)], {type : 'application/json'}));
 			let link = document.createElement("a");
 			link.href = objURL;
 			link.download = "ublock-youtube.json";
 			document.body.appendChild(link)
 
-			setTimeout(function(){
+			setTimeout(() => {
 				link.click();
 				document.body.removeChild(link);
 			}, 0);
 		}
 		
-		$scope.open = function(id){
+		$scope.open = id => {
 			browser.tabs.create({url: "https://youtube.com/channel/" + id});
 		}
 
-		$scope.close = function(){
+		$scope.close = () => {
 			window.close();
 		}
 
@@ -209,12 +211,12 @@
 		//Show settings if Firefox or not Windows. Circumvents bug
 		$scope.settingsPage = browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1;
 
-		browser.runtime.onMessage.addListener(function(requestData, sender, sendResponse) {
+		browser.runtime.onMessage.addListener((requestData, sender, sendResponse) => {
 			if(requestData.action === "update"){
 				console.log('update');
 				$scope.settings = requestData.settings;
 				$scope.$digest();
 			}
 		});
-	})
+	}])
 })(chrome ? chrome: browser, angular);

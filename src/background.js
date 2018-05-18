@@ -1,36 +1,38 @@
 "use strict";
 
-(function(window, browser, undefined){
+((window, browser, undefined) => {
 	let settings;
 	let recentads = [];
 	let blacklisted = [];
 	
-	function saveSettings(callback){
-		browser.storage.sync.set(settings, function(){
-			console.log(settings);
-			callback();
-			//console.log(browser.runtime.lastError);
+	let saveSettings = callback => {
+		return new Promise((resolve, reject) => {
+			browser.storage.sync.set(settings, () => {
+				console.log(settings);
+				resolve();
+				//console.log(browser.runtime.lastError);
+			})
 		})
 	}
 
-	browser.storage.sync.get(null, function(items){
+	browser.storage.sync.get(null, items => {
 		settings = items ? items : {};
 		if(!settings.whitelisted) settings.whitelisted = [];
 		if(!settings.blacklisted) settings.blacklisted = [];
 
 		console.log(settings);
 
-		browser.runtime.onMessage.addListener(function(message, sender, sendResponse){
+		browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			if(message.action === "get"){
 				sendResponse(settings);
 			}else if(message.action === "update"){
 				settings = message.settings;
-				saveSettings(function(){
+				saveSettings.then(() => {
 					//send the updated settings to the rest of the tabs
-					chrome.tabs.query({discarded: false}, function(tabs) {
+					chrome.tabs.query({discarded: false}, tabs => {
 						for(let tab of tabs)
 							if(!sender.tab || tab.id !== sender.tab.id) //!sender.tab means it came from popup.html
-								chrome.tabs.sendMessage(tab.id, {action: "update", settings: settings}, function(response) {
+								chrome.tabs.sendMessage(tab.id, {action: "update", settings: settings}, (response) =>  {
 									//console.log(response);
 								});
 					  });
@@ -63,7 +65,7 @@
 			}
 		});
 
-		browser.webRequest.onBeforeSendHeaders.addListener(function(details){
+		browser.webRequest.onBeforeSendHeaders.addListener((details) => {
 			if(details.tabId === -1) return; //probably came from an extension, which we don't want to process
 
 			let request = new XMLHttpRequest();
@@ -97,7 +99,7 @@
 				//asynchrously get the author title, very messy but it's the best way 
 				//the json method requires sending special headers
 				request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.ucid, true);
-				request.onreadystatechange = function() {
+				request.onreadystatechange = () =>  {
 					if(this.readyState === 4 && this.status === 200){
 					   let matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
 					   if(matches && matches[1]){
