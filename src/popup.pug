@@ -1,7 +1,9 @@
 doctype html
 html(ng-app='uYtPlug')
 	head
-		link(rel='stylesheet', href='font-awesome-5/css/fontawesome-all.min.css')
+		script(type='text/javascript', src='/lib/angular.min.js')
+		script(type='text/javascript', src='popup.js')
+		link(rel='stylesheet', href='/lib/font-awesome-5/css/fontawesome-all.min.css')
 		link(rel='stylesheet', href='popup.css')
 		style(type='text/css').
 			body{
@@ -48,8 +50,6 @@ html(ng-app='uYtPlug')
 				padding: 10px;
 				overflow: auto;
 			}
-		script(type='text/javascript', src='angular.min.js')
-		script(type='text/javascript', src='popup.js')
 	body(ng-controller='main')
 		.alert(ng-show='alert.active')
 			span.bold {{alert.text}}

@@ -2,8 +2,10 @@ doctype html
 html(ng-app='uYtPlug')
 	head
 		title Settings - YouTube Whitelister for uBlock Origin
-		link(rel='stylesheet', href='font-awesome-5/css/fontawesome-all.min.css')
-		link(rel='stylesheet', href='bootstrap.min.css', integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm', crossorigin='anonymous')
+		script(type='text/javascript', src='/lib/angular.min.js')
+		script(type='text/javascript', src='popup.js')
+		link(rel='stylesheet', href='lib/font-awesome-5/css/fontawesome-all.min.css')
+		link(rel='stylesheet', href='lib/bootstrap.min.css')
 		link(rel="icon", href="/img/icon_16.png")
 		meta(charset="utf-8")
 		meta(name="viewport", content="width=device-width, initial-scale=1, shrink-to-fit=no")
@@ -40,8 +42,6 @@ html(ng-app='uYtPlug')
 			table{
 				width: 100%;
 			}
-		script(type='text/javascript', src='angular.min.js')
-		script(type='text/javascript', src='popup.js')
 	body(ng-controller='main')
 		.overlay(ng-show="alert.active")
 		.alert(ng-show='alert.active')
