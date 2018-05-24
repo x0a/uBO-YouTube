@@ -10,7 +10,6 @@
 			browser.storage.sync.set(settings, () => {
 				console.log(settings);
 				resolve();
-				//console.log(browser.runtime.lastError);
 			})
 		})
 	}
