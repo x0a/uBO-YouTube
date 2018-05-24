@@ -7,8 +7,10 @@ let pug = require("gulp-pug");
 let jeditor = require("gulp-json-editor");
 let del = require("del");
 let gulpif = require("gulp-if");
-let archive = require("./archive.js");
-let build = false, chrome = "empty", webext = "empty";
+let mergestream = require("merge-stream");
+let Archiver = require("gulp-archiver2");
+let build = false, chrome = new Archiver("zip"), webext = new Archiver("zip"); //gulp-if requires that these be defined somehow
+let codeVersion, packageVersion;
 
 gulp.task("clean", () => {
 	return del(["dist/chrome/debug/**/*", "dist/webext/debug/**/*"]);
@@ -57,23 +59,32 @@ gulp.task("html", () => {
 })
 
 gulp.task("manifest", () => {
+	gulp.src("package.json")
+	.pipe(jeditor(json => {packageVersion = json.version; return json}));
+
 	return gulp.src("shared/manifest.json")
 	.pipe(gulp.dest("dist/webext/debug"))
 	.pipe(gulpif(build, webext.add()))
-	.pipe(jeditor(json => {delete json.applications; return json}))
+	.pipe(jeditor(json => {codeVersion = json.version; delete json.applications; return json}))
 	.pipe(gulp.dest("dist/chrome/debug"))
 	.pipe(gulpif(build, chrome.add()))
 })
 gulp.task("build-start", cb => {
 	build = true;
-	chrome = new archive("zip");
-	webext = new archive("zip");
 
 	cb();
 })
 gulp.task("build-end", cb => {
-	Promise.all([chrome.close("dist/chrome/latest.zip"), webext.close("dist/webext/latest.zip")]).then(() => cb());
-})
-gulp.task("default", gulp.series("clean", gulp.parallel("css", "js", "lib", "html", "img"), "manifest"))
+	console.log("Manifest version: ", codeVersion, "Project version: ", packageVersion);
 
-gulp.task("build", gulp.series("build-start", "default", "build-end"));
+	if(packageVersion !== codeVersion) 
+		console.log("Manifest version appears to have changed, but project version remains the same. Call `gulp build` if this is a new version.");
+
+	if(build)
+		return mergestream(chrome.close("latest.zip").pipe(gulp.dest("dist/chrome/")), webext.close("latest.zip").pipe(gulp.dest("dist/webext/")))
+	else
+		cb();
+})
+gulp.task("default", gulp.series("clean", gulp.parallel("css", "js", "lib", "html", "img"), "manifest", "build-end"))
+
+gulp.task("build", gulp.series("build-start", "default"));

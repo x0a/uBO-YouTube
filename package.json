@@ -1,5 +1,5 @@
 {
-  "name": "youtube-channel-whitelist",
+  "name": "youtube-channel-whitelist-ublock",
   "description": "[Chrome Web Store](https://chrome.google.com/webstore/detail/youtube-channel-whitelist/pbgojokkgbikdofpgphemhldcbaejfog?)\r ### Firefox\r [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtube-channel-whitelist/)",
   "version": "0.5.3",
   "main": "gulpfile.js",
@@ -34,11 +34,13 @@
     "archiver": "^2.1.1",
     "del": "^3.0.0",
     "gulp": "^4.0.0",
+    "gulp-archiver2": "^1.1.6",
     "gulp-clean-css": "^3.9.4",
     "gulp-if": "^2.0.2",
     "gulp-json-editor": "^2.3.0",
     "gulp-pug": "^4.0.1",
     "gulp-uglify-es": "^1.0.1",
-    "gulp-util": "^3.0.8"
+    "gulp-util": "^3.0.8",
+    "merge-stream": "^1.0.1"
   }
 }
