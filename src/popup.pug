@@ -6,10 +6,13 @@ html(ng-app='uYtPlug')
 		link(rel='stylesheet', href='/lib/font-awesome-5/css/fontawesome-all.min.css')
 		link(rel='stylesheet', href='popup.css')
 		style(type='text/css').
+			*{
+				font-family: "fa5-proxima-nova";
+			}
 			body{
 				background-color:  #EEEEEE;
-				font-family: "Segoe UI", Tahoma, sans-serif;
-				font-size: 75%;
+				font-family: "fa5-proxima-nova", "Segoe UI", Tahoma, sans-serif;
+				font-size: 80%;
 			}
 			.main{
 				width: 300px;
@@ -26,16 +29,18 @@ html(ng-app='uYtPlug')
 			}
 			a{
 				color: blue;
+				text-decoration: none;
 			}
 			a.remove{
 				color: red;
 			}
 			th:first-of-type{
-				padding-top: 0px !important;
+				/*padding-top: 0px !important;*/
 			}
 			th{
 				padding-top: 10px;
-				padding-bottom:10px;
+				padding-bottom: 10px;
+				font-weight: 700;
 			}
 			.btn-pressed{
 				color: grey;
