@@ -5,7 +5,7 @@
 	let recentads = [];
 	let blacklisted = [];
 	
-	let saveSettings = callback => {
+	let saveSettings = () => {
 		return new Promise((resolve, reject) => {
 			browser.storage.sync.set(settings, () => {
 				console.log(settings);
@@ -26,7 +26,7 @@
 				sendResponse(settings);
 			}else if(message.action === "update"){
 				settings = message.settings;
-				saveSettings.then(() => {
+				saveSettings().then(() => {
 					//send the updated settings to the rest of the tabs
 					chrome.tabs.query({discarded: false}, tabs => {
 						for(let tab of tabs)
