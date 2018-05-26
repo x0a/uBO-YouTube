@@ -29,11 +29,11 @@
 			}
 		})
 	}
-
+	
 	new Agent().registerListener("updateChannel", function(){
 		//make UCID available in the DOM
 		let container = document.querySelector("ytd-browse");
-			
+		
 		if(container && objGet(container, "data.metadata.channelMetadataRenderer.channelUrl")){
 			let link = document.querySelector("link[rel='canonical']");
 			
@@ -48,41 +48,43 @@
 		}
 	}).registerListener("updateVideoLists", function(args){
 		//channel = are we on a whitelisted channel page?
-		let channel = (args.channelId ? inwhitelist(args.channelId, args.settings.whitelisted) !== -1 : false);
-		let forceUpdate = args.forceUpdate ? true : false;
+		let channelPage = !!args.channelId;
+		let forceUpdate = !!args.forceUpdate;
+
 		let videos;
-		
+
 		if(args.type === "related"){
 			videos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer");
 		}else if(args.type === "general"){
 			videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer");
 		}
-		
+
 		for(let video of videos){
-			let user;
 			if(!forceUpdate && video.data.processed) continue;
-			if(channel || (user = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId"))){
+
+			let user;
+
+			if(user = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId") || (channelPage && args.channelId.id)){
+
 				let desturl, links = video.querySelectorAll("a[href^='/watch?']");
 
 				if(!links.length) continue;
-				if(channel || (inwhitelist({id: user}, args.settings.whitelisted) !== -1)){
-					if(video.data.oldhref)
-						desturl = video.data.oldhref;
+				if(inwhitelist({id: user}, args.settings.whitelisted) !== -1){
+					if(video.data.originalhref)
+						desturl = video.data.originalhref;
 					else{
 						desturl = links[0].getAttribute("href");
-						video.data.oldhref = desturl;
+						video.data.originalhref = desturl;
 					}
 					desturl += "&disableadblock=1";
-				}else if(video.data.oldhref){
-					desturl = video.data.oldhref;
+				}else if(video.data.originalhref){
+					desturl = video.data.originalhref;
 				}else{
 					video.data.processed = true;
 					continue;
 				}
-
-				for(let link of links){
+				for(let link of links)
 					link.href = desturl;
-				}
 
 				if(objGet(video, "data.navigationEndpoint.webNavigationEndpointData.url"))
 					video.data.navigationEndpoint.webNavigationEndpointData.url = desturl;
@@ -91,7 +93,6 @@
 				
 				video.data.processed = true;
 			}
-
 		}
 	});
 

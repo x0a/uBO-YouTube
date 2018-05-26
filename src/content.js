@@ -1,14 +1,14 @@
 'use strict';
 
 ((window, document, browser, undefined) => {
-	const video = 1;
-	const channel = 2;
-	const search = 3;
-	const home = 4;
-	const ad = 5;
-	const allelse = -1;
-	const lpoly = 2; //new polymer layout
-	const lbasic = 1; //old basic layout, less and less supported as time goes on
+	const VIDEO = 1;
+	const CHANNEL = 2;
+	const SEARCH = 3;
+	const HOME = 4;
+	const AD = 5;
+	const ALLELSE = -1;
+	const LPOLY = 2; //new polymer layout
+	const LBASIC = 1; //old basic layout, less and less supported as time goes on
 
 	let settings = {whitelisted: [], blacklisted: []};
 
@@ -29,7 +29,7 @@
 
 		document.addEventListener("DOMContentLoaded", () => {
 			let mode = getMode();
-			let layout = document.querySelector("ytd-app") ? lpoly : lbasic; //dirty, but just for the initial load
+			let layout = document.querySelector("ytd-app") ? LPOLY : LBASIC; //dirty, but just for the initial load
 			let prevurl = location.href;
 
 			updatePage(mode, layout);
@@ -48,7 +48,7 @@
 				}
 
 				for(let mutation of mutations){
-					if(mode === video){
+					if(mode === VIDEO){
 						if(mutation.target.id === "movie_player"
 							|| (
 								mutation.target.id === "player-container"
@@ -69,14 +69,14 @@
 								&& mutation.target.parentNode.id === "owner-name"
 							){
 								//new layout, username property changed
-								updateVideoPage(lpoly);
+								updateVideoPage(LPOLY);
 							}else if(
 								mutation.type === "attributes"
 								&& mutation.target.id === "continuations"
 								&& mutation.attributeName === "hidden"
 							){
 								//new layout, related has finished loading
-								updateVideoPage(lpoly);
+								updateVideoPage(LPOLY);
 							}else{
 								for(let node of mutation.addedNodes){
 									if(
@@ -84,24 +84,31 @@
 										|| node.localName === "ytd-video-secondary-info-renderer"
 									){
 										//username created, old layout, and newlayout on first load
-										updateVideoPage(lbasic, node);
+										updateVideoPage(LBASIC, node);
 									}
 								}
 							}
 
 						}
-					}else if(mode === channel || mode === allelse){
+					}else if(mode === CHANNEL || mode === ALLELSE){
 						//these are all about detecting that loading has finished.
 						let finishedLoading = 0;
 
 						if(
-							mutation.type === "attributes"
-							&& mutation.target.localName === "yt-page-navigation-progress"
-							&& mutation.attributeName === "hidden"
+							(
+								mutation.type === "attributes"
+								&& mutation.target.localName === "yt-page-navigation-progress"
+								&& mutation.attributeName === "hidden"
+							)
+							||
+							(
+								mutation.type === "childList"
+								&& mutation.target.id === "items"
+							)
 						){
 							//done loading
 							if(mutation.oldValue === null)
-								finishedLoading = lpoly;
+								finishedLoading = LPOLY;
 						}else if(mutation.target.id === "subscriber-count"){
 							//update the UCID in the dom
 							callAgent("updateChannel");//, {}, (channelId){console.log("new id", channelId);}) => 
@@ -110,15 +117,15 @@
 						//oldlayout
 						for(let node of mutation.removedNodes){
 							if(node.id === "progress"){
-								finishedLoading = lbasic;
+								finishedLoading = LBASIC;
 								break;
 							}
 						}
 
 						if(finishedLoading){
-							if(mode === channel)
+							if(mode === CHANNEL)
 								updateChannelPage(finishedLoading);
-							else if(mode === allelse)
+							else if(mode === ALLELSE)
 								updateVideolists(finishedLoading);
 							break;
 						}
@@ -137,15 +144,15 @@
 
 	function getMode(){
 		if(location.href.indexOf("youtube.com/watch?") !== -1){
-			return video;
+			return VIDEO;
 		}else if(location.href.indexOf("youtube.com/channel/") !== -1 || location.href.indexOf("youtube.com/user/") !== -1){
-			return channel;
+			return CHANNEL;
 		}else{
-			return allelse;
+			return ALLELSE;
 		}
 	}
 
-	function getChannelId(element, mode){
+	function getChannelId(element, mode, collect){
 		let links, link, channelId = {id: "", username: "", display: ""};
 		
 		if(!mode) 
@@ -153,15 +160,15 @@
 		if(!element) 
 			element = document;
 
-		if(mode === video){
+		if(mode === VIDEO){
 			links = element.querySelectorAll("ytd-video-owner-renderer a, [id='watch7-user-header'] a");
-		}else if(mode === channel){
+		}else if(mode === CHANNEL){
 			links = [location];
 			link = document.querySelector("link[rel='canonical']");
 			if(link) links.push(link);
 
 			channelId.display = document.querySelector("#channel-header #channel-title,.branded-page-header-title-link").textContent;
-		}else if(mode === ad){
+		}else if(mode === AD){
 			links = [element];
 		}else return false;
 
@@ -179,7 +186,11 @@
 						channelId.display = link.textContent;
 				}
 			}
+		}
 
+		if(collect){
+			collect.mode = mode;
+			collect.links = links;
 		}
 		
 		if(channelId.id || channelId.username)
@@ -192,14 +203,16 @@
 		channelId = channelId || getChannelId();
 		if(!channelId) return;
 
-		if(location.href.indexOf("&disableadblock") !== -1){
+		if(location.href.indexOf("&disableadblock=1") !== -1){
+			//ads are enabled, should we correct that?
 			if(inwhitelist(channelId) === -1){
-				window.history.replaceState(history.state, "", location.href.replace("&disableadblock=1", ""));
+				window.history.replaceState(history.state, "", reflectURLFlag(location.href, false));
 				return false;
 			}else return true;
 		}else{
+			//ads are not enabled, lets see if they should be
 			if(inwhitelist(channelId) !== -1){
-				window.history.replaceState(history.state, "", location.href + (location.href.indexOf("?") === -1 ? "?" : "") + "&disableadblock=1");
+				window.history.replaceState(history.state, "", reflectURLFlag(location.href, true));
 
 				if(verify) verifyDisabled();
 				return true;
@@ -207,10 +220,25 @@
 		}
 	}
 
+	function reflectURLFlag(url, shouldContain){
+		//take url, return url with flags removed if add is off
+		//return url with flags added if add is on
+		let search = /((?!\?)igno=re&disableadblock=1&?)|(&disableadblock=1)/g
+
+		if(shouldContain){
+			url = reflectURLFlag(url, false); //remove first, then add
+			let paramsStart = url.indexOf("?");
+			return url + (paramsStart === -1 ? "?igno=re" : (paramsStart === url.length - 1 ? "igno=re" : "")) + "&disableadblock=1"
+
+		}else{
+			return url.replace(search, "");
+		}
+	}
+
 	function updatePage(mode, layout, forceUpdate){
-		if(mode === video) updateVideoPage(layout, undefined, forceUpdate);
-		else if(mode === channel) updateChannelPage(layout, undefined, forceUpdate);
-		else if(mode === allelse) updateVideolists(layout, undefined, forceUpdate);
+		if(mode === VIDEO) updateVideoPage(layout, undefined, forceUpdate);
+		else if(mode === CHANNEL) updateChannelPage(layout, forceUpdate);
+		else if(mode === ALLELSE) updateVideolists(layout, undefined, forceUpdate);
 	}
 
 	function whitelistButton(layout, toggled, ref){
@@ -230,7 +258,8 @@
 		let button = document.createElement("button");
 		button.className = "UBO-button";
 		button.addEventListener("click", event => {
-			let channelId = getChannelId(), button = event.target; //allow parent scope to be discarded
+			let data = {}
+			let channelId = getChannelId(null, null, data), button = event.target; //allow parent scope to be discarded
 			if(inwhitelist(channelId) !== -1){
 				let index;
 
@@ -247,10 +276,11 @@
 				if(response) console.log(response)
 			})
 			updateURL(true, channelId);
-			updateRelated(layout, true);
+			updatePage(data.mode, layout, true);
+
 		}, false);
 
-		if(layout === lpoly){
+		if(layout === LPOLY){
 			let buttonContainer;
 			button.className += " UBO-poly " + (toggled ? " yt-uix-button-toggled" : "");
 			button.innerHTML = "ADS";
@@ -258,7 +288,7 @@
 			buttonContainer.appendChild(button);
 
 			return buttonContainer;
-		}else if(layout === lbasic){
+		}else if(layout === LBASIC){
 			button.className += " UBO-old yt-uix-button yt-uix-button-size-default yt-uix-button-subscribed-branded hover-enabled" + (toggled ? " yt-uix-button-toggled" : "");
 			button.innerHTML = "Ads";
 
@@ -268,16 +298,17 @@
 	function updateVideoPage(layout, element, forceUpdate){
 		let container;
 
-		if(layout === lpoly){
+		if(layout === LPOLY){
 			container = document.querySelector("ytd-video-owner-renderer")
-		}else if(layout === lbasic){
+		}else if(layout === LBASIC){
 			container = document.querySelector("#watch7-subscription-container")
 		}
 
 		if(!container) return;
 		if(!element) element = container;
 
-		let channelId = getChannelId(element);
+		let data = {}
+		let channelId = getChannelId(element, VIDEO, data);
 		let whitelisted = updateURL(false, channelId);
 		let button;
 
@@ -290,14 +321,25 @@
 			}
 		}
 
+		for(let link of data.links){
+			//this link hasn't been looked at
+			//or the channel changed
+			//or the whitelist state changed
+			if(!link.channelId || link.channelId !== channelId.id || link.whitelisted !== whitelisted){
+				link.href = reflectURLFlag(link.href, whitelisted);
+				link.whitelisted = whitelisted;
+				link.channelId = channelId.id;
+			}
+		}
+
 		updateRelated(layout, forceUpdate);
 	}
 
 	function updateRelated(layout, forceUpdate){
-		if(layout === lpoly){
+		if(layout === LPOLY){
 			//update via local JS variables on the page
 			callAgent("updateVideoLists", {settings: settings, type: "related", forceUpdate: forceUpdate})
-		}else if(layout === lbasic){
+		}else if(layout === LBASIC){
 			//update via information available on the DOM
 			let videos = document.querySelectorAll(".video-list-item");
 
@@ -309,11 +351,12 @@
 					continue;
 				else
 					user = user.getAttribute("data-ytid");
-				if(inwhitelist({id: user}) !== -1){
-					let links = vid.querySelectorAll("a[href^='/watch?']");
-					for(let link of links)
-						link.href += "&disableadblock=1";
-				}
+				let inwhite = inwhitelist({id: user}) !== -1
+				let links = vid.querySelectorAll("a[href^='/watch?']");
+				if(inwhite || forceUpdate)
+					for(let link of links){
+						link.href = reflectURLFlag(link.href, inwhite)
+					}
 
 				vid.processed = true;
 			}
@@ -322,13 +365,13 @@
 
 	function updateChannelPage(layout, forceUpdate){
 
-		let channelId = getChannelId();
+		let channelId = getChannelId(null, CHANNEL);
 		let whitelisted = updateURL(false, channelId);
 		let container, button;
 
-		if(layout === lpoly) 
+		if(layout === LPOLY) 
 			container = document.querySelector("#edit-buttons");
-		else if(layout === lbasic) 
+		else if(layout === LBASIC) 
 			container = document.querySelector(".primary-header-actions");
 
 		if(!container) return;
@@ -336,7 +379,7 @@
 		if(button = whitelistButton(layout, whitelisted, container.querySelector(".UBO-button")))
 			container.appendChild(button); //add only if it doesn't already exist
 
-		if(whitelisted){
+		if(whitelisted || forceUpdate){
 			updateVideolists(layout, channelId, forceUpdate);
 		}
 	}
@@ -344,9 +387,9 @@
 	function updateVideolists(layout, channelId, forceUpdate){
 		//videos from places like the home page, channel page, search results, etc.
 		//basically anything that isn't the /watch?v= page
-		if(layout === lpoly){
+		if(layout === LPOLY){
 			callAgent("updateVideoLists", {settings: settings, channelId: channelId, type: "general", forceUpdate: forceUpdate});
-		}else if(layout === lbasic){
+		}else if(layout === LBASIC){
 			let videos = document.querySelectorAll(".yt-lockup-video");
 
 			for(let vid of videos){
@@ -360,11 +403,12 @@
 						values = channelId;
 					else
 						continue;
-	
-				if(inwhitelist(values) !== -1){ //exists
+				let inwhite = inwhitelist(values) !== -1
+				if(inwhite || forceUpdate){ //exists
 					let links = vid.querySelectorAll("a[href^='/watch?']");
+
 					for(let link of links){
-						link.href += "&disableadblock=1";
+						link.href = reflectURLFlag(link.href, inwhite)
 					}
 				}
 				vid.processed = true;
@@ -422,7 +466,7 @@
 			iframe.height = "1px";
 			iframe.width = "1px";
 			iframe.id = "ads-text-iframe";
-			iframe.src = "https://googleads.g.doubleclick.net/pagead/";
+			iframe.src = "https://youtube.com/pagead/";
 
 			document.body.appendChild(iframe);
 			setTimeout(() => {
