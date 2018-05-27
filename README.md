@@ -6,13 +6,13 @@
 [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtube-channel-whitelist/)
 
 ## Packaging instructions
-Start installing node, gulp and other build dependencies in the root directory:
+Start by installing gulp and other build dependencies by running:
 
 ```npm install --only=dev```
 
-Then replace the applications.gecko.id key in ```/shared/manifest.json``` with either your own key or a string in email format (e.g. `test@example.com`)
+Then replace the ```applications.gecko.id``` key in ```/shared/manifest.json``` with either your own key or a string in email format (e.g. `test@example.com`)
 
-Finally, to build the packages:
+Finally build the packages by running in the root directory:
 
 ```gulp build```
 
