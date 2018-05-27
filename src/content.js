@@ -1,6 +1,6 @@
 'use strict';
 
-((window, document, browser, undefined) => {
+(function(window, document, browser, undefined){
 	const VIDEO = 1;
 	const CHANNEL = 2;
 	const SEARCH = 3;

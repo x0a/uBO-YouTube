@@ -1,6 +1,6 @@
 "use strict";
 
-((window, browser, undefined) => {
+(function(window, browser, undefined) {
 	let settings;
 	let recentads = [];
 	let blacklisted = [];
