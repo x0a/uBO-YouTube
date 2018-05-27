@@ -25,11 +25,10 @@
 			restrict: "A",
 			link: (scope, element, attrs) => {
 				let set = false;
-				let eventName = ('onauxclick' in document.documentElement) ? 'auxclick' : 'mouseup';
 
-				element.on(eventName, event => {
+				element.on("auxclick", event => {
 					if(event.which === 2){
-						event.preventDefault();
+						event.preventDefault(event);
 						element.triggerHandler("click");
 					}
 				})
@@ -215,8 +214,10 @@
 			}, 0);
 		}
 		
-		$scope.open = (id, whitelisted) => {
-			browser.tabs.create({url: "https://youtube.com/channel/" + id + (whitelisted ? "?igno=re&disableadblock=1" : "")});
+		$scope.open = (id, whitelisted, e) => {
+			if(e) e.preventDefault(e);
+			//browser.tabs.create({url: });
+			return "https://youtube.com/channel/" + id + (whitelisted ? "?igno=re&disableadblock=1" : "");
 		}
 
 		$scope.close = () => {

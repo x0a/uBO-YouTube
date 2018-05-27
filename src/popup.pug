@@ -36,6 +36,7 @@ html(ng-app='uYtPlug')
 			a.link{
 				color: #007bff;
 				text-decoration: none;
+				cursor: pointer;
 			}
 			a.link:hover{
 				text-decoration: underline;
@@ -84,7 +85,7 @@ html(ng-app='uYtPlug')
 								i.fas.fa-sync(aria-hidden='true')
 					tr(ng-repeat='item in settings.whitelisted track by $index')
 						td
-							a.bold.link(ng-click='open(item.id, true)', href='', ng-middle-click) {{item.display}}
+							a.bold.link(ng-href='{{open(item.id, true)}}', target="_blank") {{item.display}}
 						td
 							a.remove(href='', ng-click='removewhite($index)', title='Remove from whitelist')
 								i.fas.fa-minus-circle(aria-hidden='true')
@@ -94,7 +95,7 @@ html(ng-app='uYtPlug')
 						th Blacklisted Advertisers
 					tr(ng-repeat='item in settings.blacklisted track by $index')
 						td
-							a.bold.link(ng-click='open(item.id)', href='') {{item.display}}
+							a.bold.link(ng-href='{{open(item.id)}}', target="_blank") {{item.display}}
 						td
 							a.remove(href='', ng-click='removeblack($index)', title='Remove from blacklist')
 								i.fas.fa-minus-circle(aria-hidden='true')
@@ -104,7 +105,7 @@ html(ng-app='uYtPlug')
 						th Recently detected advertisers
 					tr(ng-repeat="item in recentads | orderBy: '-' | limitTo: 5  track by $index")
 						td
-							a.bold.link(ng-click='open(item.ucid)', href='') {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
+							a.bold.link(ng-href='{{open(item.ucid)}}', target="_blank") {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
 						td
 							a.remove(ng-click='addblack($index)', href='', title='Add to blacklist')
 								i.fas.fa-ban(aria-hidden='true')
