@@ -6,13 +6,17 @@
 [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtube-channel-whitelist/)
 
 ## Packaging instructions
-Start by replacing the applications.gecko.id key in ```/shared/manifest.json``` with either your own key or a string in email format (e.g. "test@test.com")
+Start installing node, gulp and other build dependencies in the root directory:
 
-To build a Chrome-compatible package, run ```node /tools/create_chrome_package.js```
+```npm install --only=dev```
 
-To build a Firefox-compatible package, run ```node /tools/create_webext_package.js```
+Then replace the applications.gecko.id key in ```/shared/manifest.json``` with either your own key or a string in email format (e.g. `test@example.com`)
 
-If the version has changed, the resulting packages will be created in ```/dist/```, ready for submission as an extension, otherwise the debug folders will be updated.
+Finally, to build the packages:
+
+```gulp build```
+
+The packages will be created in ```/dist/```, ready for submission as an extension, and the debug folders will be updated.
 
 ## Debugging
 To temporarily install the extension on Firefox, you need to first enter the "Debug Addons" page, available through the menu on the Addons page. Then click "Load Temporary Addon", and point to ```/dist/webext/debug``` and click on any file in the directory to load the extension.
