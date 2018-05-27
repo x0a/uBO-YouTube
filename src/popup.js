@@ -1,6 +1,6 @@
 "use strict";
 
-((browser, angular) => {
+(function(browser, angular){
 	let app = angular.module("uYtPlug", []);
 
 	app.directive('onFileChange', ["$parse", $parse => {
@@ -19,6 +19,23 @@
 			}
 		};
 	}]);
+
+	app.directive("ngMiddleClick", [() => {
+		return {
+			restrict: "A",
+			link: (scope, element, attrs) => {
+				let set = false;
+				let eventName = ('onauxclick' in document.documentElement) ? 'auxclick' : 'mouseup';
+
+				element.on(eventName, event => {
+					if(event.which === 2){
+						event.preventDefault();
+						element.triggerHandler("click");
+					}
+				})
+			}
+		};
+	}])
 
 	app.filter('decodeURIComponent', () => {
 		return window.decodeURIComponent;
@@ -198,8 +215,8 @@
 			}, 0);
 		}
 		
-		$scope.open = id => {
-			browser.tabs.create({url: "https://youtube.com/channel/" + id});
+		$scope.open = (id, whitelisted) => {
+			browser.tabs.create({url: "https://youtube.com/channel/" + id + (whitelisted ? "?igno=re&disableadblock=1" : "")});
 		}
 
 		$scope.close = () => {

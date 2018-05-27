@@ -27,9 +27,18 @@ html(ng-app='uYtPlug')
 			table{
 				width: 100%;
 			}
-			a{
+			a.refresh{
 				color: blue;
+			}
+			a.refresh:active{
+				color: grey;
+			}
+			a.link{
+				color: #007bff;
 				text-decoration: none;
+			}
+			a.link:hover{
+				text-decoration: underline;
 			}
 			a.remove{
 				color: red;
@@ -41,6 +50,7 @@ html(ng-app='uYtPlug')
 				padding-top: 10px;
 				padding-bottom: 10px;
 				font-weight: 700;
+				font-size: 1.06em;
 			}
 			.btn-pressed{
 				color: grey;
@@ -70,11 +80,11 @@ html(ng-app='uYtPlug')
 					tr
 						th Whitelisted Channels
 						th
-							a(href='', ng-click='refresh()', ng-class="{'btn-pressed': refreshPressed}", ng-mousedown='refreshPressed=true', ng-mouseup='refreshPressed=false')
+							a.refresh(href='', ng-click='refresh()', ng-class="{'btn-pressed': refreshPressed}", ng-mousedown='refreshPressed=true', ng-mouseup='refreshPressed=false')
 								i.fas.fa-sync(aria-hidden='true')
 					tr(ng-repeat='item in settings.whitelisted track by $index')
 						td
-							a(ng-click='open(item.id)', href='') {{item.display}}
+							a.bold.link(ng-click='open(item.id, true)', href='', ng-middle-click) {{item.display}}
 						td
 							a.remove(href='', ng-click='removewhite($index)', title='Remove from whitelist')
 								i.fas.fa-minus-circle(aria-hidden='true')
@@ -84,7 +94,7 @@ html(ng-app='uYtPlug')
 						th Blacklisted Advertisers
 					tr(ng-repeat='item in settings.blacklisted track by $index')
 						td
-							a(ng-click='open(item.id)', href='') {{item.display}}
+							a.bold.link(ng-click='open(item.id)', href='') {{item.display}}
 						td
 							a.remove(href='', ng-click='removeblack($index)', title='Remove from blacklist')
 								i.fas.fa-minus-circle(aria-hidden='true')
@@ -94,7 +104,7 @@ html(ng-app='uYtPlug')
 						th Recently detected advertisers
 					tr(ng-repeat="item in recentads | orderBy: '-' | limitTo: 5  track by $index")
 						td
-							a(ng-click='open(item.ucid)', href='') {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
+							a.bold.link(ng-click='open(item.ucid)', href='') {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
 						td
 							a.remove(ng-click='addblack($index)', href='', title='Add to blacklist')
 								i.fas.fa-ban(aria-hidden='true')
