@@ -33,6 +33,7 @@
 			let prevurl = location.href;
 
 			updatePage(mode, layout);
+			if(mode === CHANNEL) callAgent("updateChannel");
 			//in case of settings change due to activity in another tab
 			browser.runtime.onMessage.addListener((requestData, sender, sendResponse) =>  {
 		    	if(requestData.action === "update"){
@@ -99,16 +100,14 @@
 								mutation.type === "attributes"
 								&& mutation.target.localName === "yt-page-navigation-progress"
 								&& mutation.attributeName === "hidden"
-							)
-							||
-							(
+								&& mutation.oldValue === null
+							) || (
 								mutation.type === "childList"
 								&& mutation.target.id === "items"
 							)
 						){
 							//done loading
-							if(mutation.oldValue === null)
-								finishedLoading = LPOLY;
+							finishedLoading = LPOLY;
 						}else if(mutation.target.id === "subscriber-count"){
 							//update the UCID in the dom
 							callAgent("updateChannel");//, {}, (channelId){console.log("new id", channelId);}) => 
@@ -165,8 +164,11 @@
 		}else if(mode === CHANNEL){
 			links = [location];
 			link = document.querySelector("link[rel='canonical']");
-			if(link) links.push(link);
 
+			if(link){
+				links.push(link);
+				channelId.username = link.getAttribute("username") || "";
+			} 
 			channelId.display = document.querySelector("#channel-header #channel-title,.branded-page-header-title-link").textContent;
 		}else if(mode === AD){
 			links = [element];
@@ -192,7 +194,7 @@
 			collect.mode = mode;
 			collect.links = links;
 		}
-		
+
 		if(channelId.id || channelId.username)
 			return channelId;
 		else

@@ -33,8 +33,12 @@
 	new Agent().registerListener("updateChannel", function(){
 		//make UCID available in the DOM
 		let container = document.querySelector("ytd-browse");
-		
-		if(container && objGet(container, "data.metadata.channelMetadataRenderer.channelUrl")){
+		if(!container) return;
+
+		let channelURL = objGet(container, "data.metadata.channelMetadataRenderer.channelUrl");
+		let username = objGet(container, "data.metadata.channelMetadataRenderer.doubleclickTrackingUsername");
+
+		if(channelURL){
 			let link = document.querySelector("link[rel='canonical']");
 			
 			if(!link){
@@ -44,6 +48,12 @@
 			}
 
 			link.href = container.data.metadata.channelMetadataRenderer.channelUrl;
+			
+			if(username)
+				link.setAttribute("username", username)
+			else
+				link.removeAttribute("username");
+
 			return link.href;
 		}
 	}).registerListener("updateVideoLists", function(args){
