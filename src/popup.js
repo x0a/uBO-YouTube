@@ -214,9 +214,7 @@
 			}, 0);
 		}
 		
-		$scope.open = (id, whitelisted, e) => {
-			if(e) e.preventDefault(e);
-			//browser.tabs.create({url: });
+		$scope.open = (id, whitelisted) => {
 			return "https://youtube.com/channel/" + id + (whitelisted ? "?igno=re&disableadblock=1" : "");
 		}
 
