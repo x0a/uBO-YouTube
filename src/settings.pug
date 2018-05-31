@@ -110,13 +110,22 @@ html(ng-app='uYtPlug')
 						thead.thead-dark
 							tr
 								th Advertiser
+								th Status
 								th Blacklist
 						tr(ng-repeat="item in recentads | orderBy: '-' track by $index")
 							td
 								a(ng-href="{{'https://youtube.com/channel/' + item.channelId.id}}") {{item.channelId.display | limitTo:50}}
 							td
+								div(ng-if="item.blocked")
+									i.fas.fa-video-slash
+									|  Blocked
+								div(ng-if="!item.blocked")
+									i.fas.fa-video
+									|  Allowed
+							td
 								a.text-danger.float-right(ng-click='addblack($index)', href='', title='Add to blacklist')
 									i.fas.fa-ban(aria-hidden='true')
 						tr(ng-if='!recentads.length')
 							td.text-muted None.
+							td
 							td
