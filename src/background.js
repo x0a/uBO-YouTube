@@ -105,12 +105,15 @@
 				}
 
 				adinfo.params.details = details;
-
-				while(recentads.length > 20) 
-					recentads.shift(); //just trim a little off the top fam
-			
 				adinfo.params.blocked = cancel;
-				recentads.push(adinfo.params);
+
+				if(adinfo.params.channelId.id){
+					while(recentads.length > 20) 
+						recentads.shift(); //just trim a little off the top fam
+					recentads.push(adinfo.params);
+				}else
+					console.log(adinfo.params)
+
 			}else{
 				console.log("Invalid request", url);
 			}
