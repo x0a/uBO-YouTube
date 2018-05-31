@@ -5,67 +5,6 @@ html(ng-app='uYtPlug')
 		script(type='text/javascript', src='popup.js')
 		link(rel='stylesheet', href='/lib/font-awesome-5/css/fontawesome-all.min.css')
 		link(rel='stylesheet', href='popup.css')
-		style(type='text/css').
-			*{
-				font-family: "fa5-proxima-nova";
-			}
-			body{
-				background-color:  #EEEEEE;
-				font-family: "fa5-proxima-nova", "Segoe UI", Tahoma, sans-serif;
-				font-size: 80%;
-			}
-			.main{
-				width: 300px;
-				height: 300px;
-				overflow-y: auto;
-				position: relative;
-			}
-			.table-container{
-				width: 100%;
-				min-height: 230px;
-			}
-			table{
-				width: 100%;
-			}
-			a.refresh{
-				color: blue;
-			}
-			a.refresh:active{
-				color: grey;
-			}
-			a.link{
-				color: #007bff;
-				text-decoration: none;
-				cursor: pointer;
-			}
-			a.link:hover{
-				text-decoration: underline;
-			}
-			a.remove{
-				color: red;
-			}
-			th:first-of-type{
-				/*padding-top: 0px !important;*/
-			}
-			th{
-				padding-top: 10px;
-				padding-bottom: 10px;
-				font-weight: 700;
-				font-size: 1.06em;
-			}
-			.btn-pressed{
-				color: grey;
-			}
-			.empty{
-				color: grey;
-			}
-			.alert{
-				min-width: 380px;
-				max-width: 430px;
-				text-align: center;
-				padding: 10px;
-				overflow: auto;
-			}
 	body(ng-controller='main')
 		.alert(ng-show='alert.active')
 			span.bold {{alert.text}}
@@ -105,7 +44,7 @@ html(ng-app='uYtPlug')
 						th Recently detected advertisers
 					tr(ng-repeat="item in recentads | orderBy: '-' | limitTo: 5  track by $index")
 						td
-							a.bold.link(ng-href='{{open(item.ucid)}}', target="_blank") {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
+							a.bold.link(ng-href='{{open(item.channelId.id)}}', target="_blank") {{item.channelId.display | limitTo:50}}
 						td
 							a.remove(ng-click='addblack($index)', href='', title='Add to blacklist')
 								i.fas.fa-ban(aria-hidden='true')

@@ -113,7 +113,7 @@ html(ng-app='uYtPlug')
 								th Blacklist
 						tr(ng-repeat="item in recentads | orderBy: '-' track by $index")
 							td
-								a(ng-href="{{'https://youtube.com/channel/' + item.ucid}}") {{(item.author ? item.author : item.title) | decodeURIComponent | limitTo:50}}
+								a(ng-href="{{'https://youtube.com/channel/' + item.channelId.id}}") {{item.channelId.display | limitTo:50}}
 							td
 								a.text-danger.float-right(ng-click='addblack($index)', href='', title='Add to blacklist')
 									i.fas.fa-ban(aria-hidden='true')

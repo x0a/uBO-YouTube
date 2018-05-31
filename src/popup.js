@@ -78,12 +78,14 @@
 		$scope.refresh = callback => {
 			browser.runtime.sendMessage({action: "get"}, response => {
 				$scope.settings = response;
+				console.log(response);
+				
 				browser.runtime.sendMessage({action: "recentads"}, response => {
 					$scope.recentads = response;
+					console.log(response);
 					$scope.$digest();
 					if(callback) callback();
 				})
-				console.log(response);
 			})
 		}
 
@@ -108,19 +110,11 @@
 			})
 		}
 		$scope.addblack = index => {
-			let ad = $scope.recentads[$scope.recentads.length - index - 1], display = "";
-			for(let i = 0; i < $scope.settings.blacklisted.length; i++)
-				if(ad.ucid === $scope.settings.blacklisted[i].id)
-					return; // already exists
+			let ad = $scope.recentads[$scope.recentads.length - index - 1];
+			if($scope.inblacklist(ad.channelId.id) !== -1)
+				return; // already exists
 
-			if(ad.author)
-				display = decodeURIComponent(ad.author);
-			else if(ad.title)
-				display = decodeURIComponent(ad.title);
-			else
-				display = decodeURIComponent(ad.ucid);
-
-			$scope.settings.blacklisted.push({display: display, id: ad.ucid, username: ""});
+			$scope.settings.blacklisted.push(ad.channelId);
 			$scope.save();
 		}
 
@@ -225,11 +219,10 @@
 		$scope.refresh();
 		
 		//Show settings if Firefox or not Windows. Circumvents bug
-		$scope.settingsPage = browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1;
+		$scope.settingsPage = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1);
 
 		browser.runtime.onMessage.addListener((requestData, sender, sendResponse) => {
 			if(requestData.action === "update"){
-				console.log('update');
 				$scope.settings = requestData.settings;
 				$scope.$digest();
 			}

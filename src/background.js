@@ -8,7 +8,6 @@
 	let saveSettings = () => {
 		return new Promise((resolve, reject) => {
 			browser.storage.sync.set(settings, () => {
-				console.log(settings);
 				resolve();
 			})
 		})
@@ -18,8 +17,6 @@
 		settings = items ? items : {};
 		if(!settings.whitelisted) settings.whitelisted = [];
 		if(!settings.blacklisted) settings.blacklisted = [];
-
-		console.log(settings);
 
 		browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			if(message.action === "get"){
@@ -31,7 +28,7 @@
 					chrome.tabs.query({discarded: false}, tabs => {
 						for(let tab of tabs)
 							if(!sender.tab || tab.id !== sender.tab.id) //!sender.tab means it came from popup.html
-								chrome.tabs.sendMessage(tab.id, {action: "update", settings: settings}, (response) =>  {
+								chrome.tabs.sendMessage(tab.id, {action: "update", settings: settings}, response =>  {
 									//console.log(response);
 								});
 					  });
@@ -39,24 +36,17 @@
 			}else if(message.action === "recentads"){
 				sendResponse(recentads);
 			}else if(message.action === "blacklist"){
+				//find the last intercepted ad from this tab
 				for(let ad of recentads.slice().reverse()){
-					//find the last intercepted ad from this tab
 					if(ad.details.tabId === sender.tab.id){
-						let channelId = {id: "", display: "", username: ""};
-
-						if(ad.ucid && inblacklist(ad.ucid) === -1){
-							channelId.id = ad.ucid
-						}else if(ad.channel_url && inblacklist(parseChannel(ad.channel_url)) === -1){
-							channelId.id = parseChannel(ad.channel_url);
-						}else{
+						if(inblacklist(ad.channelId.id) !== -1){
 							sendResponse({error: "Advertiser already blacklisted"});
 							return; //already exists in blacklist, or UCID not available
 						}
 
-						channelId.display = decodeURIComponent(ad.author || ad.title);
-						settings.blacklisted.push(channelId);
+						settings.blacklisted.push(ad.channelId);
 						saveSettings();
-						sendResponse({error: "", channel: channelId, info: ad});
+						sendResponse({error: "", info: ad});
 						return; //also break;
 					}
 				}
@@ -70,52 +60,61 @@
 			let request = new XMLHttpRequest();
 			let url = parseURL(details.url);
 			let cancel = false;
-			let adinfo = {};
+			let adinfo = {params: {}};
 
 			if(url.pathname === "/get_video_info" && url.params.video_id){
-				if(blacklisted.indexOf(url.params.video_id) !== -1){
+				let blacklistedItem = blacklisted.find(obj => obj.video_id === url.params.video_id);
+
+				if(blacklistedItem){
 					cancel = true;
+					adinfo.params.channelId = blacklistedItem.channelId;
 				}else{
 					request.open('GET', details.url, false);  // `false` makes the request synchronous
 					request.send(null);
 
 					if (request.status === 200) {
 						adinfo = parseURL("?" + request.responseText);
-						adinfo.params.ucid = adinfo.params.ucid || parseChannel(adinfo.params.channel_url);
+						adinfo.params.channelId = {id: adinfo.params.ucid || parseChannel(adinfo.params.channel_url), display: "", username: ""};
+						
+						if(adinfo.params.channelId.id){
+							if(inblacklist(adinfo.params.channelId.id) !== -1){
+								//block, and also add video id to the list so that we dont do this synchrous request again
+								blacklisted.push({video_id: url.params.video_id, channelId: adinfo.params.channelId});
+								cancel = true;
+							}
 
-						if(adinfo.params.ucid && inblacklist(adinfo.params.ucid) !== -1){
-							//block, and also add video id to the list so that we dont do this synchrous request again
-							blacklisted.push(url.params.video_id);
-							cancel = true;
+							if(!adinfo.params.author){
+								//asynchrously get the author title, very messy but it's the best way 
+								//the json method requires sending special headers
+								adinfo.params.channelId.display = adinfo.params.channelId.id;
+								
+								request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.channelId.id, true);
+								request.onreadystatechange = function() {
+									if(this.readyState === 4 && this.status === 200){
+									   let matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
+									   if(matches && matches[1]){
+										   adinfo.params.channelId.display = matches[1];
+									   }
+									}
+								};
+								request.send();
+							}else
+								adinfo.params.channelId.display = decodeURIComponent(adinfo.params.author);
 						}
 					}
 				}
+
+				adinfo.params.details = details;
+
+				while(recentads.length > 20) 
+					recentads.shift(); //just trim a little off the top fam
+			
+				adinfo.params.blocked = cancel;
+				recentads.push(adinfo.params);
 			}else{
 				console.log("Invalid request", url);
 			}
 
-			if(!adinfo.params.author){
-				//asynchrously get the author title, very messy but it's the best way 
-				//the json method requires sending special headers
-				request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.ucid, true);
-				request.onreadystatechange = () =>  {
-					if(this.readyState === 4 && this.status === 200){
-					   let matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
-					   if(matches && matches[1]){
-						   adinfo.params.author = matches[1];
-					   }
-					}
-				};
-				request.send();
-			}
-
-			adinfo.params.details = details;
-
-			while(recentads.length > 20) 
-				recentads.shift(); //just trim a little off the top fam
-			recentads.push(adinfo.params);
-
-			console.log("Blocked:", cancel, adinfo);
 			return {cancel: cancel};
 
 		}, {urls: ["*://www.youtube.com/get_video_info?*"]}, ["blocking"])
