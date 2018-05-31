@@ -60,7 +60,7 @@
 		//channel = are we on a whitelisted channel page?
 		let channelPage = !!args.channelId;
 		let forceUpdate = !!args.forceUpdate;
-
+		let whitelisted = args.settings.whitelisted.map(item => item.id);
 		let videos;
 
 		if(args.type === "related"){
@@ -72,14 +72,15 @@
 		for(let video of videos){
 			if(!forceUpdate && video.data.processed) continue;
 
-			let user;
+			let id;
 
-			if(user = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId") || (channelPage && args.channelId.id)){
+			if(id = objGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId") || (channelPage && args.channelId.id)){
 
 				let desturl, links = video.querySelectorAll("a[href^='/watch?']");
 
 				if(!links.length) continue;
-				if(inwhitelist({id: user}, args.settings.whitelisted) !== -1){
+
+				if(whitelisted.indexOf(id) !== -1){
 					if(video.data.originalhref)
 						desturl = video.data.originalhref;
 					else{
@@ -93,6 +94,7 @@
 					video.data.processed = true;
 					continue;
 				}
+
 				for(let link of links)
 					link.href = desturl;
 
@@ -122,15 +124,4 @@
 
 		return current;
 	}
-	
-	function inwhitelist(search, whitelist){
-		for(let index in whitelist){
-			for(let id in search){
-				if(id !== "display" && whitelist[index][id] === search[id] && search[id].length)
-				return index;
-			}
-		}
-		return -1;
-	}
-
 })(window, document);
