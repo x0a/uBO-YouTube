@@ -26,7 +26,7 @@ gulp.task("css", () => {
 
 gulp.task("js", () => {
 	return gulp.src("src/*.js")
-	.pipe(minify())
+	//.pipe(minify())
 	.pipe(gulp.dest("dist/chrome/debug"))
 	.pipe(gulp.dest("dist/webext/debug"))
 	.pipe(gulpif(build, webext.add()))
