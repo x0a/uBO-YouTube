@@ -33,10 +33,13 @@
 			let prevurl = location.href;
 
 			updatePage(mode, layout);
-			if(mode === CHANNEL) callAgent("updateChannel");
+			//make username and UCID available on the DOM, for the first time
+			if(layout === LPOLY && mode === CHANNEL)
+				callAgent("updateChannel");
 			//in case of settings change due to activity in another tab
 			browser.runtime.onMessage.addListener((requestData, sender, sendResponse) =>  {
 		    	if(requestData.action === "update"){
+					//user made a change to the settings elsewhere
 					settings = requestData.settings;
 					updatePage(mode, layout, true);
 				}
@@ -432,7 +435,7 @@
 			blacklistButton = parseHTML('<button class="ytp-button" id="BLK-button"><span class="BLK-tooltip">Blacklist this advertiser</span><div class="BLK-container"><img src="' + browser.runtime.getURL("img/icon_16.png") + '"></div></button>').querySelector("#BLK-button");
 			blacklistButton.addEventListener("click", () => {
 				browser.runtime.sendMessage({action: "blacklist"}, response => {
-					if(response.error) 
+					if(response && response.error) 
 						console.error(response.error, response);
 					else
 						location.reload();
