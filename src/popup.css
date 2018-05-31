@@ -1,3 +1,60 @@
+*{
+    font-family: "fa5-proxima-nova";
+}
+body{
+    background-color:  #EEEEEE;
+    font-family: "fa5-proxima-nova", "Segoe UI", Tahoma, sans-serif;
+    font-size: 80%;
+}
+.main{
+    width: 300px;
+    height: 300px;
+    overflow-y: auto;
+    position: relative;
+}
+.table-container{
+    width: 100%;
+    min-height: 230px;
+}
+table{
+    width: 100%;
+}
+a.refresh{
+    color: blue;
+}
+a.refresh:active{
+    color: grey;
+}
+a.link{
+    color: #007bff;
+    text-decoration: none;
+    cursor: pointer;
+}
+a.link:hover{
+    text-decoration: underline;
+}
+a.remove{
+    color: red;
+}
+th{
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-weight: 700;
+    font-size: 1.06em;
+}
+.btn-pressed{
+    color: grey;
+}
+.empty{
+    color: grey;
+}
+.alert{
+    min-width: 380px;
+    max-width: 430px;
+    text-align: center;
+    padding: 10px;
+    overflow: auto;
+}
 .btn{
     display: inline-block;
     font-weight: 400;
