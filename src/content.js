@@ -1,11 +1,9 @@
 'use strict';
 
-(function(window, document, browser, undefined){
+(function(window, document, browser, console, undefined){
 	const VIDEO = 1;
 	const CHANNEL = 2;
 	const SEARCH = 3;
-	const HOME = 4;
-	const AD = 5;
 	const ALLELSE = -1;
 	const LPOLY = 2; //new polymer layout
 	const LBASIC = 1; //old basic layout, less and less supported as time goes on
@@ -14,36 +12,108 @@
 
 	browser.runtime.sendMessage({action: "get"}, response => {
 		settings = response;
+
+		let head = document.documentElement; //available even if DOM contents havent loaded
+
+		//inject styles for uBO buttons
+		head.appendChild((() => {
+			let el = document.createElement("link");
+			el.setAttribute("rel", "stylesheet");
+			el.setAttribute("type", "text/css");
+			el.setAttribute("href", browser.runtime.getURL("inject.css"));
+			return el;
+		})());
 		//allows us to access local javascript variables, needed to pre-append &disable flag to video lists
-		let head = document.documentElement;
-		let relatedScript = document.createElement("script");
-		relatedScript.setAttribute("type", "text/javascript");
-		relatedScript.setAttribute("src", browser.runtime.getURL("inject.js")); 
-		head.appendChild(relatedScript);
-		//adding styles for UBO button
-		let styleSheet = document.createElement("link");
-		styleSheet.setAttribute("rel", "stylesheet");
-		styleSheet.setAttribute("type", "text/css");
-		styleSheet.setAttribute("href", browser.runtime.getURL("inject.css"));
-		head.appendChild(styleSheet);
+		head.appendChild((() => {
+			let el = document.createElement("script");
+			el.setAttribute("type", "text/javascript");
+			el.setAttribute("src", browser.runtime.getURL("inject.js"));
+			return el;
+		})());
 
 		document.addEventListener("DOMContentLoaded", () => {
-			let mode = getMode();
 			let layout = document.querySelector("ytd-app") ? LPOLY : LBASIC; //dirty, but just for the initial load
+			let mode = getMode();
 			let prevurl = location.href;
-
-			updatePage(mode, layout);
-			//make username and UCID available on the DOM, for the first time
-			if(layout === LPOLY && mode === CHANNEL)
-				callAgent("updateChannel");
 			//in case of settings change due to activity in another tab
 			browser.runtime.onMessage.addListener((requestData, sender, sendResponse) =>  {
 		    	if(requestData.action === "update"){
-					//user made a change to the settings elsewhere
 					settings = requestData.settings;
-					updatePage(mode, layout, true);
+					updatePage(mode, layout, true); //force update
 				}
 			});
+
+			let isPlayerShowingAd = mutation => {
+				let player;
+
+				if(mutation.target.id === "movie_player"){
+					player = mutation.target;
+				}else if(mutation.target.id === "player-container" && mutation.addedNodes.length){
+					for(let node of mutation.addedNodes){
+						if(node.id === "movie_player"){
+							player = node;
+							break;
+						}
+					}
+				}
+
+				if(player && player.classList.contains("ad-showing"))
+					return player;
+				else
+					return false;
+			}
+
+			let isPolyUserInfo = mutation => {
+				if(
+					(
+						mutation.target.id === "owner-name" 
+						&& mutation.addedNodes.length
+					) || (
+						mutation.type === "attributes"
+						&& mutation.target.parentNode
+						&& mutation.target.parentNode.id === "owner-name" 
+						&& mutation.attributeName === "href"
+					)
+				){
+					return mutation.target.closest("ytd-video-owner-renderer");
+				}else{
+					return false;
+				}
+			}
+
+			let isBasicUserInfo = mutation => {
+				if(mutation.target.id === "watch7-container" && mutation.addedNodes.length){
+					for(let node of mutation.addedNodes){
+						if(node.id === "watch7-main-container"){
+							return node;
+						}
+					}
+				}
+
+				return false;
+			}
+
+			let isRelatedUpdate = mutation => {
+				return (
+					mutation.type === "attributes"
+					&& mutation.target.id === "continuations"
+					&& mutation.attributeName === "hidden"
+				);
+			}
+
+			let hasNewItems = mutation => {
+				return (
+					mutation.type === "attributes"
+					&& mutation.target.localName === "yt-page-navigation-progress"
+					&& mutation.attributeName === "hidden"
+					&& mutation.oldValue === null
+				) || (
+					mutation.type === "childList"
+					&& mutation.target.id === "items"
+				);
+			}
+
+			updatePage(mode, layout, false);
 
 			(new MutationObserver(mutations =>  {
 				if(location.href !== prevurl){
@@ -53,82 +123,40 @@
 
 				for(let mutation of mutations){
 					if(mode === VIDEO){
-						if(mutation.target.id === "movie_player"
-							|| (
-								mutation.target.id === "player-container"
-								&& mutation.addedNodes.length
-								&& mutation.addedNodes[0].id === "movie_player")
-							|| mutation.target.className === "ytp-title-channel-name"
-						){
-							//video player update, or first added
-							let player = mutation.target.id === "movie_player" ? mutation.target : document.querySelector("#movie_player");
-							if(player.classList.contains("ad-showing")){
-								updateAdShowing(player);
-							}
+						let player, userInfo;
+
+						if(player = isPlayerShowingAd(mutation)){
+							updateAdShowing(player);
+						}else if(userInfo = isPolyUserInfo(mutation)){
+							updateVideoPage(LPOLY, userInfo);
+						}else if(userInfo = isBasicUserInfo(mutation)){
+							updateVideoPage(LBASIC, userInfo);
+						}else if(isRelatedUpdate(mutation)){
+							updateRelated(LPOLY);
+						}
+					}else if(mode === CHANNEL || mode === SEARCH || mode === ALLELSE){
+						let loadedDesign = 0;
+
+						if(hasNewItems(mutation)){ //new items in videolist
+							loadedDesign = LPOLY;
+						}else if(mutation.target.id === "subscriber-count"){
+							callAgent("updateChannel"); //update the UCID in the dom
 						}else{
-							if(
-								mutation.type === "attributes"
-								&& mutation.attributeName === "href"
-								&& mutation.target.classList[0] === "yt-simple-endpoint"
-								&& mutation.target.parentNode.id === "owner-name"
-							){
-								//new layout, username property changed
-								updateVideoPage(LPOLY);
-							}else if(
-								mutation.type === "attributes"
-								&& mutation.target.id === "continuations"
-								&& mutation.attributeName === "hidden"
-							){
-								//new layout, related has finished loading
-								updateVideoPage(LPOLY);
-							}else{
-								for(let node of mutation.addedNodes){
-									if(
-										node.id === "watch7-main-container"
-										|| node.localName === "ytd-video-secondary-info-renderer"
-									){
-										//username created, old layout, and newlayout on first load
-										updateVideoPage(LBASIC, node);
-									}
+							for(let node of mutation.removedNodes){
+								if(node.id === "progress"){
+									loadedDesign = LBASIC; //old layout, progress bar removed
+									break;
 								}
 							}
-
-						}
-					}else if(mode === CHANNEL || mode === ALLELSE){
-						//these are all about detecting that loading has finished.
-						let finishedLoading = 0;
-
-						if(
-							(
-								mutation.type === "attributes"
-								&& mutation.target.localName === "yt-page-navigation-progress"
-								&& mutation.attributeName === "hidden"
-								&& mutation.oldValue === null
-							) || (
-								mutation.type === "childList"
-								&& mutation.target.id === "items"
-							)
-						){
-							//done loading
-							finishedLoading = LPOLY;
-						}else if(mutation.target.id === "subscriber-count"){
-							//update the UCID in the dom
-							callAgent("updateChannel");//, {}, (channelId){console.log("new id", channelId);}) => 
 						}
 
-						//oldlayout
-						for(let node of mutation.removedNodes){
-							if(node.id === "progress"){
-								finishedLoading = LBASIC;
-								break;
-							}
-						}
-
-						if(finishedLoading){
+						if(loadedDesign){
 							if(mode === CHANNEL)
-								updateChannelPage(finishedLoading);
+								updateChannelPage(loadedDesign);
+							else if(mode === SEARCH)
+								updateSearchPage(loadedDesign);
 							else if(mode === ALLELSE)
-								updateVideolists(finishedLoading);
+								updateVideolists(loadedDesign);
 							break;
 						}
 					}
@@ -149,22 +177,31 @@
 			return VIDEO;
 		}else if(location.href.indexOf("youtube.com/channel/") !== -1 || location.href.indexOf("youtube.com/user/") !== -1){
 			return CHANNEL;
+		}else if(location.href.indexOf("youtube.com/results?") !== -1){
+			return SEARCH;
 		}else{
 			return ALLELSE;
 		}
 	}
 
 	function getChannelId(element, mode, collect){
+		//get channel ID, username (if available), and display name from DOM
 		let links, link, channelId = {id: "", username: "", display: ""};
 		
 		if(!mode) 
 			mode = getMode();
+
 		if(!element) 
 			element = document;
 
 		if(mode === VIDEO){
-			links = element.querySelectorAll("ytd-video-owner-renderer a, [id='watch7-user-header'] a");
+			//links from the underbar
+			links = element.querySelectorAll("ytd-video-owner-renderer a, #watch7-user-header a");
+		}else if(mode === SEARCH){
+			links = element.querySelectorAll("a");
+			channelId.display = element.querySelector("#channel-title span").textContent;
 		}else if(mode === CHANNEL){
+			//metadata link from the header, should contain the ID/username if we set it previously
 			links = [location];
 			link = document.querySelector("link[rel='canonical']");
 
@@ -172,27 +209,28 @@
 				links.push(link);
 				channelId.username = link.getAttribute("username") || "";
 			} 
+			//get the display name while we are at it
 			channelId.display = document.querySelector("#channel-header #channel-title,.branded-page-header-title-link").textContent;
-		}else if(mode === AD){
-			links = [element];
 		}else return false;
 
 		for(let link of links){
-			let matches;
-
 			if(!link.href) continue;
 
+			let matches;
+
 			if(matches = link.href.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/)){
-				if(matches[1] === "user")
-					channelId.username = matches[2]
-				else if(matches[1] === "channel"){
+				if(matches[1] === "user"){
+					channelId.username = matches[2] //we can safely assume that /user/$1 is a username
+				}else if(matches[1] === "channel"){
 					channelId.id = matches[2];
-					if(link.textContent) 
+
+					if(link.textContent){ //to weed out the metadata link on channel pages
 						channelId.display = link.textContent;
+					}
 				}
 			}
 		}
-
+		//pass links and mode to the pointer, if we are given one
 		if(collect){
 			collect.mode = mode;
 			collect.links = links;
@@ -219,7 +257,7 @@
 			if(inwhitelist(channelId) !== -1){
 				window.history.replaceState(history.state, "", reflectURLFlag(location.href, true));
 
-				if(verify) verifyDisabled();
+				if(verify) callAgent("verifyDisabled");
 				return true;
 			}else return false;
 		}
@@ -242,7 +280,8 @@
 
 	function updatePage(mode, layout, forceUpdate){
 		if(mode === VIDEO) updateVideoPage(layout, undefined, forceUpdate);
-		else if(mode === CHANNEL) updateChannelPage(layout, forceUpdate);
+		else if(mode === CHANNEL) callAgent("updateChannel", {}, () => updateChannelPage(layout, forceUpdate));
+		else if(mode === SEARCH) updateSearchPage(layout, forceUpdate);
 		else if(mode === ALLELSE) updateVideolists(layout, undefined, forceUpdate);
 	}
 
@@ -264,7 +303,10 @@
 		button.className = "UBO-button";
 		button.addEventListener("click", event => {
 			let data = {}
-			let channelId = getChannelId(null, null, data), button = event.target; //allow parent scope to be discarded
+			let mode = getMode();
+			let channelEl = mode === SEARCH ? event.target.closest("ytd-channel-renderer") : null;
+			let channelId = getChannelId(channelEl, mode), button = event.target; //allow parent scope to be discarded
+
 			if(inwhitelist(channelId) !== -1){
 				let index;
 
@@ -280,8 +322,10 @@
 			browser.runtime.sendMessage({action: "update", settings: settings}, response => {
 				if(response) console.log(response)
 			})
-			updateURL(true, channelId);
-			updatePage(data.mode, layout, true);
+
+			if(mode !== SEARCH) 
+				updateURL(true, channelId);
+			updatePage(mode, layout, true);
 
 		}, false);
 
@@ -300,23 +344,21 @@
 			return button;
 		}
 	}
-	function updateVideoPage(layout, element, forceUpdate){
-		let container;
-
-		if(layout === LPOLY){
-			container = document.querySelector("ytd-video-owner-renderer")
-		}else if(layout === LBASIC){
-			container = document.querySelector("#watch7-subscription-container")
+	function updateVideoPage(layout, container, forceUpdate){
+		if(!container){
+			if(layout === LPOLY){
+				container = document.querySelector("ytd-video-owner-renderer")
+			}else if(layout === LBASIC){
+				container = document.querySelector("#watch7-subscription-container")
+			}
 		}
-
 		if(!container) return;
-		if(!element) element = container;
 
 		let data = {}
-		let channelId = getChannelId(element, VIDEO, data);
+		let channelId = getChannelId(container, VIDEO, data);
 		let whitelisted = updateURL(false, channelId);
 		let button;
-
+		console.log(channelId, whitelisted)
 		if(button = whitelistButton(layout, whitelisted, container.parentNode.querySelector(".UBO-button"))){
 			//add the new button, otherwise the status was updated on a pre-existing button
 			if(container.nextSibling){
@@ -330,8 +372,9 @@
 			//this link hasn't been looked at
 			//or the channel changed
 			//or the whitelist state changed
-			if(!link.channelId || link.channelId !== channelId.id || link.whitelisted !== whitelisted){
-				link.href = reflectURLFlag(link.href, whitelisted);
+			//or the link changed to something that we didnt set it to
+			if(!link.channelId || link.channelId !== channelId.id || link.whitelisted !== whitelisted || link.sethref !== link.href){
+				link.href = link.sethref = reflectURLFlag(link.href, whitelisted);
 				link.whitelisted = whitelisted;
 				link.channelId = channelId.id;
 			}
@@ -347,10 +390,8 @@
 		}else if(layout === LBASIC){
 			//update via information available on the DOM
 			let videos = document.querySelectorAll(".video-list-item");
-
 			for(let vid of videos){
 				if(!forceUpdate && vid.processed) continue;
-
 				let user = vid.querySelector("[data-ytid]");
 				if(!user)
 					continue;
@@ -358,18 +399,17 @@
 					user = user.getAttribute("data-ytid");
 				let inwhite = inwhitelist({id: user}) !== -1
 				let links = vid.querySelectorAll("a[href^='/watch?']");
-				if(inwhite || forceUpdate)
+				if(inwhite || forceUpdate){
 					for(let link of links){
-						link.href = reflectURLFlag(link.href, inwhite)
+						link.setAttribute("href", reflectURLFlag(link.getAttribute("href"), inwhite));
 					}
-
+				}
 				vid.processed = true;
 			}
 		}
 	}
 
 	function updateChannelPage(layout, forceUpdate){
-
 		let channelId = getChannelId(null, CHANNEL);
 		let whitelisted = updateURL(false, channelId);
 		let container, button;
@@ -387,6 +427,31 @@
 		if(whitelisted || forceUpdate){
 			updateVideolists(layout, channelId, forceUpdate);
 		}
+	}
+
+	function updateSearchPage(layout, forceUpdate, DOMUpdated){
+		if(!DOMUpdated){
+			callAgent("updateSearch", {}, () => updateSearchPage(layout, forceUpdate, true))
+			return;
+		}
+
+		let channels;
+
+		if(layout === LPOLY){
+			channels = document.querySelectorAll("ytd-channel-renderer");
+		}
+
+		if(!channels) return;
+
+		for(let channel of channels){
+			let data = {};
+			let container = channel.querySelector("#subscribe-button");
+			let button;
+
+			if(button = whitelistButton(layout, inwhitelist(getChannelId(channel, SEARCH, data)) !== -1, container.querySelector(".UBO-button")))
+				container.insertBefore(button, container.firstChild);
+		}
+		updateVideolists(layout, null, forceUpdate);
 	}
 
 	function updateVideolists(layout, channelId, forceUpdate){
@@ -413,7 +478,7 @@
 					let links = vid.querySelectorAll("a[href^='/watch?']");
 
 					for(let link of links){
-						link.href = reflectURLFlag(link.href, inwhite)
+						link.setAttribute("href", reflectURLFlag(link.getAttribute("href"), inwhite));
 					}
 				}
 				vid.processed = true;
@@ -431,8 +496,29 @@
 				console.error("Cannot find .ytp-right-controls");
 				return;
 			}
-
-			blacklistButton = parseHTML('<button class="ytp-button" id="BLK-button"><span class="BLK-tooltip">Blacklist this advertiser</span><div class="BLK-container"><img src="' + browser.runtime.getURL("img/icon_16.png") + '"></div></button>').querySelector("#BLK-button");
+			//parseHTML('<button class="ytp-button" id="BLK-button"><span class="BLK-tooltip">Blacklist this advertiser</span><div class="BLK-container"><img src="' +  + '"></div></button>').querySelector("#BLK-button");
+			blacklistButton = (() => {
+				let el = document.createElement("button");
+				el.setAttribute("id", "BLK-button");
+				el.setAttribute("class", "ytp-button");
+				el.appendChild((() => {
+					let el = document.createElement("span");
+					el.setAttribute("class", "BLK-tooltip");
+					el.appendChild(document.createTextNode("Blacklist this advertiser"));
+					return el;
+				})());
+				el.appendChild((() => {
+					let el = document.createElement("div");
+					el.setAttribute("class", "BLK-container");
+					el.appendChild((() => {
+						let el = document.createElement("img");
+						el.setAttribute("src", browser.runtime.getURL("img/icon_16.png"));
+						return el;
+					})());
+					return el;
+				})());
+				return el;
+			})();
 			blacklistButton.addEventListener("click", () => {
 				browser.runtime.sendMessage({action: "blacklist"}, response => {
 					if(response && response.error) 
@@ -465,53 +551,23 @@
 		window.postMessage({internalFunction: externalFunction, message: data, callbackId: callbackId, origin: true}, "*");
 	}
 
-	function verifyDisabled(){
-		setTimeout(() => {
-			let iframe = document.createElement("iframe");
-			iframe.height = "1px";
-			iframe.width = "1px";
-			iframe.id = "ads-text-iframe";
-			iframe.src = "https://youtube.com/pagead/";
-
-			document.body.appendChild(iframe);
-			setTimeout(() => {
-				let iframe = document.getElementById("ads-text-iframe");
-				if(iframe.style.display == "none" || iframe.style.display == "hidden" || iframe.style.visibility == "hidden" || iframe.offsetHeight == 0)
-					prompt("Ads may still be blocked, make sure you've added the following rule to your adblocker whitelist", "*youtube.com/*&disableadblock=1");
-				iframe.remove();
-			}, 500);
-		}, 800)
-	}
-
 	function inwhitelist(search){
+		if(!search) return;
+
 		for(let index in settings.whitelisted){
 			for(let id in search){
-				if(id !== "display" && settings.whitelisted[index][id] === search[id] && search[id].length)
-				return index;
+				if(
+					(search.id.length > 4
+					&& settings.whitelisted[index].id === search.id)
+					|| 
+					(search.username.length > 4
+					&& settings.whitelisted[index].username === search.username)
+				){
+					return index;
+				}
+				
 			}
 		}
 		return -1;
 	}
-
-	function parseHTML(markup) {
-		if (markup.toLowerCase().trim().indexOf('<!doctype') === 0) {
-			var doc = document.implementation.createHTMLDocument("");
-			doc.documentElement.innerHTML = markup;
-			return doc;
-		} else if ('content' in document.createElement('template')) {
-			// Template tag exists!
-			var el = document.createElement('template');
-			el.innerHTML = markup;
-			return el.content;
-		} else {
-			// Template tag doesn't exist!
-			var docfrag = document.createDocumentFragment();
-			var el = document.createElement('body');
-			el.innerHTML = markup;
-			for (i = 0; 0 < el.childNodes.length;) {
-				docfrag.appendChild(el.childNodes[i]);
-			}
-			return docfrag;
-		}
-	}
-})(window, document, chrome ? chrome : browser)
+})(window, document, chrome ? chrome : browser, console)
