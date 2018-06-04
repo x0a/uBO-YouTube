@@ -106,6 +106,33 @@
 				video.data.processed = true;
 			}
 		}
+	}).registerListener("updateSearch", function(args){
+		let channels = document.querySelectorAll("ytd-channel-renderer");
+
+		for(let channel of channels){
+			let id = objGet(channel, "data.channelId");
+			let channelURL = channel.querySelector(".UBO-hide");
+
+			if(id){
+				if(channelURL){
+					channelURL.setAttribute("href", "/channel/" + id);
+				}else{
+					channel.querySelector("#metadata").appendChild((() => {
+						let el = document.createElement("a");
+						el.setAttribute("class", "UBO-hide");
+						el.setAttribute("href", "/channel/" + id);
+						return el;
+					})())
+				}
+			}
+		}
+	}).registerListener("verifyDisabled", function(args){
+		setTimeout(() =>
+			fetch("https://www.youtube.com/favicon.ico?ads=true")
+			.catch(() =>
+				prompt("Ads may still be blocked, make sure you've added the following rule to your uBlock Origin whitelist", "*youtube.com/*&disableadblock=1")
+			)
+		, 300);
 	});
 
 	function objGet(object, key){
