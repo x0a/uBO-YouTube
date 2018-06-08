@@ -109,8 +109,8 @@
 					&& mutation.oldValue === null
 				) || (
 					mutation.type === "childList"
-					&& mutation.target.id === "items"
-				);
+					&& (mutation.target.id === "items" || mutation.target.id === "contents")
+				)
 			}
 
 			updatePage(mode, layout, false);
@@ -358,7 +358,7 @@
 		let channelId = getChannelId(container, VIDEO, data);
 		let whitelisted = updateURL(false, channelId);
 		let button;
-		console.log(channelId, whitelisted)
+		
 		if(button = whitelistButton(layout, whitelisted, container.parentNode.querySelector(".UBO-button"))){
 			//add the new button, otherwise the status was updated on a pre-existing button
 			if(container.nextSibling){
