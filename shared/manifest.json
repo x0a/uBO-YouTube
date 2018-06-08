@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "YouTube Channel Whitelist for uBlock Origin",
-	"version": "0.6.0",
+	"version": "0.6.3",
 	"description": "Exempt your favorite channels from adblocking.",
 	"browser_action": {
 		"default_icon": "./img/icon_128.png",
