@@ -507,6 +507,7 @@
 					el.appendChild(document.createTextNode("Blacklist this advertiser"));
 					return el;
 				})());
+				
 				el.appendChild((() => {
 					let el = document.createElement("div");
 					el.setAttribute("class", "BLK-container");
@@ -517,16 +518,17 @@
 					})());
 					return el;
 				})());
+				
+				el.addEventListener("click", () => {
+					browser.runtime.sendMessage({action: "blacklist"}, response => {
+						if(response && response.error) 
+							console.error(response.error, response);
+						else
+							location.reload();
+					})
+				})
 				return el;
 			})();
-			blacklistButton.addEventListener("click", () => {
-				browser.runtime.sendMessage({action: "blacklist"}, response => {
-					if(response && response.error) 
-						console.error(response.error, response);
-					else
-						location.reload();
-				})
-			})
 			container.insertBefore(blacklistButton, container.firstChild);
 		}
 	}
