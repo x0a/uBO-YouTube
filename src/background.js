@@ -84,20 +84,27 @@
 							}
 
 							if(!adinfo.params.author){
-								//asynchrously get the author title, very messy but it's the best way 
-								//the json method requires sending special headers
-								adinfo.params.channelId.display = adinfo.params.channelId.id;
-								
-								request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.channelId.id, true);
-								request.onreadystatechange = function() {
-									if(this.readyState === 4 && this.status === 200){
-									   let matches = request.responseText.match(/\<title\>(.+)\s\-\sYouTube\<\/title\>/);
-									   if(matches && matches[1]){
-										   adinfo.params.channelId.display = matches[1];
-									   }
-									}
-								};
-								request.send();
+								let prev = recentads.find(item => item.channelId.id === adinfo.params.channelId.id);
+
+								if(prev && prev.channelId.display !== prev.channelId.id){
+									//found a recent ad where we already got the display title
+									adinfo.params.channelId.display = prev.channelId.display
+								}else{
+									//asynchrously get the author title, very messy but it's the best way 
+									//the json method requires sending special headers
+									adinfo.params.channelId.display = adinfo.params.channelId.id;
+
+									request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.channelId.id, true);
+									request.onreadystatechange = function() {
+										if(this.readyState === 4 && this.status === 200){
+											let matches = request.responseText.match(/\<meta name=\"title\" content=\"(.+)\"\>/);
+											if(matches && matches[1]){
+												adinfo.params.channelId.display = matches[1];
+											}
+										}
+									};
+									request.send();
+								}
 							}else
 								adinfo.params.channelId.display = decodeURIComponent(adinfo.params.author);
 						}
@@ -145,7 +152,7 @@
 	function parseURL(url) {
 	    let parser = document.createElement('a'),
 	        params = {},
-	        queries, split;
+	        queries;
 	    // Let the browser do the work
 	    parser.href = url.replace(/\+/g, '%20');
 	    // Convert query string to object
