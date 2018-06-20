@@ -72,7 +72,7 @@ gulp.task("manifest", () => {
 gulp.task("build-start", cb => {
 	build = true;
 
-	cb();
+	return del(["dist/chrome/dist/latest*.zip", "dist/webext/dist/latest*.zip"]);
 })
 gulp.task("build-end", cb => {
 	console.log("Manifest version: ", codeVersion, "Project version: ", packageVersion);
@@ -81,7 +81,7 @@ gulp.task("build-end", cb => {
 		console.log("Manifest version appears to have changed, but project version remains the same. Call `gulp build` if this is a new version.");
 
 	if(build)
-		return mergestream(chrome.close("latest.zip").pipe(gulp.dest("dist/chrome/")), webext.close("latest.zip").pipe(gulp.dest("dist/webext/")))
+		return mergestream(chrome.close("latest-" + codeVersion + ".zip").pipe(gulp.dest("dist/chrome/")), webext.close("latest" + codeVersion + ".zip").pipe(gulp.dest("dist/webext/")))
 	else
 		cb();
 })
