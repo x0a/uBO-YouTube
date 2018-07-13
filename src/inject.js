@@ -447,7 +447,7 @@
                     continue;
                 else
                     user = user.getAttribute("data-ytid");
-                let inwhite = inwhitelist({ id: user }) !== -1
+                let inwhite = inwhitelist(user, true) !== -1
                 let links = vid.querySelectorAll("a[href^='/watch?']");
                 if (inwhite || forceUpdate) {
                     for (let link of links) {
@@ -457,6 +457,10 @@
                 vid.processed = true;
             }
         }
+    }
+
+    function updatePlaylists(layout, forceUpdate) {
+
     }
 
     function updateChannelPage(layout, forceUpdate, verify) {
@@ -549,7 +553,7 @@
         if (mode === RELATED) {
             videos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer");
         } else if (mode === ALLELSE || mode === CHANNEL) {
-            videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer");
+            videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer");
         }
 
         for (let video of videos) {
@@ -563,7 +567,7 @@
 
                 if (!links.length) continue;
 
-                if (inwhitelist({ id: id, username: "" }) !== -1) {
+                if (inwhitelist(id, true) !== -1) {
                     if (video.data.originalhref)
                         desturl = video.data.originalhref;
                     else {
@@ -699,21 +703,22 @@
         });
     }
 
-    function inwhitelist(search) {
+    function inwhitelist(search, idOnly) {
         if (!search) return;
 
-        for (let index in settings.whitelisted) {
-            for (let id in search) {
-                if (
-                    (search.id.length > 4
-                        && settings.whitelisted[index].id === search.id)
-                    ||
-                    (search.username.length > 4
-                        && settings.whitelisted[index].username === search.username)
-                ) {
-                    return index;
-                }
+        if(idOnly){
+            search = {id: search, username: ""};
+        }
 
+        for (let index in settings.whitelisted) {
+            if (
+                (search.id.length > 4
+                    && settings.whitelisted[index].id === search.id)
+                ||
+                (search.username.length > 4
+                    && settings.whitelisted[index].username === search.username)
+            ) {
+                return index;
             }
         }
         return -1;
