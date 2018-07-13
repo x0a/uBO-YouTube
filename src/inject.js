@@ -459,10 +459,6 @@
         }
     }
 
-    function updatePlaylists(layout, forceUpdate) {
-
-    }
-
     function updateChannelPage(layout, forceUpdate, verify) {
         let channelId = getChannelId(null, CHANNEL, layout);
         let whitelisted = updateURL(channelId, verify);
@@ -596,7 +592,7 @@
     }
 
     function updateAdDone(player) {
-        console.log("ad finished playing");
+        //console.log("ad finished playing");
         // agent.send("unmute")
     }
 
