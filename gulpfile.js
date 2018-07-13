@@ -1,7 +1,6 @@
 "use strict";
 
 let gulp = require("gulp");
-let minify = require("gulp-uglify-es").default;
 let cleanCSS = require("gulp-clean-css");
 let pug = require("gulp-pug");
 let jeditor = require("gulp-json-editor");
@@ -14,7 +13,8 @@ let codeVersion, packageVersion;
 
 gulp.task("clean", () => {
 	return del(["dist/chrome/debug/**/*", "dist/webext/debug/**/*"]);
-})
+});
+
 gulp.task("css", () => {
 	return gulp.src("src/*css")
 	.pipe(cleanCSS())
@@ -22,7 +22,7 @@ gulp.task("css", () => {
 	.pipe(gulp.dest("dist/webext/debug"))
 	.pipe(gulpif(build, webext.add()))
 	.pipe(gulpif(build, chrome.add()))
-})
+});
 
 gulp.task("js", () => {
 	return gulp.src("src/*.js")
@@ -31,7 +31,7 @@ gulp.task("js", () => {
 	.pipe(gulp.dest("dist/webext/debug"))
 	.pipe(gulpif(build, webext.add()))
 	.pipe(gulpif(build, chrome.add()))
-})
+});
 
 gulp.task("lib", () => {
 	return gulp.src("lib/**")
@@ -39,7 +39,7 @@ gulp.task("lib", () => {
 	.pipe(gulp.dest("dist/webext/debug/lib"))
 	.pipe(gulpif(build, webext.add("lib")))
 	.pipe(gulpif(build, chrome.add("lib")))
-})
+});
 
 gulp.task("img", () => {
 	return gulp.src("src/img/**")
@@ -47,7 +47,7 @@ gulp.task("img", () => {
 	.pipe(gulp.dest("dist/webext/debug/img"))
 	.pipe(gulpif(build, webext.add("img")))
 	.pipe(gulpif(build, chrome.add("img")))
-})
+});
 
 gulp.task("html", () => {
 	return gulp.src("src/*.pug")
@@ -56,7 +56,7 @@ gulp.task("html", () => {
 	.pipe(gulp.dest("dist/webext/debug"))
 	.pipe(gulpif(build, webext.add()))
 	.pipe(gulpif(build, chrome.add()))
-})
+});
 
 gulp.task("manifest", () => {
 	gulp.src("package.json")
@@ -68,12 +68,14 @@ gulp.task("manifest", () => {
 	.pipe(jeditor(json => {codeVersion = json.version; delete json.applications; return json}))
 	.pipe(gulp.dest("dist/chrome/debug"))
 	.pipe(gulpif(build, chrome.add()))
-})
+}); 
+
 gulp.task("build-start", cb => {
 	build = true;
 
 	return del(["dist/chrome/dist/latest*.zip", "dist/webext/dist/latest*.zip"]);
-})
+});
+
 gulp.task("build-end", cb => {
 	console.log("Manifest version: ", codeVersion, "Project version: ", packageVersion);
 
@@ -84,7 +86,13 @@ gulp.task("build-end", cb => {
 		return mergestream(chrome.close("latest-" + codeVersion + ".zip").pipe(gulp.dest("dist/chrome/")), webext.close("latest" + codeVersion + ".zip").pipe(gulp.dest("dist/webext/")))
 	else
 		cb();
-})
-gulp.task("default", gulp.series("clean", gulp.parallel("css", "js", "lib", "html", "img"), "manifest", "build-end"))
+});
+
+gulp.task("done", cb => {
+	console.log(String.fromCharCode(7));
+	setTimeout(cb, 50);
+});
+
+gulp.task("default", gulp.series("clean", gulp.parallel("css", "js", "lib", "html", "img"), "manifest", "build-end", "done"))
 
 gulp.task("build", gulp.series("build-start", "default"));
