@@ -46,9 +46,9 @@
     "gulp-uglify-es": "^1.0.4",
     "gulp-util": "^3.0.8",
     "merge-stream": "^1.0.1",
-    "webpack-stream": "^5.1.1"
+    "webpack-stream": "^5.1.1",
+    "reactstrap": "^6.4.0"
   },
   "dependencies": {
-    "reactstrap": "^6.4.0"
   }
 }

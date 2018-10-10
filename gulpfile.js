@@ -28,11 +28,11 @@ gulp.task("css", () => {
 
 gulp.task("js", () => {
 	let seek = ["src/*.js"];
-	if (build) {
-		seek.push("!src/*development*.js")
-	} else {
+	
+	if (!build) {
 		seek.push("src/pages/devel.js");
 	}
+
 	return gulp.src(seek)
 		//.pipe(minify())
 		.pipe(gulp.dest("dist/chrome/debug"))
@@ -75,7 +75,11 @@ gulp.task("jsx", () => {
 })
 
 gulp.task("lib", () => {
-	return gulp.src("lib/**")
+	let seek = ["lib/**"];
+	if (build) {
+		seek.push("!lib/*development*.js");
+	}
+	return gulp.src(seek)
 		.pipe(gulp.dest("dist/chrome/debug/lib"))
 		.pipe(gulp.dest("dist/webext/debug/lib"))
 		.pipe(gulpif(build, webext.add("lib")))
