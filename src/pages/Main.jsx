@@ -195,9 +195,7 @@ class ChannelList extends Component {
         this.full = props.full;
         this.emptyRow = <tr>
             <td className="text-muted">None</td>
-            {
-                this.full ? <Fragment><td /><td /></Fragment> : <td />
-            }
+            <td />
         </tr>;
     }
     componentWillReceiveProps(nextProps) {
