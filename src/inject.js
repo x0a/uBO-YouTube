@@ -123,7 +123,10 @@
 
                     if (player = isPlayerUpdate(mutation)) {
                         if (player.classList.contains("ad-showing")) {
-                            adWasPlaying = true;
+                            if (!adWasPlaying) {
+                                agent.send("mute", {mute: true});
+                                adWasPlaying = true;
+                            }
                             updateAdShowing(player);
                         } else if (adWasPlaying) {
                             adWasPlaying = false;
@@ -380,10 +383,10 @@
             let channelId = getChannelId(channelEl, mode, layout), button = event.target; // allow parent scope to be discarded
 
             if (inwhitelist(channelId) !== -1) {
-                agent.send("setSettings", { channelId: channelId, type: "remove" });
+                agent.send("setSettings", { channelId: channelId, type: "remove-white" });
                 button.classList.remove("yt-uix-button-toggled");
             } else {
-                agent.send("setSettings", { channelId: channelId, type: "add" });
+                agent.send("setSettings", { channelId: channelId, type: "add-white" });
                 button.classList.add("yt-uix-button-toggled");
             }
 
@@ -593,7 +596,7 @@
 
     function updateAdDone(player) {
         //console.log("ad finished playing");
-        // agent.send("unmute")
+        agent.send("mute", {mute: false});
     }
 
     function updateAdShowing(player) {
@@ -702,17 +705,15 @@
     function inwhitelist(search, idOnly) {
         if (!search) return;
 
-        if(idOnly){
-            search = {id: search, username: ""};
+        if (idOnly) {
+            search = { id: search, username: "" };
         }
 
         for (let index in settings.whitelisted) {
             if (
-                (search.id.length > 4
-                    && settings.whitelisted[index].id === search.id)
+                (search.id.length > 4 && settings.whitelisted[index].id === search.id)
                 ||
-                (search.username.length > 4
-                    && settings.whitelisted[index].username === search.username)
+                (search.username.length > 4 && settings.whitelisted[index].username === search.username)
             ) {
                 return index;
             }

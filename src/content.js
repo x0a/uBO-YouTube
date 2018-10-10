@@ -30,6 +30,12 @@
         })
     });
 
+    agent.on("mute", change => {
+        return new Promise((resolve) => {
+            browser.runtime.sendMessage({ action: "mute", mute: change.mute || false, ad: change.ad }, response => resolve(response));
+        });
+    })
+
     browser.runtime.onMessage.addListener((requestData, sender, sendResponse) => {
         if (requestData.action === "update") {
             agent.send("settingsUpdate", { settings: requestData.settings, isOriginator: requestData.isOriginator });

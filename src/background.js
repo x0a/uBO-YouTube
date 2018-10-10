@@ -1,6 +1,7 @@
 "use strict";
 
 (function (window, browser, undefined) {
+	const devMode = isDevMode();
 	let settings;
 	let recentads = [];
 	let blacklisted = [];
@@ -21,15 +22,24 @@
 			if (message.action === "get") {
 				sendResponse(settings);
 			} else if (message.action === "set") {
-				if (message.changes.type === "add") {
+				if (message.changes.type === "add-white") {
 					if (inwhitelist(message.changes.channelId.id) === -1) {
 						settings.whitelisted.push(message.changes.channelId);
 					}
-				} else if (message.changes.type === "remove") {
+				} else if (message.changes.type === "add-black") {
+					if (inblacklist(message.changes.channelId.id) === -1) {
+						settings.blacklisted.push(message.changes.channelId);
+					}
+				} else if (message.changes.type === "remove-white") {
 					let i = -1;
 
 					while ((i = inwhitelist(message.changes.channelId.id)) !== -1) {
 						settings.whitelisted.splice(i, 1);
+					}
+				} else if (message.changes.type === "remove-black") {
+					let i = -1;
+					while ((i = inblacklist(message.changes.channelId.id)) !== -1) {
+						settings.blacklisted.splice(i, 1);
 					}
 				} else if (message.changes.type === "bulk") {
 					settings = message.changes.settings;
@@ -46,7 +56,12 @@
 							});
 						}
 					});
+
+					if (!sender.tab || sender.tab.id === -1) {
+						sendResponse({ action: "update", settings: settings })
+					}
 				});
+				return true;
 			} else if (message.action === "recentads") {
 				sendResponse(recentads);
 			} else if (message.action === "blacklist") {
@@ -65,6 +80,13 @@
 					}
 				}
 				sendResponse({ error: "Ad not found" });
+			} else if (message.action === "mute") {
+				return; // TODO
+				browser.tabs.update(sender.tab.id, {
+					muted: message.mute
+				}).then(() => {
+					sendResponse({ error: "" });
+				})
 			}
 		});
 
@@ -144,6 +166,14 @@
 		}, { urls: ["*://www.youtube.com/get_video_info?*"] }, ["blocking"])
 	});
 
+	if (devMode) {
+		browser.webRequest.onBeforeSendHeaders.addListener((details) => {
+			browser.runtime.reload();
+		}, { urls: ["https://www.youtube.com/robots.txt"] })
+
+		console.log(Date.now());
+	}
+
 	function inblacklist(search) {
 		for (let index in settings.blacklisted) {
 			if (settings.blacklisted[index].id === search)
@@ -192,5 +222,9 @@
 			params: params,
 			hash: parser.hash
 		};
+	}
+
+	function isDevMode() {
+		return !('update_url' in browser.runtime.getManifest());
 	}
 })(window, chrome ? chrome : browser)
