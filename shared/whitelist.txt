@@ -1,0 +1,3 @@
+[Adblock Plus 2.0]
+@@youtube.com/*&disableadblock=1$document
+@@chrome-extension://*$document
