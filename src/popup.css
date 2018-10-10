@@ -1,59 +1,31 @@
 *{
     font-family: "fa5-proxima-nova";
 }
-body{
-    background-color:  #EEEEEE;
-    font-family: "fa5-proxima-nova", "Segoe UI", Tahoma, sans-serif;
-    font-size: 80%;
+.clearfix::after {
+    display: block;
+    clear: both;
+    content: "";
 }
-.main{
-    width: 300px;
-    height: 300px;
-    overflow-y: auto;
-    position: relative;
-}
-.table-container{
+.form-control{
+    display: block;
     width: 100%;
-    min-height: 230px;
+    height: calc(2.25rem + 2px);
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
-table{
-    width: 100%;
-}
-a.refresh{
-    color: blue;
-}
-a.refresh:active{
-    color: grey;
-}
-a.link{
-    color: #007bff;
-    text-decoration: none;
-    cursor: pointer;
-}
-a.link:hover{
-    text-decoration: underline;
-}
-a.remove{
-    color: red;
-}
-th{
-    padding-top: 10px;
-    padding-bottom: 10px;
-    font-weight: 700;
-    font-size: 1.06em;
-}
-.btn-pressed{
-    color: grey;
-}
-.empty{
-    color: grey;
-}
-.alert{
-    min-width: 380px;
-    max-width: 430px;
-    text-align: center;
-    padding: 10px;
-    overflow: auto;
+.form-control-sm{
+    height: calc(1.8125rem + 2px);
+    padding: .25rem .5rem;
+    font-size: .875rem;
+    line-height: 1.5;
+    border-radius: .2rem;
 }
 .btn{
     display: inline-block;
@@ -70,6 +42,8 @@ th{
         border-right-color: transparent;
         border-bottom-color: transparent;
         border-left-color: transparent;
+    margin-left: 2px;
+    margin-right: 2px;
     padding: .375rem .75rem;
     font-size: 1rem;
     line-height: 1.5;
@@ -86,6 +60,11 @@ th{
     color: #fff;
     background-color: #007bff;
     border-color: #007bff;
+}
+.btn-link{
+    font-weight: 400;
+    color: #007bff;
+    background-color: transparent;
 }
 /*  disable coz it doesn't fit neatly in the popup and icbf to fix
 .btn-primary:focus{
@@ -145,6 +124,130 @@ th{
     line-height: 1.5;
     border-radius: .2rem;
 }
+body{
+    background-color:  #EEEEEE;
+    font-family: "fa5-proxima-nova", "Segoe UI", Tahoma, sans-serif;
+    font-size: 80%;
+    margin: 0px;
+}
+.main{
+    width: 300px;
+    height: 300px;
+    overflow-y: auto;
+    position: relative;
+    margin: 8px;
+}
+.channel-search{
+    width: 300px;
+    height: 300px;
+    overflow-y: auto;
+    position: relative;
+    
+    margin: 8px;
+}
+.table-container{
+    width: 100%;
+    min-height: 230px;
+}
+table{
+    width: 100%;
+}
+.refresh{
+    color: blue !important;
+}
+
+.refresh:active{
+    color: grey !important;
+}
+a.link{
+    color: #007bff;
+    text-decoration: none;
+    cursor: pointer;
+}
+button.link {
+    background:none!important;
+    color:inherit;
+    border:none; 
+    padding:0!important;
+    font: inherit;
+    /*border is optional*/
+    color: #007bff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.link:hover{
+    text-decoration: underline;
+}
+.remove{
+    color: red !important;
+    float: right;
+}
+
+.hidden{
+    display:none;
+}
+
+.space{
+    margin-right: 2px;
+}
+
+.channel-search-header{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    display: flex;
+    flex-direction:row;
+    padding: 5px;
+}
+.modal-search-feedback{
+    position: absolute;
+    right: 1rem;
+    top: calc(50% - .5rem);
+    pointer-events: none;
+}
+.channel-list{
+    margin-top: 50px;
+}
+.channel{
+    padding: 5px;
+    display: flex;
+    flex-direction: row;
+}
+
+.channel-info{
+    padding-left: 5px;
+    flex-grow: 1;
+}
+.channel-thumb{
+    width: 32px;
+    height: 32px;
+}
+
+.channel-name{
+    font-size: 108%;
+}
+th{
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-weight: 700;
+    font-size: 1.06em;
+}
+.btn-pressed{
+    color: grey;
+}
+.text-muted{
+    color: grey;
+}
+.alert{
+    min-width: 380px;
+    max-width: 430px;
+    text-align: center;
+    padding: 18px;
+    overflow: auto;
+}
+
 hr {
     margin-top: 1rem;
     margin-bottom: 1rem;
@@ -152,7 +255,7 @@ hr {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 .bold{
-    font-weight: bold;
+    font-weight: bold !important;
 }
 
 .align-right{
