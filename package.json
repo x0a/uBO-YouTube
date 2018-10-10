@@ -31,7 +31,11 @@
   },
   "homepage": "https://github.com/x0a/YouTube-Channel-Whitelist-for-uBlock-Origin#readme",
   "devDependencies": {
+    "@babel/core": "^7.0.0-rc.3",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
     "archiver": "^2.1.1",
+    "babel-loader": "^8.0.2",
     "del": "^3.0.0",
     "gulp": "^4.0.0",
     "gulp-archiver2": "^1.1.6",
@@ -41,6 +45,10 @@
     "gulp-pug": "^4.0.1",
     "gulp-uglify-es": "^1.0.4",
     "gulp-util": "^3.0.8",
-    "merge-stream": "^1.0.1"
+    "merge-stream": "^1.0.1",
+    "webpack-stream": "^5.1.1"
+  },
+  "dependencies": {
+    "reactstrap": "^6.4.0"
   }
 }
