@@ -110,4 +110,4 @@
             }
         });
     }
-})(window, document, chrome ? chrome : browser, console)
+})(window, document, window.browser || window.chrome, console)
