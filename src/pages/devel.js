@@ -11,7 +11,6 @@ if (!window.browser) {
                 }
 
                 if (message.action === "set") {
-                    console.log(message);
                     if (message.changes.type === "bulk") {
                         sampleSettings = message.changes.settings;
 
