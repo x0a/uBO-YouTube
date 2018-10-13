@@ -61,6 +61,7 @@ class SettingsTools extends Component {
                 if (settings && settings.action === "update") {
                     settings = settings.settings;
                 } else {
+                    resolve();
                     return;
                 }
             }
@@ -69,7 +70,7 @@ class SettingsTools extends Component {
             this.pushSettings(settings)
                 .then(resolve)
                 .catch(reject);
-        })
+        });
 
     }
 
@@ -151,7 +152,7 @@ class SettingsTools extends Component {
                     .then(resolve)
                     .catch(reject);
             })
-        })
+        });
 
     }
 
