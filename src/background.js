@@ -9,6 +9,7 @@
 	let saveSettings = () => {
 		return new Promise((resolve, reject) => {
 			browser.storage.sync.set(settings, resolve)
+			setTimeout(resolve, 800) // resolve anyway if it takes too long, for Edge
 		})
 	}
 
@@ -45,23 +46,22 @@
 					settings = message.changes.settings;
 				}
 
-				saveSettings().then(() => {
-					//send the updated settings to the rest of the tabs
+				saveSettings();
 
-					chrome.tabs.query({ discarded: false }, tabs => {
-						for (let tab of tabs) {
-							const origin = (sender.tab && sender.tab.id === tab.id) || false;
-							chrome.tabs.sendMessage(tab.id, { action: "update", settings: settings, isOriginator: origin }, response => {
-								//console.log(response);
-							});
-						}
-					});
+				if (!sender.tab || sender.tab.id === -1) {
+					sendResponse({ action: "update", settings: settings });
+				}
 
-					if (!sender.tab || sender.tab.id === -1) {
-						sendResponse({ action: "update", settings: settings })
+				browser.tabs.query({ discarded: false }, tabs => {
+					for (let tab of tabs) {
+						const origin = (sender.tab && sender.tab.id === tab.id) || false;
+						browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, isOriginator: origin }, response => {
+							//console.log(response);
+						});
 					}
 				});
-				return true;
+				
+				
 			} else if (message.action === "recentads") {
 				sendResponse(recentads);
 			} else if (message.action === "blacklist") {
@@ -167,11 +167,12 @@
 	});
 
 	if (devMode) {
-		browser.webRequest.onBeforeSendHeaders.addListener((details) => {
-			browser.runtime.reload();
+
+		browser.webRequest.onBeforeSendHeaders.addListener(details => {
+			guaranteeCallback(browser.tabs.remove, details.tabId, () => browser.runtime.reload())
 		}, { urls: ["https://www.youtube.com/robots.txt"] })
 
-		console.log(Date.now());
+		console.log("[", Date.now(), "]: Dev mode");
 	}
 
 	function inblacklist(search) {
@@ -223,8 +224,14 @@
 			hash: parser.hash
 		};
 	}
+	function guaranteeCallback(func, args, callback) {
+		let ret = func(args, callback);
+		if (ret instanceof Promise) {
+			ret.then(callback);
+		}
+	}
 
 	function isDevMode() {
-		return !('update_url' in browser.runtime.getManifest());
+		return browser.runtime.getManifest && !('update_url' in browser.runtime.getManifest());
 	}
-})(window, chrome ? chrome : browser)
+})(window, window.browser || window.chrome)
