@@ -50,14 +50,18 @@ class Main extends Component {
     }
 
     setSettings(settings, response = false) {
-        if (response) {
-            if (settings && settings.action === "update") {
-                settings = settings.settings;
-            } else {
-                return;
+        return new Promise((resolve, reject) => {
+            if (response) {
+                if (settings && settings.action === "update") {
+                    settings = settings.settings;
+                } else {
+                    resolve();
+                    return;
+                }
             }
-        }
-        this.setState({ settings: settings });
+            this.setState({ settings: settings }, resolve);
+        });
+
     }
 
     toggleSearch() {
@@ -69,7 +73,7 @@ class Main extends Component {
     }
 
     removeWhite(item) {
-        this.settingsComp.removeWhite(item);
+        return this.settingsComp.removeWhite(item);
     }
 
     addBlacklist(item) {
@@ -77,15 +81,22 @@ class Main extends Component {
     }
 
     addWhite(item) {
-        this.settingsComp.addWhite(item);
+        return this.settingsComp.addWhite(item);
     }
 
     toggleWhite(item) {
-        if (this.state.settings.whitelisted.findIndex(i => i.id === item.id) !== -1) {
-            this.removeWhite(item);
-        } else {
-            this.addWhite(item);
-        }
+        return new Promise((resolve, reject) => {
+            if (this.state.settings.whitelisted.findIndex(i => i.id === item.id) !== -1) {
+                this.removeWhite(item)
+                    .then(resolve)
+                    .catch(reject);
+            } else {
+                this.addWhite(item)
+                    .then(resolve)
+                    .catch(reject);
+            }
+        })
+
     }
 
     refreshAll() {

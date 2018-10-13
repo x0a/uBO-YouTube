@@ -21,7 +21,7 @@ class SettingsTools extends Component {
         this.fileChange = this.fileChange.bind(this);
         this.getList = this.getList.bind(this);
     }
-    
+
     componentDidMount() {
         this.downloadLink = document.createElement("a");
         this.downloadLink.download = "ublock-youtube.json";
@@ -56,16 +56,21 @@ class SettingsTools extends Component {
     }
 
     setSettings(settings, response = false) {
-        if (response) {
-            if (settings && settings.action === "update") {
-                settings = settings.settings;
-            } else {
-                return;
+        return new Promise((resolve, reject) => {
+            if (response) {
+                if (settings && settings.action === "update") {
+                    settings = settings.settings;
+                } else {
+                    return;
+                }
             }
-        }
-        console.log("Settings:", settings);
-        this.setState({ settings: settings });
-        this.pushSettings(settings);
+            console.log("Settings:", settings);
+            this.setState({ settings: settings });
+            this.pushSettings(settings)
+                .then(resolve)
+                .catch(reject);
+        })
+
     }
 
     setBulkSettings(settings) {
@@ -113,11 +118,16 @@ class SettingsTools extends Component {
     }
 
     removeWhite(item) {
-        this.showAlert("Are you sure you want to remove '" + item.display + "' from whitelist?", true, false).then(() =>
-            browser.runtime.sendMessage({ action: "set", changes: { type: "remove-white", channelId: item } }, response => {
-                this.setSettings(response, true)
-            })
-        )
+        return new Promise((resolve, reject) => {
+            this.showAlert("Are you sure you want to remove '" + item.display + "' from whitelist?", true, false).then(() =>
+                browser.runtime.sendMessage({ action: "set", changes: { type: "remove-white", channelId: item } }, response => {
+                    this.setSettings(response, true)
+                        .then(resolve)
+                        .catch(reject)
+                })
+            ).catch(reject);
+        })
+
     }
 
     removeBlack(item) {
@@ -135,9 +145,14 @@ class SettingsTools extends Component {
     }
 
     addWhite(item) {
-        browser.runtime.sendMessage({ action: "set", changes: { type: "add-white", channelId: item } }, response => {
-            this.setSettings(response, true);
+        return new Promise((resolve, reject) => {
+            browser.runtime.sendMessage({ action: "set", changes: { type: "add-white", channelId: item } }, response => {
+                this.setSettings(response, true)
+                    .then(resolve)
+                    .catch(reject);
+            })
         })
+
     }
 
     inblacklist(channelId) {

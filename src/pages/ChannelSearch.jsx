@@ -15,17 +15,20 @@ class ChannelSearch extends Component {
             channels: [],
             text: "",
             show: props.show,
-            searching: false,
+            searching: 0,
             permission: false
         }
 
         this.searchTimeout = null;
         this.inputChanged = this.inputChanged.bind(this);
+        this.channelSelected = this.channelSelected.bind(this);
         this.requestPermissions = this.requestPermissions.bind(this);
         this.focusSearch = this.focusSearch.bind(this);
     }
 
     componentDidMount() {
+        if (!browser.permissions) return this.setState({ permission: true }); // Edge doesn't have .permissions API
+
         guaranteeCallback(browser.permissions.contains, {
             origins: ["*://*.content.googleapis.com/"]
         }, granted => this.setState({ permission: granted }));
@@ -48,6 +51,8 @@ class ChannelSearch extends Component {
     }
 
     requestPermissions() {
+        if (!browser.permissions) return;
+
         guaranteeCallback(
             browser.permissions.request,
             { origins: ["*://*.content.googleapis.com/"] },
@@ -59,7 +64,7 @@ class ChannelSearch extends Component {
         let nextState = {};
         if (event.target.id === "search") {
             nextState.text = event.target.value;
-            nextState.searching = true;
+            nextState.searching = 1;
 
             if (this.searchTimeout) {
                 clearTimeout(this.searchTimeout);
@@ -69,13 +74,17 @@ class ChannelSearch extends Component {
                 fetch("https://content.googleapis.com/youtube/v3/search?type=channel&q=" + nextState.text + "&maxResults=10&part=snippet&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo")
                     .then(resp => resp.json())
                     .then(json => this.response = json)
-                    .then(json => this.setState({ channels: json.items, searching: false }))
-            }, 500);
+                    .then(json => this.setState({ channels: json.items, searching: 0 }))
+                    .catch(err => this.setState({ searching: 2 }))
+            }, 500)
         }
 
         this.setState(nextState);
     }
-
+    channelSelected(channel){
+        this.selectChannel(channel)
+        .then(() => this.searchInput.select());
+    }
     focusSearch() {
         if (this.searchInput)
             this.searchInput.focus();
@@ -83,6 +92,16 @@ class ChannelSearch extends Component {
 
     render() {
         let channelSearch;
+        let searchIcon;
+
+        if (this.state.searching === 0) {
+            searchIcon = "fa-search";
+        } else if (this.state.searching === 1) {
+            searchIcon = "fa-spinner fa-spin";
+        } else if (this.state.searching === 2) {
+            searchIcon = "fa-exclamation-circle";
+        }
+
         let search = this.state.permission && <Fragment>
             <input
                 ref={searchInput => this.searchInput = searchInput}
@@ -92,7 +111,7 @@ class ChannelSearch extends Component {
                 value={this.state.text}
                 placeholder="Channel name.."
                 className={"form-control " + (this.full ? "form-control-sm" : "form-control-sm")} />
-            <i className={"fas modal-search-feedback " + (this.state.searching ? "fa-spinner fa-spin" : " fa-search")} />
+            <i className={"fas modal-search-feedback " + searchIcon} />
         </Fragment>;
 
         let items;
@@ -100,12 +119,16 @@ class ChannelSearch extends Component {
             items = this.state.channels.map(item => <Channel
                 full={this.full}
                 item={item}
-                onClick={this.selectChannel}
+                onClick={this.channelSelected}
                 key={item.etag}
                 added={this.state.whitelist.findIndex(witem => witem.id === item.id.channelId) !== -1} />);
         } else {
             if (this.state.permission) {
-                items = <span className="text-muted bold">Type to search for a YouTube channel</span>
+                if (this.state.searching === 2) {
+                    items = <span className="bold">Could not load results. Offline?</span>
+                } else {
+                    items = <span className="text-muted bold">Type to search for a YouTube channel</span>
+                }
             } else {
                 items = <Fragment>
                     <h5>One-time permission needed to access public YouTube channel listings: </h5>
@@ -173,9 +196,11 @@ class Channel extends Component {
             });
         }
     }
+    
     getUrl(added) {
         return "https://youtube.com/channel/" + this.item.id.channelId + (added ? "?igno=re&disableadblock=1" : "");
     }
+
     toggleHovering(hoveringState) {
         this.setState({ hovering: hoveringState });
     }
