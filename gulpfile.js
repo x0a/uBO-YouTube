@@ -9,9 +9,9 @@ let gulpif = require("gulp-if");
 let mergestream = require("merge-stream");
 let webpack = require("webpack-stream");
 let Archiver = require("gulp-archiver2");
-let spawn = require('child_process').spawn;
+let wsServer = require('websocket').server;
 let build = false, chrome = new Archiver("zip"), webext = new Archiver("zip"); //gulp-if requires that these be defined somehow
-let codeVersion, packageVersion;
+let codeVersion, packageVersion, ws, wsConnections = [];
 
 gulp.task("clean", () => {
 	return del(["dist/chrome/debug/**/*", "dist/webext/debug/**/*"]);
@@ -28,7 +28,7 @@ gulp.task("css", () => {
 
 gulp.task("js", () => {
 	let seek = ["src/*.js"];
-	
+
 	if (!build) {
 		seek.push("src/pages/devel.js");
 	}
@@ -52,7 +52,7 @@ gulp.task("jsx", () => {
 						plugins: [],
 						presets: ["@babel/env", "@babel/react"]
 					}
-					
+
 				}]
 			},
 			output: {
@@ -65,7 +65,7 @@ gulp.task("jsx", () => {
 			mode: "production",
 			optimization: {
 				minimize: false,
-				
+
 			}
 		}))
 		.pipe(gulp.dest("dist/chrome/debug"))
@@ -107,9 +107,40 @@ gulp.task("pug", () => {
 		.pipe(gulpif(build, chrome.add()))
 });
 
-gulp.task("pages",() => {
-	return gulp.watch(["src/pages/*.jsx", "src/pages/*.js", "src/pages/*.pug", "src/*.css"], gulp.parallel("js", "jsx", "pug", "css"));
-});
+gulp.task("watch", () => {
+	let server = require("http").createServer(() => { })
+	server.listen(3050, () => { })
+	ws = new wsServer({ httpServer: server });
+
+	ws.on("request", req => {
+		let con = req.accept(null, req.origin);
+
+		wsConnections.push(con);
+
+		con.on("message", msg => {
+			console.log("Browser connected: ", msg.utf8Data)
+		})
+
+		con.on("close", () => {
+			wsConnections.splice(wsConnections.findIndex(val => val === con), 1);
+		})
+	});
+
+	gulp.watch("src/*.css", gulp.series("css"));
+	gulp.watch("src/pages/*.pug", gulp.series("pug"))
+	gulp.watch("src/pages/*.jsx", gulp.series("jsx")); // this
+	gulp.watch("src/pages/*.js", gulp.series("js")); //   + this both compile to popup.js
+	gulp.watch("src/*.js", gulp.series("js", "reload")); // core js changes require reload
+})
+
+gulp.task("reload", cb => {
+	if (!ws)
+		console.error("Server needed to be running at time of load.")
+	for (let con of wsConnections) {
+		con.sendUTF("reload");
+	}
+	cb();
+})
 
 gulp.task("manifest", () => {
 	gulp.src("package.json")
@@ -118,7 +149,11 @@ gulp.task("manifest", () => {
 	return gulp.src("shared/manifest.json")
 		.pipe(gulp.dest("dist/webext/debug"))
 		.pipe(gulpif(build, webext.add()))
-		.pipe(jeditor(json => { codeVersion = json.version; delete json.applications; return json }))
+		.pipe(jeditor(json => {
+			codeVersion = json.version;
+			delete json.applications;
+			return json;
+		}))
 		.pipe(gulp.dest("dist/chrome/debug"))
 		.pipe(gulpif(build, chrome.add()))
 });
@@ -141,9 +176,8 @@ gulp.task("build-end", cb => {
 });
 
 gulp.task("done", cb => {
-	console.log(String.fromCharCode(7)); //beep
-	spawn("explorer", ["http://www.youtube.com/robots.txt"])
-	setTimeout(cb, 50);
+	console.log(String.fromCharCode(7));
+	cb();
 });
 
 gulp.task("default", gulp.series("clean", gulp.parallel("css", "js", "jsx", "lib", "pug", "img"), "manifest", "build-end", "done"))
