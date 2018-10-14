@@ -124,7 +124,7 @@
                     if (player = isPlayerUpdate(mutation)) {
                         if (player.classList.contains("ad-showing")) {
                             if (!adWasPlaying) {
-                                agent.send("mute", {mute: true});
+                                agent.send("mute", { mute: true });
                                 adWasPlaying = true;
                             }
                             updateAdShowing(player);
@@ -174,6 +174,19 @@
             attributeFilter: ["hidden", "href"],
             attributeOldValue: true
         });
+
+        agent.on("disconnected", () => {
+            console.log("Detaching inject script..");
+            ytWatch.disconnect();
+
+            let domAttachments = document.querySelectorAll("#BLK-button,.UBO-button");
+
+            for (let el of domAttachments) {
+                el.remove();
+            }
+
+            setTimeout(() => agent.destroy(), 0);
+        })
     }
 
     function getMode() {
@@ -596,7 +609,7 @@
 
     function updateAdDone(player) {
         //console.log("ad finished playing");
-        agent.send("mute", {mute: false});
+        agent.send("mute", { mute: false });
     }
 
     function updateAdShowing(player) {
@@ -656,6 +669,7 @@
         let instance = identifier || Math.random().toString(36).substring(7); // used to differentiate between us and others
         let resolvers = [];
         let events = {};
+        let mainevent;
 
         this.on = (event, listener) => {
             if (typeof listener !== "function") throw "Listener must be a function";
@@ -674,7 +688,14 @@
             })
         }
 
-        window.addEventListener("message", (e) => {
+        this.destroy = () => {
+            window.removeEventListener("message", mainevent);
+            resolvers = null;
+            events = null;
+            instance = null;
+        }
+
+        window.addEventListener("message", mainevent = e => {
             let revent = e.data;
             let promises = [];
 

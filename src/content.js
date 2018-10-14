@@ -6,6 +6,24 @@
 
 (function (window, document, browser, console, undefined) {
     const agent = new MessageAgent(); // my postMessage wrapper, to communicate with our injected script
+    let injectJS, injectCSS, injectListener, browserListener;
+
+    window.dispatchEvent(new CustomEvent("uBOWLInstance")); // unload any previous running instances
+
+    window.addEventListener("uBOWLInstance", injectListener = () => {
+        console.log("Unloading uBOWL..");
+
+        agent.send("disconnected");
+
+        setTimeout(() => agent.destroy(), 0);
+
+        head.removeChild(injectCSS);
+        head.removeChild(injectJS);
+
+        window.removeEventListener("uBOWLInstance", injectListener);
+
+        browser.runtime.onMessage.removeListener(browserListener)
+    })
 
     agent.on("getSettings", () => {
         return new Promise((resolve) => {
@@ -36,7 +54,7 @@
         });
     })
 
-    browser.runtime.onMessage.addListener((requestData, sender, sendResponse) => {
+    browser.runtime.onMessage.addListener(browserListener = (requestData, sender, sendResponse) => {
         if (requestData.action === "update") {
             agent.send("settingsUpdate", { settings: requestData.settings, isOriginator: requestData.isOriginator });
         }
@@ -45,7 +63,7 @@
     let head = document.documentElement; // equivalent to document.querySelector("html");
 
     // styling for whitelist button, blacklist button, etc.
-    head.appendChild((() => {
+    head.appendChild(injectCSS = (() => {
         let el = document.createElement("link");
         el.setAttribute("rel", "stylesheet");
         el.setAttribute("type", "text/css");
@@ -54,7 +72,7 @@
     })());
 
     // inject main script
-    head.appendChild((() => {
+    head.appendChild(injectJS = (() => {
         let el = document.createElement("script");
         el.setAttribute("type", "text/javascript");
         el.setAttribute("src", browser.runtime.getURL("inject.js"));
@@ -65,6 +83,7 @@
         let instance = identifier || Math.random().toString(36).substring(7); //used to differentiate between us and others
         let resolvers = [];
         let events = {};
+        let mainevent;
 
         this.on = (event, listener) => {
             if (typeof listener !== "function") throw "Listener must be a function";
@@ -83,7 +102,14 @@
             })
         }
 
-        window.addEventListener("message", (e) => {
+        this.destroy = () => {
+            window.removeEventListener("message", mainevent);
+            resolvers = null;
+            events = null;
+            instance = null;
+        }
+
+        window.addEventListener("message", mainevent = e => {
             let revent = e.data;
             let promises = [];
 
@@ -110,4 +136,4 @@
             }
         });
     }
-})(window, document, window.browser || window.chrome, console)
+})(window, document, (() => { let api; try { api = browser; } catch (e) { api = chrome }; return api })(), console)
