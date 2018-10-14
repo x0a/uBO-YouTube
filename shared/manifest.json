@@ -20,8 +20,7 @@
 	"permissions": ["storage", "webRequest", "webRequestBlocking", "*://*.youtube.com/"],
 	"optional_permissions": ["*://*.content.googleapis.com/"],
 	"background": {
-		"scripts": ["background.js"],
-		"persistent": true
+		"scripts": ["background.js"]
 	},
 	"applications": {
 		"gecko": {
