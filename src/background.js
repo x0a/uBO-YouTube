@@ -60,8 +60,8 @@
 						});
 					}
 				});
-				
-				
+
+
 			} else if (message.action === "recentads") {
 				sendResponse(recentads);
 			} else if (message.action === "blacklist") {
@@ -166,13 +166,31 @@
 		}, { urls: ["*://www.youtube.com/get_video_info?*"] }, ["blocking"])
 	});
 
-	if (devMode) {
+	browser.tabs.query({ discarded: false }, tabs => {
+		for (let tab of tabs) {
+			try {
+				browser.tabs.executeScript(tab.id, { file: "content.js" })
+			} catch (e) { }
+		}
+	});
 
-		browser.webRequest.onBeforeSendHeaders.addListener(details => {
-			guaranteeCallback(browser.tabs.remove, details.tabId, () => browser.runtime.reload())
-		}, { urls: ["https://www.youtube.com/robots.txt"] })
+	if (false && devMode) {
+		// make it easier to reload extension during development
 
-		console.log("[", Date.now(), "]: Dev mode");
+		let ws = new WebSocket("ws://localhost:3050");
+
+		ws.addEventListener("open", event => {
+			ws.send(JSON.stringify({
+				userAgent: navigator.userAgent
+			}));
+		})
+
+		ws.addEventListener("message", event => {
+			if (event.data === "reload")
+				browser.runtime.reload();
+		})
+
+		console.log("[", Date.now(), "]: Development mode");
 	}
 
 	function inblacklist(search) {
@@ -234,4 +252,5 @@
 	function isDevMode() {
 		return browser.runtime.getManifest && !('update_url' in browser.runtime.getManifest());
 	}
-})(window, window.browser || window.chrome)
+})(window, (() => { let api; try { api = browser; } catch (e) { api = chrome }; return api })())
+
