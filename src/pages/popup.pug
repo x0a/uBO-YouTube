@@ -1,21 +1,21 @@
 doctype html
 html
-	head
-		if(development)
-			//base(href="file:///C:/Users/Adrian/dev/youtube-channel-whitelist/dist/chrome/debug/")
-		else
-			base(href="/")
+    head
+        if(development)
+            
+        else
+            base(href="/")
 
-		if(development)
-			script(type="text/javascript", src="lib/react.development.js")
-			script(type="text/javascript", src="lib/react-dom.development.js")
-			script(type="text/javascript", src="devel.js")
-		else
-			script(type="text/javascript", src="lib/react.production.min.js")
-			script(type="text/javascript", src="lib/react-dom.production.min.js")
-		script(type="text/javascript", src="popup.js")
-		link(rel="stylesheet", href="lib/font-awesome-5/css/fontawesome-all.min.css")
-		link(rel="stylesheet", href="popup.css")
-	body
-		#root
-			.main
+        if(development)
+            script(type="text/javascript", src="lib/react.development.js")
+            script(type="text/javascript", src="lib/react-dom.development.js")
+            script(type="text/javascript", src="devel.js")
+        else
+            script(type="text/javascript", src="lib/react.production.min.js")
+            script(type="text/javascript", src="lib/react-dom.production.min.js")
+        script(type="text/javascript", src="popup.js")
+        link(rel="stylesheet", href="lib/font-awesome-5/css/fontawesome-all.min.css")
+        link(rel="stylesheet", href="popup.css")
+    body
+        #root
+            .main
