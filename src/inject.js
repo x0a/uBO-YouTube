@@ -703,7 +703,7 @@
                 if (revent.event && revent.event in events) {
                     for (let i = 0; i < events[revent.event].length; i++) {
                         let response = events[revent.event][i](revent.message); // execute listener
-                        if (response && typeof response.then === "function") // if a promise
+                        if (response instanceof Promise) // if a promise
                             promises.push(response); // wait til resolved
                         else
                             promises.push(Promise.resolve(response)) // resolve immediately

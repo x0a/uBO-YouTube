@@ -5,12 +5,13 @@
 // and the background script.
 
 (function (window, document, browser, console, undefined) {
+    let injectJS, injectCSS, withdrawListener, browserListener;
+
     const agent = new MessageAgent(); // my postMessage wrapper, to communicate with our injected script
-    let injectJS, injectCSS, injectListener, browserListener;
 
-    window.dispatchEvent(new CustomEvent("uBOWLInstance")); // unload any previous running instances
-
-    window.addEventListener("uBOWLInstance", injectListener = () => {
+    window.dispatchEvent(new CustomEvent("uBOWLInstance")); // signal to any pre-existing instances that they should unload
+    window.addEventListener("uBOWLInstance", withdrawListener = () => {
+        // received unload request
         console.log("Unloading uBOWL..");
 
         agent.send("disconnected");
@@ -20,7 +21,7 @@
         head.removeChild(injectCSS);
         head.removeChild(injectJS);
 
-        window.removeEventListener("uBOWLInstance", injectListener);
+        window.removeEventListener("uBOWLInstance", withdrawListener);
 
         browser.runtime.onMessage.removeListener(browserListener)
     })
@@ -117,7 +118,7 @@
                 if (revent.event && revent.event in events) {
                     for (let i = 0; i < events[revent.event].length; i++) {
                         let response = events[revent.event][i](revent.message); //execute listener
-                        if (response && typeof response.then === "function") //if a promise
+                        if (response instanceof Promise) //if a promise
                             promises.push(response); //wait til resolved
                         else
                             promises.push(Promise.resolve(response)) //resolve immediately
