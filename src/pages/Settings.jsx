@@ -9,7 +9,7 @@ class SettingsTools extends Component {
             settings: { blacklisted: [], whitelisted: [] }
         }
 
-        this.isLinuxOrFirefox = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1);
+        this.isLinuxFirefoxOrEdge = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1 || window.navigator.platform.indexOf("Edge/") !== -1);
         this.pushSettings = props.receivedSettings;
         this.full = props.full;
         this.showAlert = props.askConfirm;
@@ -213,7 +213,7 @@ class SettingsTools extends Component {
     render() {
         const size = this.full ? "" : " btn-sm ";
 
-        if (!this.full && this.isLinuxOrFirefox) {
+        if (!this.full && this.isLinuxFirefoxOrEdge) {
             return <div className="bottom">
                 <button className="btn btn-primary btn-sm align-right" onClick={this.openSettings}>
                     <i className="fas fa-cog space" />
@@ -225,7 +225,7 @@ class SettingsTools extends Component {
         let refreshBtn;
 
         if (this.full) {
-            refreshBtn = <button className={this.full ? "btn btn-primary" : "link refresh"}
+            refreshBtn = <button className={this.full ? "btn btn-secondary" : "link refresh"}
                 onClick={this.requestRefresh}
                 ref={clickEvents}>
                 <i className="fas fa-sync" />
@@ -242,7 +242,7 @@ class SettingsTools extends Component {
                     type="button"
                     onClick={this.export}
                     title="Export settings to file">
-                    <i className="fas fa-upload space" />
+                    <i className="fas fa-download space" />
                     {this.full ? " Export lists" : " Export"}
                 </button>
                 <button
@@ -250,7 +250,7 @@ class SettingsTools extends Component {
                     type="button"
                     onClick={this.import}
                     title="Import settings from file">
-                    <i className="fas fa-download" />
+                    <i className="fas fa-upload" />
                     {this.full ? " Import lists" : " Import"}
                 </button>
                 <button
