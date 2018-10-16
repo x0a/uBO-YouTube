@@ -1,12 +1,14 @@
-*{
+* {
     font-family: "fa5-proxima-nova";
 }
+
 .clearfix::after {
     display: block;
     clear: both;
     content: "";
 }
-.form-control{
+
+.form-control {
     display: block;
     width: 100%;
     height: calc(2.25rem + 2px);
@@ -18,16 +20,18 @@
     background-clip: padding-box;
     border: 1px solid #ced4da;
     border-radius: .25rem;
-    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
-.form-control-sm{
+
+.form-control-sm {
     height: calc(1.8125rem + 2px);
     padding: .25rem .5rem;
     font-size: .875rem;
     line-height: 1.5;
     border-radius: .2rem;
 }
-.btn{
+
+.btn {
     display: inline-block;
     font-weight: 400;
     text-align: center;
@@ -38,34 +42,39 @@
     -ms-user-select: none;
     user-select: none;
     border: 1px solid transparent;
-        border-top-color: transparent;
-        border-right-color: transparent;
-        border-bottom-color: transparent;
-        border-left-color: transparent;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
     margin-left: 2px;
     margin-right: 2px;
     padding: .375rem .75rem;
     font-size: 1rem;
     line-height: 1.5;
     border-radius: .25rem;
-    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
+
 .btn:not(:disabled):not(.disabled) {
     cursor: pointer;
 }
-.btn:focus{
+
+.btn:focus {
     outline: 0;
 }
-.btn-primary{
+
+.btn-primary {
     color: #fff;
     background-color: #007bff;
     border-color: #007bff;
 }
-.btn-link{
+
+.btn-link {
     font-weight: 400;
     color: #007bff;
     background-color: transparent;
 }
+
 /*  disable coz it doesn't fit neatly in the popup and icbf to fix
 .btn-primary:focus{
     box-shadow: 0 0 0 .2rem rgba(0,123,255,.5);
@@ -77,17 +86,20 @@
     box-shadow: 0 0 0 .2rem rgba(220,53,69,.5);
 }
 */
-.btn-primary:hover{
+
+.btn-primary:hover {
     color: #fff;
     background-color: #0069d9;
     border-color: #0062cc;
 }
-.btn-primary:not(:disabled):not(.disabled):active{
+
+.btn-primary:not(:disabled):not(.disabled):active {
     color: #fff;
     background-color: #0062cc;
     border-color: #005cbf;
 }
-.btn-secondary{
+
+.btn-secondary {
     color: #fff;
     background-color: #6c757d;
     border-color: #6c757d;
@@ -98,77 +110,89 @@
     background-color: #5a6268;
     border-color: #545b62;
 }
-.btn-secondary:not(:disabled):not(.disabled):active{
+
+.btn-secondary:not(:disabled):not(.disabled):active {
     color: #fff;
     background-color: #545b62;
     border-color: #4e555b;
 }
-.btn-danger{
+
+.btn-danger {
     color: #fff;
     background-color: #dc3545;
     border-color: #dc3545;
 }
+
 .btn-danger:hover {
     color: #fff;
     background-color: #c82333;
     border-color: #bd2130;
 }
-.btn-danger:not(:disabled):not(.disabled):active{
+
+.btn-danger:not(:disabled):not(.disabled):active {
     color: #fff;
     background-color: #bd2130;
     border-color: #b21f2d;
 }
-.btn-sm{
+
+.btn-sm {
     padding: .25rem .5rem;
     font-size: .875rem;
     line-height: 1.5;
     border-radius: .2rem;
 }
-body{
-    background-color:  #EEEEEE;
+
+body {
+    background-color: #EEEEEE;
     font-family: "fa5-proxima-nova", "Segoe UI", Tahoma, sans-serif;
     font-size: 80%;
     margin: 0px;
 }
-.main{
+
+.main {
     width: 300px;
     height: 300px;
     overflow-y: auto;
     position: relative;
     margin: 8px;
 }
-.channel-search{
+
+.channel-search {
     width: 300px;
     height: 300px;
     overflow-y: auto;
     position: relative;
-    
     margin: 8px;
 }
-.table-container{
+
+.table-container {
     width: 100%;
     min-height: 230px;
 }
-table{
+
+table {
     width: 100%;
 }
-.refresh{
+
+.refresh {
     color: blue !important;
 }
 
-.refresh:active{
+.refresh:active {
     color: grey !important;
 }
-a.link{
+
+a.link {
     color: #007bff;
     text-decoration: none;
     cursor: pointer;
 }
+
 button.link {
-    background:none!important;
-    color:inherit;
-    border:none; 
-    padding:0!important;
+    background: none !important;
+    color: inherit;
+    border: none;
+    padding: 0 !important;
     font: inherit;
     /*border is optional*/
     color: #007bff;
@@ -176,71 +200,84 @@ button.link {
     cursor: pointer;
 }
 
-.link:hover{
+.link:hover {
     text-decoration: underline;
 }
-.remove{
+
+.remove {
     color: red !important;
     float: right;
 }
 
-.hidden{
-    display:none;
+.hidden {
+    display: none;
 }
 
-.space{
+.space {
     margin-right: 2px;
 }
 
-.channel-search-header{
+#search::-ms-clear {
+    display: none;
+}
+
+.channel-search-header {
     position: absolute;
     top: 0px;
     left: 0px;
     right: 0px;
     display: flex;
-    flex-direction:row;
+    flex-direction: row;
     padding: 5px;
 }
-.modal-search-feedback{
+
+.modal-search-feedback {
     position: absolute;
     right: 1rem;
     top: calc(50% - .5rem);
     pointer-events: none;
 }
-.channel-list{
+
+.channel-list {
     margin-top: 50px;
 }
-.channel{
+
+.channel {
     padding: 5px;
     display: flex;
     flex-direction: row;
 }
 
-.channel-info{
+.channel-info {
     padding-left: 5px;
     flex-grow: 1;
 }
-.channel-thumb{
+
+.channel-thumb {
     width: 32px;
     height: 32px;
 }
 
-.channel-name{
+.channel-name {
     font-size: 108%;
 }
-th{
+
+th {
     padding-top: 10px;
     padding-bottom: 10px;
     font-weight: 700;
     font-size: 1.06em;
 }
-.btn-pressed{
+
+.btn-pressed {
     color: grey;
 }
-.text-muted{
+
+.text-muted {
     color: grey;
 }
-.alert{
+
+.alert {
     min-width: 380px;
     max-width: 430px;
     text-align: center;
@@ -254,10 +291,11 @@ hr {
     border: 0;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
-.bold{
+
+.bold {
     font-weight: bold !important;
 }
 
-.align-right{
+.align-right {
     float: right;
 }

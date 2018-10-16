@@ -1,72 +1,82 @@
- .UBO-button.UBO-old {
-	margin-left: 5px;
-	padding: 0 5.5px 0px 6px !important;
+.UBO-button.UBO-old {
+    margin-left: 5px;
+    padding: 0 5.5px 0px 6px !important;
 }
- .UBO-button.UBO-poly {
-	margin-top: 6px;
-	color: rgba(17, 17, 17, 0.298);
-	outline: none;
-	background:transparent;
-	padding: 10px 16px;
-	border: none;
-	cursor: pointer;
-	font-family: 'Roboto', 'Noto', sans-serif;
-	font-size: 14px;
-	font-weight:500;
-	letter-spacing: 0.007px;
-	text-transform: uppercase;
-	border-radius: 2px;
-	-webkit-font-smoothing: antialiased;
-	white-space: nowrap
+
+.UBO-button.UBO-poly {
+    margin-top: 6px;
+    color: rgba(17, 17, 17, 0.298);
+    outline: none;
+    background: transparent;
+    padding: 10px 16px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Roboto', 'Noto', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.007px;
+    text-transform: uppercase;
+    border-radius: 2px;
+    -webkit-font-smoothing: antialiased;
+    white-space: nowrap
 }
- .UBO-button.UBO-poly.yt-uix-button-toggled {
-	color: rgba(17, 17, 17, 0.6);
-	border-bottom: 2px solid darkseagreen;
+
+.UBO-button.UBO-poly.yt-uix-button-toggled {
+    color: rgba(17, 17, 17, 0.6);
+    border-bottom: 2px solid darkseagreen;
 }
- html[dark] .UBO-button.UBO-poly {
-	color: rgba(255, 255, 255, 0.26);
+
+html[dark] .UBO-button.UBO-poly {
+    color: rgba(255, 255, 255, 0.26);
 }
- html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
-	color: rgba(255, 255, 255, 0.498);
+
+html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
+    color: rgba(255, 255, 255, 0.498);
 }
- #BLK-button {
-	display: none;
-	overflow: visible;
-	position: relative;
+
+#BLK-button {
+    display: none;
+    overflow: visible;
+    position: relative;
 }
- #movie_player.ad-interrupting #BLK-button {
-	display: inline-block !important;
+
+#movie_player.ad-interrupting #BLK-button {
+    display: inline-block !important;
 }
- #BLK-button .BLK-container {
-	height: 100%;
-	width: 100%;
-	position:relative
+
+#BLK-button .BLK-container {
+    height: 100%;
+    width: 100%;
+    position: relative
 }
- #BLK-button .BLK-container img {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	margin-top: -8px;
-	margin-left: -8px;
+
+#BLK-button .BLK-container img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -8px;
+    margin-left: -8px;
 }
- #BLK-button .BLK-tooltip {
+
+#BLK-button .BLK-tooltip {
     visibility: hidden;
-    background-color: rgba(28,28,28,0.9);
+    background-color: rgba(28, 28, 28, 0.9);
     color: rgb(238, 238, 238);
     text-align: center;
     border-radius: 2px;
     padding: 5px 9px;
     position: absolute;
     z-index: 1001;
-	bottom: 140%;
-	font-weight: 500;
-	line-height: 15px;
+    bottom: 140%;
+    font-weight: 500;
+    line-height: 15px;
     left: -50%;
     white-space: nowrap;
     opacity: 0;
     transition: opacity .5s;
 }
- #BLK-button:hover .BLK-tooltip {
+
+#BLK-button:hover .BLK-tooltip {
     visibility: visible;
     opacity: 1;
 }
