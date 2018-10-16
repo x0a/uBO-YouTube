@@ -1,0 +1,120 @@
+body {
+    background-color: #f8f9fa !important;
+    margin-top: 40px;
+}
+
+.alert {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 350px;
+    padding: 10px;
+    border: 1px solid gray;
+    background-color: #EEEEEE;
+    text-align: center;
+    border-radius: 5px;
+    z-index: 1501;
+}
+
+.channel-search {
+    position: relative;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    padding: 10px;
+    border: 1px solid gray;
+    z-index: 1002;
+    background-color: white;
+}
+
+.channel {
+    display: flex;
+    flex-direction: row;
+    padding: 5px;
+}
+
+.channel-list {
+    margin-bottom: 50px;
+}
+
+.channel-thumb-container {}
+
+.channel-thumb {
+    width: 28px;
+    height: 28px;
+}
+
+.channel-name {
+    margin-left: 5px;
+}
+
+.channel-info {
+    flex-grow: 1;
+}
+
+.channel-action {}
+
+.channel-desc {
+    font-size: .8em;
+}
+
+.blur {
+    filter: blur(2px);
+}
+
+.table-action {
+    margin: 0;
+    padding: 0;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1500;
+}
+
+table {
+    width: 100%;
+}
+
+.hidden {
+    display: none;
+}
+
+.space {
+    margin-right: 2px;
+}
+
+button {
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.modal-title {
+    width: 100%;
+    position: relative;
+}
+
+.modal-search-feedback {
+    position: absolute;
+    right: .5rem;
+    top: calc(50% - .5rem);
+    pointer-events: none;
+}
+
+.support {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+}
+
+.support svg {
+    width: 40px;
+    height: 40px;
+}
