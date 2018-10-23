@@ -12,7 +12,7 @@ let webpack = require("webpack-stream");
 let Archiver = require("gulp-archiver2");
 let wsServer = require('websocket').server;
 let build = false, production = false, chrome = new Archiver("zip"), webext = new Archiver("zip"); //gulp-if requires that these be defined somehow
-let codeVersion, packageVersion, ws, wsClients = [];
+let codeVersion, packageVersion, ws, wsClients = new Map();
 
 gulp.task("clean", () => {
     return del(["dist/chrome/debug/**/*", "dist/webext/debug/**/*"]);
@@ -115,8 +115,9 @@ gulp.task("watch", () => {
 
     ws.on("request", req => {
         let con = req.accept(null, req.origin);
-        let ref = { socket: con, agent: "" };
-        wsClients.push(ref);
+        let ref = { agent: "" };
+        
+        wsClients.set(con, ref);
 
         con.on("message", event => {
             const msg = JSON.parse(event.utf8Data);
@@ -133,9 +134,8 @@ gulp.task("watch", () => {
         })
 
         con.on("close", () => {
-            const index = wsClients.findIndex(val => val === ref)
-            console.log("Disconnected:", wsClients[index].userAgent);
-            wsClients.splice(index, 1);
+            console.log("Disconnected:", ref.userAgent);
+            wsClients.delete(con)
         })
     });
 
@@ -150,8 +150,8 @@ gulp.task("watch", () => {
 gulp.task("reload", cb => {
     if (!ws)
         console.error("Server needed to be running at time of load.")
-    for (let client of wsClients) {
-        client.socket.sendUTF("reload");
+    for (let client of wsClients.keys()) {
+        client.sendUTF("reload");
     }
     cb();
 })
