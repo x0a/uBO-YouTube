@@ -20,6 +20,7 @@ class SettingsTools extends Component {
         this.clearSettings = this.clearSettings.bind(this);
         this.fileChange = this.fileChange.bind(this);
         this.getList = this.getList.bind(this);
+        this.refreshAll = this.refreshAll.bind(this);
     }
 
     componentDidMount() {
@@ -41,10 +42,18 @@ class SettingsTools extends Component {
     getList() {
         return new Promise((resolve, reject) => {
             browser.runtime.sendMessage({ action: "get" }, response => {
-                this.setSettings(response);
-                resolve();
+                this.setSettings(response)
+                    .then(resolve);
             })
         })
+    }
+
+    refreshAll() {
+        this.setState({ refreshing: true });
+        // wait til refresh is done, wait an additional 150 ms otherwise animation is too fast.
+        this.requestRefresh().then(() => {
+            setTimeout(() => this.setState({ refreshing: false }), 150);
+        });
     }
 
     openSettings() {
@@ -226,49 +235,55 @@ class SettingsTools extends Component {
 
         if (this.full) {
             refreshBtn = <button className={this.full ? "btn btn-secondary" : "link refresh"}
-                onClick={this.requestRefresh}
-                ref={clickEvents}>
-                <i className="fas fa-sync" />
+                onClick={this.refreshAll}
+                ref={clickEvents.bind(this.full)}>
+                <i className={"fas fa-sync " + (this.state.refreshing ? "fa-spin" : "")} />
                 {this.full ? " Refresh" : ""}
             </button>
         }
 
         return <Fragment>
-            {refreshBtn}
-            <div className={this.full ? "import-export float-right" : "bottom"}>
-                {this.props.children}
-                <button
-                    className={"btn btn-primary" + size}
-                    type="button"
-                    onClick={this.export}
-                    title="Export settings to file">
-                    <i className="fas fa-download space" />
-                    {this.full ? " Export lists" : " Export"}
-                </button>
-                <button
-                    className={"btn btn-primary" + size}
-                    type="button"
-                    onClick={this.import}
-                    title="Import settings from file">
-                    <i className="fas fa-upload" />
-                    {this.full ? " Import lists" : " Import"}
-                </button>
-                <button
-                    className={"btn btn-danger" + size + (this.full ? "" : " align-right")}
-                    type="button"
-                    onClick={this.clearSettings}
-                    title="Clear all settings"
-                >
-                    <i className="fas fa-trash" />
-                    {this.full ? " Delete All" : ""}
-                </button>
-                <input
-                    id="import"
-                    ref={element => this.fileImport = element}
-                    type="file"
-                    accept=".json"
-                    onChange={this.fileChange}
-                    className="hidden" />
+            <div className="row">
+                <div className="col-md">
+                    {refreshBtn}
+                </div>
+                <div className="col-md">
+                    <div className={this.full ? "import-export float-right" : "bottom"}>
+                        {this.props.children}
+                        <button
+                            className={"btn btn-primary" + size}
+                            type="button"
+                            onClick={this.export}
+                            title="Export settings to file">
+                            <i className="fas fa-download space" />
+                            {this.full ? " Export lists" : " Export"}
+                        </button>
+                        <button
+                            className={"btn btn-primary" + size}
+                            type="button"
+                            onClick={this.import}
+                            title="Import settings from file">
+                            <i className="fas fa-upload" />
+                            {this.full ? " Import lists" : " Import"}
+                        </button>
+                        <button
+                            className={"btn btn-danger" + size + (this.full ? "" : " align-right")}
+                            type="button"
+                            onClick={this.clearSettings}
+                            title="Clear all settings"
+                        >
+                            <i className="fas fa-trash" />
+                            {this.full ? " Delete All" : ""}
+                        </button>
+                        <input
+                            id="import"
+                            ref={element => this.fileImport = element}
+                            type="file"
+                            accept=".json"
+                            onChange={this.fileChange}
+                            className="hidden" />
+                    </div>
+                </div>
             </div>
         </Fragment>
     }

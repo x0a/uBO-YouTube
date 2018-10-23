@@ -1,6 +1,7 @@
 
-const clickEvents = el => {
-    if (!el) return;
+const clickEvents = (full, el) => {
+    if (!el || full) return;
+
     el.addEventListener("mousedown", () => el.classList.add("btn-pressed"))
     el.addEventListener("mouseup", () => el.classList.remove("btn-pressed"))
 }
