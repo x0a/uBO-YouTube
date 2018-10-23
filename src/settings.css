@@ -39,8 +39,6 @@ body {
     margin-bottom: 50px;
 }
 
-.channel-thumb-container {}
-
 .channel-thumb {
     width: 28px;
     height: 28px;
@@ -53,8 +51,6 @@ body {
 .channel-info {
     flex-grow: 1;
 }
-
-.channel-action {}
 
 .channel-desc {
     font-size: .8em;
@@ -112,6 +108,10 @@ button {
     position: fixed;
     bottom: 15px;
     right: 15px;
+}
+
+.support:hover {
+    color: black !important;
 }
 
 .support svg {
