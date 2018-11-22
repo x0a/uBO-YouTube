@@ -3,27 +3,31 @@
     padding: 0 5.5px 0px 6px !important;
 }
 
+.UBO-button.hidden {
+    display: none;
+}
+
 .UBO-button.UBO-poly {
-    margin-top: 6px;
+    margin-top: 7px;
     color: rgba(17, 17, 17, 0.298);
     outline: none;
     background: transparent;
     padding: 10px 16px;
     border: none;
     cursor: pointer;
-    font-family: 'Roboto', 'Noto', sans-serif;
-    font-size: 14px;
+    font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif;
+    font-size: 1.4rem;
     font-weight: 500;
     letter-spacing: 0.007px;
     text-transform: uppercase;
     border-radius: 2px;
-    -webkit-font-smoothing: antialiased;
     white-space: nowrap
 }
 
 .UBO-button.UBO-poly.yt-uix-button-toggled {
     color: rgba(17, 17, 17, 0.6);
     border-bottom: 2px solid darkseagreen;
+    padding-bottom: 8px;
 }
 
 html[dark] .UBO-button.UBO-poly {
@@ -33,8 +37,11 @@ html[dark] .UBO-button.UBO-poly {
 html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     color: rgba(255, 255, 255, 0.498);
 }
-
+#BLK-button.hidden{
+    visibility: hidden;
+}
 #BLK-button {
+    visibility: visible;
     display: none;
     overflow: visible;
     position: relative;
@@ -68,9 +75,10 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     position: absolute;
     z-index: 1001;
     bottom: 140%;
+    left: 50%;
+    transform: translateX(-50%);
     font-weight: 500;
     line-height: 15px;
-    left: -50%;
     white-space: nowrap;
     opacity: 0;
     transition: opacity .5s;
@@ -79,4 +87,42 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
 #BLK-button:hover .BLK-tooltip {
     visibility: visible;
     opacity: 1;
+}
+
+.UBO-menu {
+    position: absolute;
+    z-index: 1200;
+    width: 195px;
+    background-color: rgba(28, 28, 28, 0.9);
+    color: rgb(238, 238, 238);
+    border-radius: 2px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.UBO-menu-item {
+    display: block;
+    text-align: left;
+    background-color: rgba(0, 0, 0, 0.0);
+    color: rgb(238, 238, 238);
+    border: none;
+    width: 100%;
+    height: 33px;
+    font-weight: 500;
+    font-size: 118%;
+    cursor: pointer;
+    padding-left: 15px;
+    padding-right: 15px;
+    font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif;
+}
+
+.UBO-menu-item:hover {
+    background-color: rgba(255, 255, 255, .1);
+}
+
+.UBO-icon{
+    display:inline-block;
+    height: 50%;
+    margin-right:5px;
+    vertical-align: -4px;
 }
