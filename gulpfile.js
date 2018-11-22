@@ -14,6 +14,13 @@ let wsServer = require('websocket').server;
 let build = false, production = false, chrome = new Archiver("zip"), webext = new Archiver("zip"); //gulp-if requires that these be defined somehow
 let codeVersion, packageVersion, ws, wsClients = new Map();
 
+function sendToAll(message) {
+    if (!ws)
+        console.error("Server needed to be running at time of load.")
+    for (let client of wsClients.keys()) {
+        client.sendUTF(message);
+    }
+}
 gulp.task("clean", () => {
     return del(["dist/chrome/debug/**/*", "dist/webext/debug/**/*"]);
 });
@@ -115,8 +122,8 @@ gulp.task("watch", () => {
 
     ws.on("request", req => {
         let con = req.accept(null, req.origin);
-        let ref = { agent: "" };
-        
+        let ref = { agent: "", nick: "" };
+
         wsClients.set(con, ref);
 
         con.on("message", event => {
@@ -125,10 +132,18 @@ gulp.task("watch", () => {
             if (msg.userAgent) {
                 console.log("Browser connected: ", msg.userAgent);
                 ref.userAgent = msg.userAgent;
+                ref.nick = (agent => {
+                    if (agent.indexOf("Firefox") !== -1)
+                        return "Firefox"
+                    else if (agent.indexOf("Chrome") !== -1)
+                        return "Chrome";
+                    else
+                        return "Unknown";
+                })(msg.userAgent)
             } else if (msg.log) {
-                console.log("Log from", ref.userAgent.substring(0, 10), ":", msg.log)
+                console.log("Log from", ref.nick, ":", JSON.stringify(msg.log));
             } else if (msg.error) {
-                console.error("Log from", ref.userAgent.substring(0, 10), ":", msg.error)
+                console.error("Log from", ref.nick, ":", JSON.stringify(msg.error));
             }
 
         })
@@ -143,16 +158,18 @@ gulp.task("watch", () => {
     gulp.watch("src/pages/*.pug", gulp.series("pug"))
     gulp.watch("src/pages/*.jsx", gulp.series("jsx")); // this,
     gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
-    gulp.watch("shared/manifest.json", gulp.series("manifest", "reload"));
-    gulp.watch("src/*.js", gulp.series("js", "reload")); // core js changes (background.js, content.js) require reload
+    gulp.watch("shared/manifest.json", gulp.series("manifest", "fullreload"));
+    gulp.watch("src/background.js", gulp.series("js", "fullreload")); // core js changes (background.js) require reload
+    gulp.watch(["!src/background.js", "src/*.js"], gulp.series("js", "partialreload")); // content.js doesnt require full reload, only script reloading
 })
 
-gulp.task("reload", cb => {
-    if (!ws)
-        console.error("Server needed to be running at time of load.")
-    for (let client of wsClients.keys()) {
-        client.sendUTF("reload");
-    }
+gulp.task("fullreload", cb => {
+    sendToAll("reload")
+    cb();
+})
+
+gulp.task("partialreload", cb => {
+    sendToAll("partialreload");
     cb();
 })
 
