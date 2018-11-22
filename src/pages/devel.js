@@ -3,10 +3,10 @@ if (!window.browser) {
     window.browser = {
         runtime: {
             sendMessage: function (message, resp) {
-                if (message.action === "get") {
+                if (message.action === "get-lists") {
                     resp(sampleSettings);
                 }
-                if (message.action === "recentads") {
+                if (message.action === "get-ads") {
                     resp(ads);
                 }
 

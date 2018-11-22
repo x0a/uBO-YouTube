@@ -41,7 +41,7 @@ class SettingsTools extends Component {
 
     getList() {
         return new Promise((resolve, reject) => {
-            browser.runtime.sendMessage({ action: "get" }, response => {
+            browser.runtime.sendMessage({ action: "get-lists" }, response => {
                 this.setSettings(response)
                     .then(resolve);
             })
@@ -102,14 +102,15 @@ class SettingsTools extends Component {
     }
 
     importSettings(settings) {
-        this.showAlert(["Add", settings.whitelisted.length, "items to whitelist and", settings.blacklisted.length, "to blacklist?"].join(" "), true).then(() => {
+        this.showAlert(["Add", settings.whitelisted.length, "items to whitelist,", settings.blacklisted.length, "to blacklist, and ", settings.muted.length, " items to mutelist?"].join(" "), true).then(() => {
             let newSettings = deepCopy(this.state.settings);
 
             for (let channel of settings.whitelisted)
                 newSettings.whitelisted.push(channel);
             for (let channel of settings.blacklisted)
                 newSettings.blacklisted.push(channel);
-
+            for (let channel of settings.muted)
+                newSettings.muted.push(channel);
             this.setBulkSettings(newSettings);
         });
     }
@@ -123,6 +124,7 @@ class SettingsTools extends Component {
             let newSettings = deepCopy(this.state.settings);
             newSettings.blacklisted = [];
             newSettings.whitelisted = [];
+            newSettings.muted = [];
             this.setBulkSettings(newSettings);
         });
     }
@@ -147,7 +149,13 @@ class SettingsTools extends Component {
             })
         )
     }
-
+    removeMute(item) {
+        this.showAlert("Are you sure you want to stop muting ads from '" + item.display + "'?", true, false).then(() =>
+            browser.runtime.sendMessage({ action: "set", changes: { type: "remove-mute", channelId: item } }, response => {
+                this.setSettings(response, true)
+            })
+        )
+    }
     addBlacklist(item) {
         browser.runtime.sendMessage({ action: "set", changes: { type: "add-black", channelId: item } }, response => {
             this.setSettings(response, true)
@@ -180,6 +188,14 @@ class SettingsTools extends Component {
         }
         return -1;
     }
+    
+    inmutelist(channelId){
+        for (let channel = 0; channel < this.state.settings.muted.length; channel++) {
+            if (this.state.settings.muted[channel].id === channelId)
+                return channel;
+        }
+        return -1;
+    }
 
     fileChange(event) {
         if (!event.target.files.length) return;
@@ -202,7 +218,12 @@ class SettingsTools extends Component {
                             results.whitelisted.splice(i, 1);
                             i--;
                         }
-                    if (!results.whitelisted.length && !results.blacklisted.length)
+                    for (let i = 0; i < results.muted.length; i++)
+                        if (this.inmutelist(results.muted[i].id) !== -1) {
+                            results.muted.splice(i, 1);
+                            i--;
+                        }
+                    if (!results.whitelisted.length && !results.blacklisted.length && !results.muted.length)
                         this.error("No new items to add");
                     else
                         this.importSettings(results);

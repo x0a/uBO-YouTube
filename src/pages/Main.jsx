@@ -12,7 +12,8 @@ class Main extends Component {
             alert: { show: false, confirm: false, danger: false, onConfirm: null, onCancel: null },
             settings: {
                 whitelisted: [],
-                blacklisted: []
+                blacklisted: [],
+                muted: []
             },
             showSearch: false
         }
@@ -24,6 +25,7 @@ class Main extends Component {
         this.setSettings = this.setSettings.bind(this);
         this.removeWhite = this.removeWhite.bind(this);
         this.removeBlack = this.removeBlack.bind(this);
+        this.removeMute = this.removeMute.bind(this);
         this.addBlacklist = this.addBlacklist.bind(this);
         this.addWhite = this.addWhite.bind(this);
         this.toggleWhite = this.toggleWhite.bind(this);
@@ -67,7 +69,9 @@ class Main extends Component {
     toggleSearch() {
         this.setState({ showSearch: !this.state.showSearch })
     }
-
+    removeMute(item){
+        this.settingsComp.removeMute(item);
+    }
     removeBlack(item) {
         this.settingsComp.removeBlack(item);
     }
@@ -127,7 +131,11 @@ class Main extends Component {
             name="Blacklisted Advertisers"
             list={this.state.settings.blacklisted}
             remove={this.removeBlack} />;
-
+        let muted = <ChannelList
+            full={this.full}
+            name="Muted Advertisers"
+            list={this.state.settings.muted}
+            remove={this.removeMute} />;
         let adsUi = <AdList full={this.full} blacklist={this.addBlacklist} ref={el => this.adsComp = el} />;
 
         let settingsUi = <SettingsTools
@@ -167,6 +175,7 @@ class Main extends Component {
                         </div>
                         <div className="col-md">
                             {blacklist}
+                            {muted}
                             {adsUi}
                         </div>
                     </div>
@@ -185,6 +194,7 @@ class Main extends Component {
                     <div className="table-container">
                         {whitelist}
                         {blacklist}
+                        {muted}
                         {adsUi}
                     </div>
                     <hr />
@@ -270,7 +280,7 @@ class AdList extends Component {
 
     getList() {
         return new Promise((resolve, reject) => {
-            browser.runtime.sendMessage({ action: "recentads" }, response => {
+            browser.runtime.sendMessage({ action: "get-ads", type: "all" }, response => {
                 console.log("Ads:", response);
                 response = response.reverse();
 
