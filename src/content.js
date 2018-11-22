@@ -86,6 +86,7 @@
             browser.runtime.onMessage.removeListener(init.onBrowserMessage);
         }
     }
+
     class AdWatcher {
         constructor(onReceiveSettings) {
             this.onReceiveSettings = onReceiveSettings;
@@ -164,6 +165,7 @@
             return parent.appendChild((() => {
                 let el = document.createElement("script");
                 el.setAttribute("id", "replacement");
+                el.setAttribute("type", "text/javascript");
                 el.appendChild(document.createTextNode(code));
                 return el;
             })());
@@ -317,7 +319,7 @@
         window.removeEventListener("uBOWLInstance", dejector);
         agent.send("destroy");
         init.destroy();
-        adwatcher.destroy();
+        //adwatcher.destroy();
         agent.destroy();
     });
 
