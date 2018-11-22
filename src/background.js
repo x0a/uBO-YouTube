@@ -1,287 +1,525 @@
 "use strict";
 
 (function (window, browser, undefined) {
-    const devMode = isDevMode();
-    let settings;
-    let recentads = [];
-    let blacklisted = [];
+    let settings; // :SettingsManager
+    let ads; // :AdManager
 
-    let saveSettings = () => {
-        return new Promise((resolve, reject) => {
-            browser.storage.sync.set(settings, resolve)
-            setTimeout(resolve, 800) // resolve anyway if it takes too long, for Edge
-        })
+    class SettingsManager {
+        constructor(settings) {
+            if (!settings) settings = {};
+            if (!settings.whitelisted) settings.whitelisted = [];
+            if (!settings.blacklisted) settings.blacklisted = [];
+            if (!settings.muted) settings.muted = [];
+
+            this.whitelisted = settings.whitelisted;
+            this.blacklisted = settings.blacklisted;
+            this.muted = settings.muted;
+        }
+
+        updateAll(originTab) {
+            browser.tabs.query({}, tabs => {
+                for (let tab of tabs) {
+                    const origin = (originTab && originTab.id === tab.id) || false;
+                    browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, initiator: origin }, response => {
+                        //console.log(response);
+                    });
+                }
+            });
+        }
+
+        static injectAll() {
+            browser.tabs.query({}, tabs => {
+                for (let tab of tabs) {
+                    try {
+                        browser.tabs.executeScript(tab.id, { file: "content.js" }, () => {
+                            void browser.runtime.lastError;
+                        })
+                    } catch (e) { }
+                }
+            });
+        }
+
+        addToWhitelist(channelId) {
+            if (this.inWhitelist(channelId.id) === -1) {
+                this.whitelisted.push(channelId);
+                return true;
+            }
+            return false;
+        }
+
+        addToBlacklist(channelId) {
+            if (this.inBlacklist(channelId.id) === -1) {
+                this.blacklisted.push(channelId);
+                return true;
+            }
+            return false;
+        }
+
+        addToMutelist(channelId) {
+            if (this.inMutelist(channelId.id) === -1) {
+                this.muted.push(channelId);
+                return true;
+            }
+            return false;
+        }
+
+        removeFromWhitelist(id) {
+            let i = -1;
+            let removeCount = 0;
+
+            while ((i = this.inWhitelist(id)) !== -1) {
+                this.whitelisted.splice(i, 1);
+                removeCount++;
+            }
+            return removeCount;
+        }
+        removeFromBlacklist(id) {
+            let i = -1;
+            let removeCount = 0;
+
+            while ((i = this.inBlacklist(id)) !== -1) {
+                this.blacklisted.splice(i, 1);
+                removeCount++;
+            }
+            return removeCount;
+        }
+        removeFromMutelist(id) {
+            let i = -1;
+            let removeCount = 0;
+
+            while ((i = this.inMutelist(id)) !== -1) {
+                this.muted.splice(i, 1);
+                removeCount++;
+            }
+            return removeCount;
+        }
+        inWhitelist(id) {
+            for (let index in this.whitelisted) {
+                if (this.whitelisted[index].id === id)
+                    return index;
+            }
+            return -1;
+        }
+        inBlacklist(id) {
+            for (let index in this.blacklisted) {
+                if (this.blacklisted[index].id === id)
+                    return index;
+            }
+            return -1;
+        }
+        inMutelist(id) {
+            for (let index in this.muted) {
+                if (this.muted[index].id === id)
+                    return index;
+            }
+            return -1;
+        }
+
+        get() {
+            return {
+                whitelisted: this.whitelisted,
+                blacklisted: this.blacklisted,
+                muted: this.muted
+            };
+        }
+        save() {
+            return new Promise((resolve, reject) => {
+                browser.storage.sync.set(this.get(), resolve)
+                setTimeout(resolve, 800) // resolve anyway if it takes too long, for Edge
+            })
+        }
+    }
+
+    class AdManager {
+        constructor() {
+            this.ads = [];
+            this.pending = [];
+            this.apiAvailable = false;
+            this.checkPermissions();
+        }
+
+        push(ad) {
+            while (this.ads.length > 20) {
+                this.ads.shift(); // just trim a little off the top fam
+            }
+            this.ads.push(ad);
+        }
+
+        queue(details) {
+            let resolver, rejector;
+
+            let promise = new Promise((resolve, reject) => {
+                resolver = resolve;
+                rejector = reject
+            }).then(ad => {
+                this.pending.splice(this.pending.findIndex(item => promise === item.promise), 1)
+                this.push(ad);
+                this.sendToTab(ad.details.tabId, ad);
+            }).catch(ad => {
+                console.error("No UCID available", ad)
+            });
+
+            this.pending.push({ details: details, promise: promise });
+
+            return [resolver, rejector];
+        }
+        get() {
+            let promises = []
+            for (let i = this.pending.length - 1; i > -1; i--) {
+                promises.push(this.pending[i].promise)
+            }
+            return Promise.all(promises).then(() => this.ads);
+        }
+        sendToTab(tabId, ad) {
+            browser.tabs.query({}, tabs => {
+                for (let tab of tabs) {
+                    if (tab.id !== tabId) continue;
+                    browser.tabs.sendMessage(tab.id, { action: "ad-update", ad: ad }, response => { });
+                    return;
+                }
+            });
+        }
+        getLastAdFromTab(tabId) /** :Promise */ {
+            for (let i = this.pending.length - 1; i > -1; i--) {
+                if (this.pending[i].details.tabId === tabId) {
+                    return this.pending[i].promise;
+                }
+            }
+
+            for (let i = this.ads.length - 1; i > -1; i--) {
+                if (this.ads[i].details.tabId === tabId) {
+                    return Promise.resolve(this.ads[i]);
+                }
+            }
+
+            return Promise.reject();
+        }
+
+        findChannelFromPreviousAd(id) {
+            return this.ads.find(item => item.channelId.id === id)
+        }
+
+        findPrevAdByVideoId(videoId) {
+            for (let ad of this.ads) {
+                if (ad.video_id === videoId) {
+                    return ad;
+                }
+            }
+            return false;
+        }
+
+        fetchChannelTitle(id) {
+            if (this.apiAvailable) {
+                // if user enabled the gAPI permission, use it because its 80% faster
+                return fetch("https://content.googleapis.com/youtube/v3/channels?part=snippet&id=" + id + "&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo")
+                    .then(response => response.json())
+                    .then(json => {
+                        if (json && json.items && json.items.length && json.items[0].snippet && json.items[0].snippet.title) {
+                            return json.items[0].snippet.title;
+                        } else {
+                            return id;
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        return id;
+                    })
+            } else {
+                return fetch("https://www.youtube.com/channel/" + id)
+                    .then(response => response.text())
+                    .then(text => {
+                        let matches = text.match(/\<meta name=\"title\" content=\"(.+)\"\>/);
+                        if (matches && matches[1]) {
+                            return matches[1];
+                        } else {
+                            return id;
+                        }
+                    }).catch(err => {
+                        console.error(err);
+                        return id;
+                    })
+            }
+        }
+
+        getChannelFromURL(url) {
+            if (!url) return false;
+
+            let matches = url.match(/\/channel\/([\w-]+)(?:\/|$|\?)/);
+
+            if (matches && matches[1])
+                return matches[1];
+            else
+                return false;
+        }
+
+        parseURL(url) {
+            let parser = document.createElement('a');
+            let params = {}
+            let queries;
+
+            parser.href = url.replace(/\+/g, '%20'); // Let the browser do the work
+            queries = parser.search.replace(/^\?/, '').split('&');
+
+            for (let i = 0; i < queries.length; i++) {
+                // Convert query string to object
+                let split = queries[i].split('=');
+                params[split[0]] = split[1];
+            }
+
+            return {
+                protocol: parser.protocol,
+                host: parser.host,
+                hostname: parser.hostname,
+                port: parser.port,
+                pathname: parser.pathname,
+                search: parser.search,
+                params: params,
+                hash: parser.hash
+            };
+        }
+        checkPermissions(){
+            let neededPerms = { origins: ["*://*.content.googleapis.com/"] };
+            gCall(browser.permissions.contains, neededPerms, granted => this.apiAvailable = granted);
+        }
     }
 
     browser.storage.sync.get(null, items => {
-        settings = items ? items : {};
 
-        if (!settings.whitelisted) settings.whitelisted = [];
-        if (!settings.blacklisted) settings.blacklisted = [];
+        settings = new SettingsManager(items);
+        ads = new AdManager();
 
         browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-            if (message.action === "get") {
-                sendResponse(settings);
+            let sendError = null;
+
+            if (message.action === "get-lists") {
+                sendResponse(settings.get());
             } else if (message.action === "set") {
                 if (message.changes.type === "add-white") {
-                    if (inwhitelist(message.changes.channelId.id) === -1) {
-                        settings.whitelisted.push(message.changes.channelId);
-                    }
+                    settings.addToWhitelist(message.changes.channelId);
+                } else if (message.changes.type === "add-mute") {
+                    settings.addToMutelist(message.changes.channelId)
+                    sendError = "";
                 } else if (message.changes.type === "add-black") {
-                    if (inblacklist(message.changes.channelId.id) === -1) {
-                        settings.blacklisted.push(message.changes.channelId);
+                    if (settings.addToBlacklist(message.changes.channelId)) {
+                        sendError = "";
+                    } else {
+                        sendError = "Already in blacklist";
                     }
+                } else if (message.changes.type === "remove-mute") {
+                    settings.removeFromMutelist(message.changes.channelId.id);
+                    sendError = "";
                 } else if (message.changes.type === "remove-white") {
-                    let i = -1;
-
-                    while ((i = inwhitelist(message.changes.channelId.id)) !== -1) {
-                        settings.whitelisted.splice(i, 1);
-                    }
+                    settings.removeFromWhitelist(message.changes.channelId.id)
                 } else if (message.changes.type === "remove-black") {
-                    let i = -1;
-                    while ((i = inblacklist(message.changes.channelId.id)) !== -1) {
-                        settings.blacklisted.splice(i, 1);
-                    }
+                    settings.removeFromBlacklist(message.changes.channelId.id);
                 } else if (message.changes.type === "bulk") {
-                    settings = message.changes.settings;
+                    settings = new SettingsManager(message.changes.settings);
                 }
 
-                saveSettings();
+                settings.save();
 
-                if (!sender.tab || sender.tab.id === -1) {
-                    sendResponse({ action: "update", settings: settings });
+                if (!sender.tab || sender.tab.id === -1 || sendError !== null) {
+                    sendResponse({ action: "update", settings: settings, error: sendError });
                 }
 
-                browser.tabs.query({}, tabs => {
-                    for (let tab of tabs) {
-                        const origin = (sender.tab && sender.tab.id === tab.id) || false;
-                        browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, isOriginator: origin }, response => {
-                            //console.log(response);
-                        });
-                    }
-                });
+                settings.updateAll(sender.tab);
 
-
-            } else if (message.action === "recentads") {
-                sendResponse(recentads);
-            } else if (message.action === "blacklist") {
-                //find the last intercepted ad from this tab
-                for (let ad of recentads.slice().reverse()) {
-                    if (ad.details.tabId === sender.tab.id) {
-                        if (inblacklist(ad.channelId.id) !== -1) {
-                            sendResponse({ error: "Advertiser already blacklisted" });
-                            return; //already exists in blacklist, or UCID not available
-                        }
-
-                        settings.blacklisted.push(ad.channelId);
-                        saveSettings();
-                        sendResponse({ error: "", info: ad });
-                        return; //also break;
-                    }
+            } else if (message.action === "get-ads") {
+                if (message.type === "all") {
+                    ads.get().then(adList => sendResponse(adList));
+                    return true;
+                } else if (message.type === "current-tab") {
+                    ads.getLastAdFromTab(sender.tab.id)
+                        .then(ad => {
+                            sendResponse({ ad: ad })
+                        })
+                        .catch(() => {
+                            sendResponse({ error: "Ad not found" });
+                        })
+                    return true;
                 }
-                sendResponse({ error: "Ad not found" });
             } else if (message.action === "mute") {
-                return; // TODO
                 browser.tabs.update(sender.tab.id, {
                     muted: message.mute
-                }).then(() => {
-                    sendResponse({ error: "" });
-                })
+                });
+                sendResponse({ error: "" });
+            } else if (message.action = "permission"){
+                if(message.type = "google-api"){
+                    ads.checkPermissions();
+                }
+                sendResponse({ error: "" });
             }
         });
 
-        browser.webRequest.onBeforeSendHeaders.addListener((details) => {
+        browser.webRequest.onBeforeSendHeaders.addListener(details => {
             if (details.tabId === -1) return; //probably came from an extension, which we don't want to process
-
+            
             let request = new XMLHttpRequest();
-            let url = parseURL(details.url);
-            let cancel = false;
-            let adinfo = { params: {} };
-
+            let url = ads.parseURL(details.url);
+            let ad = {};
+            let [done, failed] = ads.queue(details);
+            let shouldCancel = false;
+            let gotChannelTitle;
+            
             if (url.pathname === "/get_video_info" && url.params.video_id) {
-                let blacklistedItem = blacklisted.find(obj => obj.video_id === url.params.video_id);
+                let prevAd = ads.findPrevAdByVideoId(url.params.video_id);
 
-                if (blacklistedItem) {
-                    cancel = true;
-                    adinfo.params.channelId = blacklistedItem.channelId;
-                } else {
+                if (prevAd) { // at this point, all we have is the vID, no channel information, unless we've seen this specific vid before
+                    if (settings.inBlacklist(prevAd.channelId.id) !== -1) {
+                        shouldCancel = true;
+                    }
+
+                    ad = cloneObject(prevAd);
+                    gotChannelTitle = Promise.resolve();
+                } else { //get more information by accessing the url ourselves
                     request.open('GET', details.url, false);  // `false` makes the request synchronous
                     request.send(null);
 
                     if (request.status === 200) {
-                        adinfo = parseURL("?" + request.responseText);
-                        adinfo.params.channelId = { id: adinfo.params.ucid || parseChannel(adinfo.params.channel_url), display: "", username: "" };
+                        ad = ads.parseURL("?" + request.responseText).params;
 
-                        if (adinfo.params.channelId.id) {
-                            if (inblacklist(adinfo.params.channelId.id) !== -1) {
-                                //block, and also add video id to the list so that we dont do this synchrous request again
-                                blacklisted.push({ video_id: url.params.video_id, channelId: adinfo.params.channelId });
-                                cancel = true;
+                        ad.channelId = {
+                            id: ad.ucid || ads.getChannelFromURL(ad.channel_url),
+                            display: "",
+                            username: ""
+                        };
+
+                        if (ad.channelId.id) {
+                            if (settings.inBlacklist(ad.channelId.id) !== -1) {
+                                shouldCancel = true;
                             }
 
-                            if (!adinfo.params.author) {
-                                let prev = recentads.find(item => item.channelId.id === adinfo.params.channelId.id);
-
-                                if (prev && prev.channelId.display !== prev.channelId.id) {
+                            if (ad.author) {
+                                ad.channelId.display = decodeURIComponent(ad.author);
+                                gotChannelTitle = Promise.resolve();
+                            } else {
+                                let prevChannel = ads.findChannelFromPreviousAd(ad.channelId.id);
+                                if (prevChannel && prevChannel.display !== prevChannel.id) {
                                     //found a recent ad where we already got the display title
-                                    adinfo.params.channelId.display = prev.channelId.display
+                                    ad.channelId.display = prevChannel.display
+                                    gotChannelTitle = Promise.resolve();
                                 } else {
                                     //asynchrously get the author title, very messy but it's the best way 
                                     //the json method requires sending special headers
-                                    adinfo.params.channelId.display = adinfo.params.channelId.id;
+                                    ad.channelId.display = ad.channelId.id;
 
-                                    request.open("GET", "https://www.youtube.com/channel/" + adinfo.params.channelId.id, true);
-                                    request.onreadystatechange = function () {
-                                        if (this.readyState === 4 && this.status === 200) {
-                                            let matches = request.responseText.match(/\<meta name=\"title\" content=\"(.+)\"\>/);
-                                            if (matches && matches[1]) {
-                                                adinfo.params.channelId.display = matches[1];
-                                            }
-                                        }
-                                    };
-                                    request.send();
+                                    gotChannelTitle = ads.fetchChannelTitle(ad.channelId.id)
+                                        .then(title => ad.channelId.display = title)
+                                        .catch(title => ad.channelId.display = title);
                                 }
-                            } else
-                                adinfo.params.channelId.display = decodeURIComponent(adinfo.params.author);
+                            }
                         }
                     }
                 }
 
-                adinfo.params.details = details;
-                adinfo.params.blocked = cancel;
+                ad.details = details;
+                ad.blocked = shouldCancel;
 
-                if (adinfo.params.channelId.id) {
-                    while (recentads.length > 20)
-                        recentads.shift(); //just trim a little off the top fam
-                    recentads.push(adinfo.params);
-                } else
-                    console.log(adinfo.params)
+                if (ad.channelId.id) {
+                    gotChannelTitle
+                        .then(() => done(ad))
+                        .catch(() => done(ad));
+                } else {
+                    failed(ad);
+                }
 
             } else {
-                console.log("Invalid request", url);
+                failed("Invalid request: " + url);
             }
 
-            return { cancel: cancel };
+            return { cancel: shouldCancel };
 
         }, { urls: ["*://www.youtube.com/get_video_info?*"] }, ["blocking"])
     });
 
-    browser.tabs.query({}, tabs => {
-        for (let tab of tabs) {
-            try {
-                browser.tabs.executeScript(tab.id, { file: "content.js" }, () => {
-                    void browser.runtime.lastError;
-                })
-            } catch (e) { }
+    SettingsManager.injectAll();
+
+    class Development {
+        constructor(server) {
+            this.developmentServer = server || "ws://127.0.0.1:3050";
+            this.originalLog = console.log;
+            this.originalErr = console.error;
+            this.reconnectInterval = 1500;
+            this.timeoutInt = null;
+            this.ws = null;
+
+            this.connect = this.connect.bind(this);
         }
-    });
+        connect() {
+            this.ws = new WebSocket(this.developmentServer);
+            this.ws.addEventListener("open", event => {
+                this.timeoutInt = null;
+                this.prepareDevEnv();
 
-    if (false && devMode) {
-        // make it easier to reload extension during development		
-        let log = console.log, error = console.error, timeoutInt, ws;
-        function prepareConnection() {
-            ws = new WebSocket("ws://127.0.0.1:3050");
-
-            ws.addEventListener("open", event => {
-                timeoutInt = null;
-                console.log = function () {
-                    ws.send(JSON.stringify({
-                        log: Array.from(arguments).join(", ")
-                    }))
-                }
-                console.error = function () {
-                    ws.send(JSON.stringify({
-                        error: Array.from(arguments).join(", ")
-                    }))
-                }
-                ws.send(JSON.stringify({
+                this.ws.send(JSON.stringify({
                     userAgent: navigator.userAgent
                 }));
-                console.log("Hello");
+
+                console.log("Hello world");
             });
 
-            ws.addEventListener("message", event => {
-                if (event.data === "reload")
-                    ws.close(1000);
-                browser.runtime.reload();
+            this.ws.addEventListener("message", event => {
+                if (event.data === "reload") {
+                    this.ws.close(1000);
+                    browser.runtime.reload();
+                } else if (event.data === "partialreload") {
+                    SettingsManager.injectAll();
+                    console.log("Re-injected scripts");
+                }
             });
 
-            ws.addEventListener("error", event => {
-                if (timeoutInt)
-                    clearInterval(timeoutInt);
+            this.ws.addEventListener("error", event => this.queueConnection());
 
-                timeoutInt = setTimeout(prepareConnection, 1500)
+            this.ws.addEventListener("close", () => {
+                this.removeDevEnv();
+                this.queueConnection();
             });
 
-            ws.addEventListener("close", () => {
-                console.log = log;
-                console.error = error;
-
-                if (timeoutInt)
-                    clearInterval(timeoutInt);
-
-
-                timeoutInt = setTimeout(prepareConnection, 1500);
-            });
         }
 
-        prepareConnection();
+        queueConnection() {
+            if (this.timeoutInt)
+                clearInterval(this.timeoutInt);
+            this.timeoutInt = setTimeout(this.connect, this.reconnectInterval);
+        }
 
+        prepareDevEnv() {
+            let self = this;
+            console.log = function () {
+                self.ws.send(JSON.stringify({
+                    log: Array.from(arguments)
+                }))
+            }
+            console.error = function () {
+                self.ws.send(JSON.stringify({
+                    error: Array.from(arguments)
+                }))
+            }
+        }
+
+        removeDevEnv() {
+            console.log = this.originalLog;
+            console.error = this.originalErr;
+        }
+        static detectedDevMode() {
+            return browser.runtime.getManifest && !('update_url' in browser.runtime.getManifest());
+        }
+    }
+
+    if (true && Development.detectedDevMode()) { // set to false in production builds
+        let devClient = new Development();
+        devClient.connect();
         console.log("[", Date.now(), "]: Development mode");
     }
 
-    function inblacklist(search) {
-        for (let index in settings.blacklisted) {
-            if (settings.blacklisted[index].id === search)
-                return index;
+    function gCall(func, args, callback) {
+        let ret = func(args, callback);
+        if (ret instanceof Promise) {
+            ret.then(callback);
         }
-        return -1;
-    }
-    function inwhitelist(search) {
-        for (let index in settings.whitelisted) {
-            if (settings.whitelisted[index].id === search)
-                return index;
-        }
-        return -1;
     }
 
-    function parseChannel(search) {
-        if (!search) return false;
-
-        let matches = search.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/);
-
-        if (matches && matches[2])
-            return matches[2];
-        else
-            return false;
-    }
-
-    function parseURL(url) {
-        let parser = document.createElement('a'),
-            params = {},
-            queries;
-        // Let the browser do the work
-        parser.href = url.replace(/\+/g, '%20');
-        // Convert query string to object
-        queries = parser.search.replace(/^\?/, '').split('&');
-        for (let i = 0; i < queries.length; i++) {
-            let split = queries[i].split('=');
-            params[split[0]] = split[1];
-        }
-        return {
-            protocol: parser.protocol,
-            host: parser.host,
-            hostname: parser.hostname,
-            port: parser.port,
-            pathname: parser.pathname,
-            search: parser.search,
-            params: params,
-            hash: parser.hash
-        };
-    }
-
-    function isDevMode() {
-        return browser.runtime.getManifest && !('update_url' in browser.runtime.getManifest());
+    function cloneObject(obj) {
+        return JSON.parse(JSON.stringify(obj));
     }
 })(window, (() => { let api; try { api = browser; } catch (e) { api = chrome }; return api })())
-
