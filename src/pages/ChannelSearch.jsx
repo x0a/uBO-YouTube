@@ -56,7 +56,12 @@ class ChannelSearch extends Component {
         guaranteeCallback(
             browser.permissions.request,
             { origins: ["*://*.content.googleapis.com/"] },
-            granted => this.setState({ permission: granted }, this.focusSearch)
+            granted => {
+                if (granted) {
+                    browser.runtime.sendMessage({ action: "permission", type: "google-api" }, response => { })
+                }
+                this.setState({ permission: granted }, this.focusSearch)
+            }
         );
     }
 
@@ -81,9 +86,9 @@ class ChannelSearch extends Component {
 
         this.setState(nextState);
     }
-    channelSelected(channel){
+    channelSelected(channel) {
         this.selectChannel(channel)
-        .then(() => this.searchInput.select());
+            .then(() => this.searchInput.select());
     }
     focusSearch() {
         if (this.searchInput)
@@ -196,7 +201,7 @@ class Channel extends Component {
             });
         }
     }
-    
+
     getUrl(added) {
         return "https://youtube.com/channel/" + this.item.id.channelId + (added ? "?igno=re&disableadblock=1" : "");
     }
