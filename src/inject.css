@@ -64,9 +64,7 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     margin-top: -8px;
     margin-left: -8px;
 }
-
-#BLK-button .BLK-tooltip {
-    visibility: hidden;
+.BLK-tooltip{
     background-color: rgba(28, 28, 28, 0.9);
     color: rgb(238, 238, 238);
     text-align: center;
@@ -74,14 +72,17 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     padding: 5px 9px;
     position: absolute;
     z-index: 1001;
-    bottom: 140%;
-    left: 50%;
-    transform: translateX(-50%);
     font-weight: 500;
     line-height: 15px;
     white-space: nowrap;
     opacity: 0;
     transition: opacity .5s;
+}
+#BLK-button .BLK-tooltip {
+    visibility: hidden;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 140%;
 }
 
 #BLK-button:hover .BLK-tooltip {
@@ -116,8 +117,18 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif;
 }
 
+.UBO-menu-item .BLK-tooltip{
+    visibility: hidden;
+    right: 105%;
+    bottom: auto;
+}
+
 .UBO-menu-item:hover {
     background-color: rgba(255, 255, 255, .1);
+}
+.UBO-menu-item:hover .BLK-tooltip{
+    visibility: visible;
+    opacity: 1;
 }
 
 .UBO-icon{
