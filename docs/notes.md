@@ -19,7 +19,7 @@ the page before it loads, make changes, and pass the changes to the page.
 And use onbeforescriptexecute to catch the object during initial load.
 
 ## CHANNEL INFORMATION
-In the polyfill design, YouTube has conveniently placed the channel data in *\[htmlElement\]*.data.navigationEndpoint.browseEndpoint.browseId
+In the Polymer design, YouTube has conveniently placed the channel data in *\[htmlElement\]*.data.navigationEndpoint.browseEndpoint.browseId
 or *\[htmlElement\]*.data.response.metadata.channelMetadataRenderer.externalId in the case of the channel page.
 
 The container that we place the whitelist button into is
