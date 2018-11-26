@@ -80,7 +80,7 @@
             this.head.appendChild(this.cssFile);
         }
         destroy() {
-            this.cssFile.disabled = "true";
+            this.cssFile.disabled = true;
             this.head.removeChild(this.cssFile);
             this.head.removeChild(this.jsFile);
             browser.runtime.onMessage.removeListener(init.onBrowserMessage);
@@ -118,7 +118,7 @@
                         console.log("Object missing data");
                     }
                 } else {
-                    console.log("Trouble parsing inline script tag:", e)
+                    console.log("Trouble parsing inline script tag:", event)
                 }
             }
         }
@@ -272,6 +272,7 @@
         }
         destroy() {
             Object.keys(this.events).forEach(key => this.events[key] = []);
+
             return Promise.all(this.requestsPending.concat(this.resolvers)).then(() => {
                 window.removeEventListener("message", this.messageListener);
                 this.resolvers = null;
@@ -322,5 +323,4 @@
         //adwatcher.destroy();
         agent.destroy();
     });
-
 })(window, document, (() => { let api; try { api = browser; } catch (e) { api = chrome }; return api })(), console)
