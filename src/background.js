@@ -1,3 +1,4 @@
+// @ts-check
 "use strict";
 
 (function (window, browser, undefined) {
@@ -96,21 +97,21 @@
         inWhitelist(id) {
             for (let index in this.whitelisted) {
                 if (this.whitelisted[index].id === id)
-                    return index;
+                    return ~~index;
             }
             return -1;
         }
         inBlacklist(id) {
             for (let index in this.blacklisted) {
                 if (this.blacklisted[index].id === id)
-                    return index;
+                    return ~~index;
             }
             return -1;
         }
         inMutelist(id) {
             for (let index in this.muted) {
                 if (this.muted[index].id === id)
-                    return index;
+                    return ~~index;
             }
             return -1;
         }
@@ -522,4 +523,5 @@
     function cloneObject(obj) {
         return JSON.parse(JSON.stringify(obj));
     }
+    //@ts-ignore
 })(window, (() => { let api; try { api = browser; } catch (e) { api = chrome }; return api })())
