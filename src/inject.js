@@ -6,60 +6,19 @@
     const CHANNEL = 2;
     const SEARCH = 3;
     const ALLELSE = -1;
-    const RELATED = 1;
     const LPOLY = 2; // new polymer layout
     const LBASIC = 1; // old basic layout, less and less supported as time goes on
 
     /* ---------------------------- */
 
-    const agent = new MessageAgent();
-
     let settings = { whitelisted: [], blacklisted: [], muted: [] };
     let accessURLs = {};
-    let pages, watcher;
-
-    agent.send("get-settings").then(response => {
-        settings = response.settings;
-        accessURLs = response.accessURLs;
-
-        if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
-            init(); // DOMContentAlreadyLoaded
-        } else {
-            document.addEventListener("DOMContentLoaded", init);
-        }
-    });
-
-    function init() {
-        pages = new Page(Page.getDesign());
-        watcher = new MutationWatcher();
-        pages.update(pages.getMode(), true);
-        watcher.start();
-
-        agent.on("settings-update", updated => {
-            settings = updated.settings;
-            pages.update(pages.getMode(), true, updated.initiator)
-        }).on("ad-update", ad => {
-            pages.updateAd(ad);
-        }).on("destroy", () => {
-            console.log("Detaching inject script..");
-
-            agent.destroy();
-            watcher.destroy();
-            domCleanup();
-        }).send("ready");
-    }
-
-    function domCleanup() {
-        let nodes = document.querySelectorAll("#BLK-button,.UBO-button,.UBO-button-container,.UBO-menu");
-
-        for (let node of nodes) {
-            node.remove();
-        }
-    }
+    let pages, watcher, agent;
 
     class MutationWatcher {
         constructor() {
             this.watcher = new MutationObserver(this.onMutation.bind(this));
+            this.pendingActions = {};
         }
 
         start() {
@@ -67,7 +26,7 @@
                 childList: true,
                 subtree: true,
                 attributes: true,
-                attributeFilter: ["hidden", "href"],
+                attributeFilter: ["hidden", "href", "style"],
                 attributeOldValue: true
             });
         }
@@ -144,46 +103,60 @@
                     && (mutation.target.id === "items" || mutation.target.id === "contents")
                 )
         }
+        finishedLoadingBasic(mutation) {
+            for (let node of mutation.removedNodes) {
+                if (node.id === "progress") {
+                    return true; // old layout, progress bar removed
+                }
+            }
+            return false;
+        }
+        isAdSkipButton(mutation) {
+            return mutation.type === "attributes"
+                && mutation.target.classList.contains("videoAdUiSkipContainer")
+                && mutation.target.style.display !== "none"
+                && mutation.target.querySelector("button");
+        }
+        queueUpdate(method) {
+            if (this.pendingActions[method]) {
+                clearTimeout(this.pendingActions[method]);
+            }
+            this.pendingActions[method] = setTimeout(() => {
+                delete this.pendingActions[method];
+                method();
+            }, 50);
+        }
         onMutation(mutations) {
             let mode = pages.getMode();
 
             for (let mutation of mutations) {
                 if (mode === VIDEO) {
-                    let player, userInfo;
+                    let player, userInfo, skipButton;
 
                     if (player = this.isPlayerUpdate(mutation)) {
                         pages.video.updateAdPlaying(player, !!player.classList.contains("ad-showing"))
                     } else if (userInfo = this.isPolyUserInfo(mutation)) {
-                        pages.video.updatePage(userInfo, false, false);
+                        pages.video.setDataNode(userInfo)
+                        pages.video.updatePage();
                     } else if (userInfo = this.isBasicUserInfo(mutation)) {
-                        pages.video.updatePage(userInfo);
+                        pages.video.setDataNode(userInfo)
+                        pages.video.updatePage();
                     } else if (this.isRelatedUpdate(mutation)) {
-                        pages.video.updateVideos();
+                        this.queueUpdate(pages.channel.updateVideos);
                     } else if (this.isPlayerDurationUpdate(mutation)) {
                         pages.video.updateDuration(mutation.target.textContent);
+                    } else if (skipButton = this.isAdSkipButton(mutation)) {
+                        pages.video.updateSkip(skipButton);
                     }
                 } else if (mode === CHANNEL || mode === SEARCH || mode === ALLELSE) {
-                    let loaded = false;
-
-                    if (this.hasNewItems(mutation)) { // new items in videolist
-                        loaded = true;
-                    } else {
-                        for (let node of mutation.removedNodes) {
-                            if (node.id === "progress") {
-                                loaded = true; // old layout, progress bar removed
-                                break;
-                            }
-                        }
-                    }
-
-                    if (loaded) {
-                        if (mode === CHANNEL)
-                            pages.channel.updatePage();
-                        else if (mode === SEARCH)
-                            pages.search.updatePage();
-                        else if (mode === ALLELSE)
+                    if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
+                        if (mode === CHANNEL) {
+                            this.queueUpdate(pages.channel.updatePage);
+                        } else if (mode === SEARCH) {
+                            this.queueUpdate(pages.search.updatePage);
+                        } else if (mode === ALLELSE) {
                             pages.updateAllVideos();
-                        break;
+                        }
                     }
                 }
 
@@ -224,6 +197,7 @@
 
 
     }
+
     class WhitelistButtonPoly extends WhitelistButton {
         constructor(onClick, toggled) {
             super(onClick, toggled);
@@ -237,6 +211,7 @@
             return this.buttonContainer;
         }
     }
+
     class WhitelistButtonBasic extends WhitelistButton {
         constructor(onClick, toggled) {
             super(onClick, toggled);
@@ -252,7 +227,7 @@
     }
 
     class AdOptions {
-        constructor(onBlacklist, onMute) {
+        constructor(onBlacklist, onMute, onSkip) {
             this.toggleMenu = this.toggleMenu.bind(this);
             this.unfocusedMenu = this.unfocusedMenu.bind(this);
 
@@ -300,10 +275,44 @@
                 let el = document.createElement("button");
                 el.setAttribute("class", "UBO-menu-item");
                 el.appendChild(this.muteBlock);
+                el.appendChild((() => {
+                    let el = document.createElement("span");
+                    el.setAttribute("class", "BLK-tooltip");
+                    el.appendChild(document.createTextNode("Mute all ads from this advertiser"));
+                    return el;
+                })())
                 el.addEventListener("click", onMute)
                 return el;
             })()
-
+            this.skipButton = (() => {
+                let el = document.createElement("button");
+                el.setAttribute("class", "UBO-menu-item");
+                el.appendChild((() => {
+                    let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    el.setAttribute("data-icon", "fast-forward");
+                    el.setAttribute("viewBox", "0 0 512 512");
+                    el.setAttribute("class", "UBO-icon");
+                    el.appendChild((() => {
+                        let el = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        el.setAttributeNS(null, "fill", "currentColor");
+                        el.setAttributeNS(null, "d", "M512 76v360c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12V284.1L276.5 440.6c-20.6 17.2-52.5 2.8-52.5-24.6V284.1L52.5 440.6C31.9 457.8 0 443.4 0 416V96c0-27.4 31.9-41.7 52.5-24.6L224 226.8V96c0-27.4 31.9-41.7 52.5-24.6L448 226.8V76c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12z");
+                        return el;
+                    })());
+                    return el;
+                })())
+                el.appendChild(document.createTextNode("Attempt skip"));
+                el.appendChild((() => {
+                    let el = document.createElement("span");
+                    el.setAttribute("class", "BLK-tooltip");
+                    el.appendChild(document.createTextNode("Try to skip this ad. If unskippable, it will play at 5x speed to the end."));
+                    return el;
+                })())
+                el.addEventListener("click", () => {
+                    this.closeMenu();
+                    onSkip()
+                })
+                return el;
+            })()
 
             this.menu = (() => {
                 let el = document.createElement("div");
@@ -326,10 +335,17 @@
                         return el;
                     })());
                     el.appendChild(document.createTextNode("Block advertiser"));
+                    el.appendChild((() => {
+                        let el = document.createElement("span");
+                        el.setAttribute("class", "BLK-tooltip");
+                        el.appendChild(document.createTextNode("Block all ads from this advertiser"));
+                        return el;
+                    })())
                     el.addEventListener("click", onBlacklist);
                     return el;
                 })());
                 el.appendChild(this.muteButton);
+                el.appendChild(this.skipButton)
                 el.addEventListener("focusin", () => this.menuFocused = true);
                 el.addEventListener("focusout", () => {
                     this.menuFocused = false;
@@ -381,14 +397,16 @@
         }
 
         set muteToggled(state) {
-            if (state === this.muted) return state;
+            state = !!state;
+            if (state === this.muted) return;
 
             if (this.muted) {
                 this.muteButton.removeChild(this.unMuteBlock);
             } else {
                 this.muteButton.removeChild(this.muteBlock);
             }
-            this.muted = !!state;
+
+            this.muted = state;
 
             if (state) {
                 agent.send("mute", { mute: true });
@@ -415,7 +433,7 @@
 
             return false;
         }
-        closeMenu(fromBlur = false) {
+        closeMenu() {
             this.menu.classList.add("hidden");
             this.tooltip.classList.remove("hidden");
             this.menuOpen = false;
@@ -441,45 +459,48 @@
             return this.menu;
         }
     }
+
     class SingleChannelPage {
-        constructor() {
-            this.dataContainer = null
+        constructor(ButtonFactory) {
+            this.dataNode = null
             this.buttonParent = null;
-            this.whitelistButton = null;
-            this.adOptions = new AdOptions(this.addBlacklist.bind(this), this.toggleMute.bind(this));
+            this.whitelistButton = new ButtonFactory(this.toggleWhitelist.bind(this), false);
+            this.adOptions = new AdOptions(this.addBlacklist.bind(this), this.toggleMute.bind(this), this.attemptSkip.bind(this));
             this.channelId = null;
             this.currentAd = null;
             this.currentDuration = "";
             this.firstRun = true;
             this.adPlaying = false;
             this.adConfirmed = false;
+            this.skipButton = null;
+            this.currentPlayer = null;
+            this.awaitingSkip = false;
         }
 
-        updatePage(container, forceUpdate, verify) {
-            container = this.normalizeContainer(container);
-            if (!container) return// console.error("Container not available");
+        updatePage(forceUpdate, verify) {
+            if (!this.dataNode && !this.setDataNode()) return;// console.error("Container not available");
 
-            this.channelId = this.getChannelId(container);
+            this.channelId = this.getChannelId(this.dataNode);
             if (!this.channelId) throw "Channel ID not available";
 
             let whitelisted = pages.updateURL(this.channelId, verify);
 
-            if (!(this.whitelistButton && this.whitelistButton.exists())) {
-                this.whitelistButton = this.getWhitelistButton(this.toggleWhitelist, whitelisted);
+            whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
+            if (!this.whitelistButton.exists()) {
                 this.insertButton(this.whitelistButton);
                 // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
                 if (this.firstRun) {
                     let player = document.querySelector("#movie_player");
+
                     if (player) {
                         this.updateAdPlaying(player, !!player.classList.contains("ad-showing"), true);
                     }
+
                     this.firstRun = false;
                 }
-            } else {
-                whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
-                this.updateAdButton();
             }
 
+            this.updateAdButton();
             this.updateVideos(whitelisted, forceUpdate);
         }
 
@@ -490,13 +511,14 @@
 
                 let options = this.adOptions.renderButton();
                 let menu = this.adOptions.renderMenu();
+
                 if (!container.contains(options)) {
                     container.insertBefore(options, container.firstChild);
                 }
                 if (!player.contains(menu)) {
                     player.appendChild(menu);
                 }
-
+                this.currentPlayer = player.querySelector("video");
                 if (firstRun) {
                     let duration = player.querySelector(".ytp-time-duration");
                     this.currentDuration = (duration && duration.textContent) || "";
@@ -514,6 +536,9 @@
                 this.adOptions.hide();
                 this.adPlaying = false;
                 this.adConfirmed = false;
+                this.awaitingSkip = false;
+                this.skipButton = null;
+                this.currentPlayer = null;
                 this.currentAd = null;
             }
 
@@ -527,7 +552,6 @@
         }
 
         updateAdButton() {
-            // console.log(this.adConfirmed, this.adPlaying, this.currentAd && this.currentAd.length_seconds, this.currentDuration, this);
             if (!this.adConfirmed && this.adPlaying && this.currentAd && this.withinSpec(this.currentDuration, this.currentAd.length_seconds)) {
                 this.adConfirmed = true;
                 this.adOptions.advertiserName = this.currentAd.channelId.display;
@@ -538,7 +562,22 @@
                 this.adOptions.muteToggled = ChannelID.inmutelist(this.currentAd.channelId) !== -1;
             }
         }
+        attemptSkip() {
+            if (!this.currentPlayer) return// console.error("Player not available");
+            if (this.skipButton) {
+                return this.skipButton.click();
+            }
+            this.adOptions.muteToggled = true;
+            this.awaitingSkip = true;
+            this.currentPlayer.playbackRate = 5;
+        }
+        updateSkip(skipButton) {
+            this.skipButton = skipButton;
 
+            if (this.awaitingSkip) {
+                this.skipButton.click();
+            }
+        }
         updateDuration(duration) {
             this.currentDuration = duration;
             this.updateAdButton()
@@ -563,7 +602,7 @@
 
                 for (let i = 0; i < durationParts.length; i++) {
                     if (isNaN(durationParts[i])) return 0;
-                    duration += durationParts[i] * Math.pow(60, durationParts.length - i - 1)
+                    duration += ~~durationParts[i] * Math.pow(60, durationParts.length - i - 1)
                 }
 
                 return duration;
@@ -594,7 +633,7 @@
         }
 
         toggleWhitelist() {
-            this.channelId = this.getChannelId(this.dataContainer);
+            this.channelId = this.getChannelId(this.dataNode);
             if (!this.channelId) throw "Channel ID not available";
 
             if (ChannelID.inwhitelist(this.channelId) !== -1) {
@@ -607,41 +646,40 @@
 
         }
     }
+
     class VideoPagePoly extends SingleChannelPage {
         constructor() {
-            super();
+            super(WhitelistButtonPoly);
             this.toggleWhitelist = this.toggleWhitelist.bind(this);
             this.updatePage = this.updatePage.bind(this);
+            this.updateVideos = this.updateVideos.bind(this);
         }
 
-        normalizeContainer(container) {
-            return this.dataContainer = container || this.dataContainer || document.querySelector("ytd-video-owner-renderer");
+        setDataNode(container) {
+            return this.dataNode = container || this.dataNode || document.querySelector("ytd-video-owner-renderer");
         }
 
-        normalizeParent(parent) {
+        setParentNode(parent) {
             return this.buttonParent = parent || this.buttonParent;
         }
-        getWhitelistButton(onClick, toggled) {
-            return new WhitelistButtonPoly(onClick, toggled);
-        }
         insertButton(button) {
-            this.normalizeParent(this.dataContainer.parentNode);
+            this.setParentNode(this.dataNode.parentNode);
 
-            if (this.dataContainer.nextSibling) {
-                this.buttonParent.insertBefore(button.render(), this.dataContainer.nextSibling);
+            if (this.dataNode.nextSibling) {
+                this.buttonParent.insertBefore(button.render(), this.dataNode.nextSibling);
             } else {
                 this.buttonParent.appendChild(button.render());
             }
         }
         updateVideos(whitelisted, forceUpdate) {
-            this.updateInfobar(this.dataContainer, whitelisted);
+            this.updateInfobar(this.dataNode, whitelisted);
             let relatedVideos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer");
 
             pages.updateVideos(relatedVideos, forceUpdate)
         }
 
         updateInfobar(container, whitelisted, channelId = this.channelId) {
-            container = this.normalizeContainer(container);
+            container = this.setDataNode(container);
             if (!container) return false;
             if (!channelId) return false;
 
@@ -662,7 +700,7 @@
 
         getChannelId(container) {
             let channelId = ChannelID.createNew();
-            container = this.normalizeContainer(container);
+            container = this.setDataNode(container);
 
             if (!container) return false;
 
@@ -673,20 +711,23 @@
             return ChannelID.validate(channelId);
         }
     }
+
     class VideoPageBasic extends SingleChannelPage {
         constructor() {
-            super();
+            super(WhitelistButtonBasic);
             this.toggleWhitelist = this.toggleWhitelist.bind(this);
+            this.updatePage = this.updatePage.bind(this);
+            this.updateVideos = this.updateVideos.bind(this);
         }
-        normalizeContainer(container) {
-            return this.dataContainer = container || this.dataContainer || document.querySelector("#watch7-user-header");
+        setDataNode(container) {
+            return this.dataNode = container || this.dataNode || document.querySelector("#watch7-user-header");
         }
-        normalizeParent(parent) {
+        setParentNode(parent) {
             let tParent = parent || this.buttonParent;
 
             if (!tParent) {
-                if (this.dataContainer) {
-                    tParent = this.dataContainer.querySelector("#watch7-subscription-container")
+                if (this.dataNode) {
+                    tParent = this.dataNode.querySelector("#watch7-subscription-container")
                 } else {
                     tParent = document.querySelector("#watch7-subscription-container");
                 }
@@ -694,11 +735,8 @@
 
             return this.buttonParent = tParent;
         }
-        getWhitelistButton(onClick, toggled) {
-            return new WhitelistButtonBasic(onClick, toggled);
-        }
         insertButton(button) {
-            this.normalizeParent();
+            this.setParentNode();
 
             if (this.buttonParent.nextSibling) {
                 this.buttonParent.parentNode.insertBefore(button.render(), this.buttonParent.nextSibling);
@@ -707,40 +745,39 @@
             }
         }
         updateVideos(whitelisted, forceUpdate) {
-            this.updateInfobar(this.dataContainer, whitelisted);
+            this.updateInfobar(this.dataNode, whitelisted);
             pages.updateRelatedBasic(forceUpdate);
         }
         updateInfobar(container, whitelisted, channelId = this.channelId) {
 
         }
         getChannelId(container) {
-            this.normalizeContainer(container);
-            let links = this.dataContainer.querySelectorAll("a");
+            this.setDataNode(container);
+            let links = this.dataNode.querySelectorAll("a");
             return ChannelID.validate(ChannelID.extractFromLinks(links));
         }
     }
+
     class ChannelPagePoly extends SingleChannelPage {
         constructor() {
-            super();
+            super(WhitelistButtonPoly);
 
             this.toggleWhitelist = this.toggleWhitelist.bind(this);
             this.updatePage = this.updatePage.bind(this);
+            this.updateVideos = this.updateVideos.bind(this);
         }
 
-        normalizeContainer(container) {
+        setDataNode(container) {
             // ytd-page-manager contains data at .data.response.metadata
             // whereas ytd-browse contains data at .data.metadata
-            return this.dataContainer = container || this.dataContainer || document.querySelector("ytd-page-manager");//"ytd-browse");
+            return this.dataNode = container || this.dataNode || document.querySelector("ytd-page-manager");//"ytd-browse");
         }
 
-        normalizeParent(parent) {
+        setParentNode(parent) {
             return this.buttonParent = parent || this.buttonParent || document.querySelector("#edit-buttons");
         }
-        getWhitelistButton(onClick, toggled) {
-            return new WhitelistButtonPoly(onClick, toggled);
-        }
         insertButton(button) {
-            this.normalizeParent();
+            this.setParentNode();
             this.buttonParent.appendChild(button.render());
         }
 
@@ -750,7 +787,7 @@
 
         getChannelId(container) {
             let channelId = ChannelID.createNew();
-            container = this.normalizeContainer(container);
+            container = this.setDataNode(container);
             if (!container) return false;
 
             channelId.username = oGet(container, "data.response.metadata.channelMetadataRenderer.doubleclickTrackingUsername") || "";
@@ -760,23 +797,23 @@
             return ChannelID.validate(channelId);
         }
     }
+
     class ChannelPageBasic extends SingleChannelPage {
         constructor() {
-            super();
+            super(WhitelistButtonBasic);
             this.toggleWhitelist = this.toggleWhitelist.bind(this);
+            this.updatePage = this.updatePage.bind(this);
+            this.updateVideos = this.updateVideos.bind(this);
         }
-        normalizeContainer() {
+        setDataNode() {
             return true;
         }
 
-        normalizeParent(parent) {
+        setParentNode(parent) {
             return this.buttonParent = parent || this.buttonParent || document.querySelector(".primary-header-actions");
         }
-        getWhitelistButton(onClick, toggled) {
-            return new WhitelistButtonBasic(onClick, toggled);
-        }
         insertButton(button) {
-            this.normalizeParent();
+            this.setParentNode();
             this.buttonParent.appendChild(button.render());
         }
 
@@ -797,12 +834,13 @@
             return ChannelID.validate(channelId)
         }
     }
+
     class SearchPagePoly {
         constructor() {
+            this.updatePage = this.updatePage.bind(this);
         }
         updatePage(forceUpdate) {
             let t = Math.random();
-            console.time("updatingSearch" + t);
             let channelElements = document.querySelectorAll("ytd-channel-renderer");
 
             if (!channelElements) return;
@@ -824,10 +862,9 @@
             }
 
             pages.updateAllVideos(forceUpdate)
-            console.timeEnd("updatingSearch" + t);
         }
-        toggleWhitelist(dataContainer) {
-            let channelId = this.getChannelId(dataContainer);
+        toggleWhitelist(dataNode) {
+            let channelId = this.getChannelId(dataNode);
             if (!channelId) throw "Channel ID not available";
 
             if (ChannelID.inwhitelist(channelId) !== -1) {
@@ -847,16 +884,22 @@
             return ChannelID.validate(channelId);
         }
     }
+
     class SearchPageBasic {
         constructor() {
+            this.udpatePage = this.updatePage.bind(this);
+        }
+        updatePage(forceUpdate) {
 
         }
     }
+
     class ChannelID {
         static createNew() {
             return { id: "", username: "", display: "" };
         }
         static getUsernameFromURL(url) {
+            if (!url) return "";
             let matches = url.match(/\/user\/(.+)/);
             if (matches && matches.length > 1)
                 return matches[1];
@@ -870,7 +913,7 @@
         static inmutelist(search, idOnly) {
             return ChannelID.searchlist(settings.muted, search, idOnly);
         }
-        
+
         static inwhitelist(search, idOnly) {
             return ChannelID.searchlist(settings.whitelisted, search, idOnly)
         }
@@ -928,6 +971,7 @@
             return channelId;
         }
     }
+
     class Page {
         constructor(design) {
             if (design === LPOLY) {
@@ -941,25 +985,26 @@
             }
 
             this.currentURL = "";
+            this.updateAllVideos = this.updateAllVideos.bind(this);
         }
         static getDesign() {
-            if (document.getElementById("masthead") || window.Polymer || document.querySelector("ytd-app")) {
+            if (window.Polymer || document.querySelector("ytd-app")) {
                 return LPOLY;
             } else {
                 return LBASIC;
             }
         }
-        updateMode() {
+        getMode() {
             let newURL = location.href;
 
             if (newURL !== this.currentURL) {
                 this.currentURL = newURL;
-                return this.mode = this.getMode(newURL);
+                return this.mode = this.determineMode(newURL);
             } else {
                 return this.mode;
             }
         }
-        getMode(url = location.href) {
+        determineMode(url = location.href) {
             if (url.indexOf("youtube.com/watch?") !== -1) {
                 return VIDEO;
             } else if (url.indexOf("youtube.com/channel/") !== -1 || url.indexOf("youtube.com/user/") !== -1) {
@@ -971,11 +1016,18 @@
             }
         }
 
-        update(mode = this.getMode(), forceUpdate, verify) {
-            if (mode === VIDEO) this.video.updatePage(null, forceUpdate, verify);
-            else if (mode === CHANNEL) this.channel.updatePage(null, forceUpdate, verify);
-            else if (mode === SEARCH) this.search.updatePage(forceUpdate);
-            else if (mode === ALLELSE) this.updateAllVideos(forceUpdate)
+        update(forceUpdate, verify) {
+            let mode = this.getMode();
+
+            if (mode === VIDEO) {
+                this.video.updatePage(forceUpdate, verify);
+            } else if (mode === CHANNEL) {
+                this.channel.updatePage(forceUpdate, verify);
+            } else if (mode === SEARCH) {
+                this.search.updatePage(forceUpdate);
+            } else if (mode === ALLELSE) {
+                this.updateAllVideos(forceUpdate)
+            }
         }
 
         updateAd(ad, mode = this.getMode()) {
@@ -985,7 +1037,7 @@
                 this.channel.updateAdInformation(ad);
             }
         }
-        updateVideos(videos, forceUpdate, channelId){
+        updateVideos(videos, forceUpdate, channelId) {
             for (let video of videos) {
                 if (!forceUpdate && video.data.processed) continue;
 
@@ -1042,10 +1094,7 @@
                     let values = { username: "" };
 
                     if (!user || !(values.username = user.textContent))
-                        if (channelId)
-                            values = channelId;
-                        else
-                            continue;
+                        continue;
                     inwhite = ChannelID.inwhitelist(values) !== -1
                 }
                 if (inwhite || forceUpdate) { // exists
@@ -1060,18 +1109,22 @@
         }
         updateRelatedBasic(forceUpdate) {
             let videos = document.querySelectorAll(".video-list-item");
+
             for (let vid of videos) {
                 if (!forceUpdate && vid.processed) continue;
-                let user = vid.querySelector("[data-ytid]");
-                if (!user)
+
+                let user, userNode = vid.querySelector("[data-ytid]");
+
+                if (!user) {
                     continue;
-                else
-                    user = user.getAttribute("data-ytid");
+                } else {
+                    user = userNode.getAttribute("data-ytid");
+                }
                 let inwhite = ChannelID.inwhitelist(user, true) !== -1
                 let links = vid.querySelectorAll("a[href^='/watch?']");
                 if (inwhite || forceUpdate) {
                     for (let link of links) {
-                        link.setAttribute("href", reflectURLFlag(link.getAttribute("href"), inwhite));
+                        link.setAttribute("href", this.reflectURLFlag(link.getAttribute("href"), inwhite));
                     }
                 }
                 vid.processed = true;
@@ -1119,23 +1172,6 @@
                 )
                 , 300);
         }
-    }
-
-    function oGet(object, key) {
-        let levels = key.split(/[\[\]\.]+/);
-        let current = object;
-
-        for (let level of levels) {
-            if (level.length === 0) continue;
-            if (current[level] !== undefined) {
-                current = current[level];
-            } else {
-                // console.log("Failed at", level);
-                return;
-            }
-        }
-
-        return current;
     }
 
     class MessageAgent {
@@ -1216,5 +1252,83 @@
             })
         }
 
+    }
+
+    function oGet(object, key) {
+        let levels = key.split(/[\[\]\.]+/);
+        let current = object;
+
+        for (let level of levels) {
+            if (level.length === 0) continue;
+            if (current[level] !== undefined) {
+                current = current[level];
+            } else {
+                // console.log("Failed at", level);
+                return;
+            }
+        }
+
+        return current;
+    }
+
+    function init() {
+        pages = new Page(Page.getDesign());
+        watcher = new MutationWatcher();
+        pages.update(true);
+        watcher.start();
+
+        agent.on("settings-update", updated => {
+            settings = updated.settings;
+            pages.update(true, updated.initiator)
+        }).on("ad-update", ad => {
+            pages.updateAd(ad);
+        }).on("destroy", () => {
+            console.log("Detaching inject script..");
+
+            agent.destroy();
+            watcher.destroy();
+            domCleanup();
+            agent = null;
+            watcher = null;
+            pages = null;
+        }).send("ready");
+
+        function domCleanup() {
+            let nodes = document.querySelectorAll("#BLK-button,.UBO-button,.UBO-button-container,.UBO-menu");
+
+            for (let node of nodes) {
+                node.remove();
+            }
+        }
+    }
+
+    agent = new MessageAgent();
+    agent.send("get-settings").then(response => {
+        settings = response.settings;
+        accessURLs = response.accessURLs;
+
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            init(); // DOMContentAlreadyLoaded
+        } else {
+            document.addEventListener("DOMContentLoaded", init);
+        }
+    });
+
+    return {
+        Page: Page,
+        VideoPageBasic: VideoPageBasic,
+        VideoPagePoly: VideoPagePoly,
+        MessageAgent: MessageAgent,
+        WhitelistButton: WhitelistButton,
+        WhitelistButtonBasic: WhitelistButtonBasic,
+        whitelistButtonPoly: WhitelistButtonPoly,
+        ChannelID: ChannelID,
+        ChannelPageBasic: ChannelPageBasic,
+        ChannelPagePoly: ChannelPagePoly,
+        SingleChannelPage: SingleChannelPage,
+        SearchPagePoly: SearchPagePoly,
+        SearchPageBasic: SearchPageBasic,
+        AdOptions: AdOptions,
+        MutationWatcher: MutationWatcher
     }
 })(window, document, console)
