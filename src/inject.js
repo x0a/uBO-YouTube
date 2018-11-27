@@ -18,7 +18,7 @@
     class MutationWatcher {
         constructor() {
             this.watcher = new MutationObserver(this.onMutation.bind(this));
-            this.pendingActions = {};
+            this.queuedActions = new Map();
         }
 
         start() {
@@ -117,14 +117,34 @@
                 && mutation.target.style.display !== "none"
                 && mutation.target.querySelector("button");
         }
-        queueUpdate(method) {
-            if (this.pendingActions[method]) {
-                clearTimeout(this.pendingActions[method]);
-            }
-            this.pendingActions[method] = setTimeout(() => {
-                delete this.pendingActions[method];
+        pollUpdate(method) {
+            // To prevent excessive updating, wait
+            let ticket;
+            let action = () => {
+                ticket.lastExecuted = Date.now();
                 method();
-            }, 50);
+            };
+
+            if (this.queuedActions.has(method)) {
+                ticket = this.queuedActions.get(method);
+
+                if (ticket.timeoutId) {
+                    clearTimeout(ticket.timeoutId);
+                }
+
+                if (Date.now() - ticket.lastExecuted > 400) {
+                    action();
+                } else {
+                    ticket.timeoutId = setTimeout(action, 50);
+                }
+            } else {
+                ticket = {
+                    method: method,
+                    lastExecuted: Date.now(),
+                    timeoutId: setTimeout(action, 50)
+                }
+                this.queuedActions.set(method, ticket)
+            }
         }
         onMutation(mutations) {
             let mode = pages.getMode();
@@ -133,27 +153,37 @@
                 if (mode === VIDEO) {
                     let player, userInfo, skipButton;
 
-                    if (player = this.isPlayerUpdate(mutation)) {
-                        pages.video.updateAdPlaying(player, !!player.classList.contains("ad-showing"))
-                    } else if (userInfo = this.isPolyUserInfo(mutation)) {
+                    if (userInfo = this.isPolyUserInfo(mutation)) {
                         pages.video.setDataNode(userInfo)
                         pages.video.updatePage();
                     } else if (userInfo = this.isBasicUserInfo(mutation)) {
                         pages.video.setDataNode(userInfo)
                         pages.video.updatePage();
                     } else if (this.isRelatedUpdate(mutation)) {
-                        this.queueUpdate(pages.channel.updateVideos);
+                        this.pollUpdate(pages.channel.updateVideos);
+                    } else if (player = this.isPlayerUpdate(mutation)) {
+                        pages.video.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
                     } else if (this.isPlayerDurationUpdate(mutation)) {
                         pages.video.updateDuration(mutation.target.textContent);
                     } else if (skipButton = this.isAdSkipButton(mutation)) {
-                        pages.video.updateSkip(skipButton);
+                        pages.video.skipButtonAvailable(skipButton);
                     }
                 } else if (mode === CHANNEL || mode === SEARCH || mode === ALLELSE) {
+                    if (mode === CHANNEL) {
+                        let player, skipButton;
+                        if (player = this.isPlayerUpdate(mutation)) {
+                            pages.channel.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
+                        } else if (this.isPlayerDurationUpdate(mutation)) {
+                            pages.channel.updateDuration(mutation.target.textContent);
+                        } else if (skipButton = this.isAdSkipButton(mutation)) {
+                            pages.channel.skipButtonAvailable(skipButton);
+                        }
+                    }
                     if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
                         if (mode === CHANNEL) {
-                            this.queueUpdate(pages.channel.updatePage);
+                            this.pollUpdate(pages.channel.updatePage);
                         } else if (mode === SEARCH) {
-                            this.queueUpdate(pages.search.updatePage);
+                            this.pollUpdate(pages.search.updatePage);
                         } else if (mode === ALLELSE) {
                             pages.updateAllVideos();
                         }
@@ -231,119 +261,35 @@
             this.toggleMenu = this.toggleMenu.bind(this);
             this.unfocusedMenu = this.unfocusedMenu.bind(this);
 
-            this.muteBlock = (() => {
-                let el = document.createElement("span");
-                el.appendChild((() => {
-                    let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                    el.setAttribute("data-icon", "volume-slash");
-                    el.setAttribute("role", "img");
-                    el.setAttribute("class", "UBO-icon");
-                    el.setAttributeNS(null, "viewBox", "0 0 640 512");
-                    el.appendChild((() => {
-                        let el = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        el.setAttributeNS(null, "fill", "currentColor");
-                        el.setAttributeNS(null, "d", "M633.82 458.1l-69-53.33C592.42 360.8 608 309.68 608 256c0-95.33-47.73-183.58-127.65-236.03-11.17-7.33-26.18-4.24-33.51 6.95-7.34 11.17-4.22 26.18 6.95 33.51 66.27 43.49 105.82 116.6 105.82 195.58 0 42.78-11.96 83.59-33.22 119.06l-38.12-29.46C503.49 318.68 512 288.06 512 256c0-63.09-32.06-122.09-85.77-156.16-11.19-7.09-26.03-3.8-33.12 7.41-7.09 11.2-3.78 26.03 7.41 33.13C440.27 165.59 464 209.44 464 256c0 21.21-5.03 41.57-14.2 59.88l-39.56-30.58c3.38-9.35 5.76-19.07 5.76-29.3 0-31.88-17.53-61.33-45.77-76.88-11.58-6.33-26.19-2.16-32.61 9.45-6.39 11.61-2.16 26.2 9.45 32.61 11.76 6.46 19.12 18.18 20.4 31.06L288 190.82V88.02c0-21.46-25.96-31.98-40.97-16.97l-49.71 49.7L45.47 3.37C38.49-2.05 28.43-.8 23.01 6.18L3.37 31.45C-2.05 38.42-.8 48.47 6.18 53.9l588.36 454.73c6.98 5.43 17.03 4.17 22.46-2.81l19.64-25.27c5.41-6.97 4.16-17.02-2.82-22.45zM32 184v144c0 13.25 10.74 24 24 24h102.06l88.97 88.95c15.03 15.03 40.97 4.47 40.97-16.97V352.6L43.76 163.84C36.86 168.05 32 175.32 32 184z");
-                        return el;
-                    })());
-                    return el;
-                })())
-                el.appendChild(document.createTextNode("Mute advertiser"));
-                return el;
-            })();
+            this.unMuteIcon = this.generateIcon("M215.03 71.05L126.06 160H24c-13.26 0-24 10.74-24 24v144c0 13.25 10.74 24 24 24h102.06l88.97 88.95c15.03 15.03 40.97 4.47 40.97-16.97V88.02c0-21.46-25.96-31.98-40.97-16.97zm233.32-51.08c-11.17-7.33-26.18-4.24-33.51 6.95-7.34 11.17-4.22 26.18 6.95 33.51 66.27 43.49 105.82 116.6 105.82 195.58 0 78.98-39.55 152.09-105.82 195.58-11.17 7.32-14.29 22.34-6.95 33.5 7.04 10.71 21.93 14.56 33.51 6.95C528.27 439.58 576 351.33 576 256S528.27 72.43 448.35 19.97zM480 256c0-63.53-32.06-121.94-85.77-156.24-11.19-7.14-26.03-3.82-33.12 7.46s-3.78 26.21 7.41 33.36C408.27 165.97 432 209.11 432 256s-23.73 90.03-63.48 115.42c-11.19 7.14-14.5 22.07-7.41 33.36 6.51 10.36 21.12 15.14 33.12 7.46C447.94 377.94 480 319.54 480 256zm-141.77-76.87c-11.58-6.33-26.19-2.16-32.61 9.45-6.39 11.61-2.16 26.2 9.45 32.61C327.98 228.28 336 241.63 336 256c0 14.38-8.02 27.72-20.92 34.81-11.61 6.41-15.84 21-9.45 32.61 6.43 11.66 21.05 15.8 32.61 9.45 28.23-15.55 45.77-45 45.77-76.88s-17.54-61.32-45.78-76.86z");
+            this.muteIcon = this.generateIcon("M633.82 458.1l-69-53.33C592.42 360.8 608 309.68 608 256c0-95.33-47.73-183.58-127.65-236.03-11.17-7.33-26.18-4.24-33.51 6.95-7.34 11.17-4.22 26.18 6.95 33.51 66.27 43.49 105.82 116.6 105.82 195.58 0 42.78-11.96 83.59-33.22 119.06l-38.12-29.46C503.49 318.68 512 288.06 512 256c0-63.09-32.06-122.09-85.77-156.16-11.19-7.09-26.03-3.8-33.12 7.41-7.09 11.2-3.78 26.03 7.41 33.13C440.27 165.59 464 209.44 464 256c0 21.21-5.03 41.57-14.2 59.88l-39.56-30.58c3.38-9.35 5.76-19.07 5.76-29.3 0-31.88-17.53-61.33-45.77-76.88-11.58-6.33-26.19-2.16-32.61 9.45-6.39 11.61-2.16 26.2 9.45 32.61 11.76 6.46 19.12 18.18 20.4 31.06L288 190.82V88.02c0-21.46-25.96-31.98-40.97-16.97l-49.71 49.7L45.47 3.37C38.49-2.05 28.43-.8 23.01 6.18L3.37 31.45C-2.05 38.42-.8 48.47 6.18 53.9l588.36 454.73c6.98 5.43 17.03 4.17 22.46-2.81l19.64-25.27c5.41-6.97 4.16-17.02-2.82-22.45zM32 184v144c0 13.25 10.74 24 24 24h102.06l88.97 88.95c15.03 15.03 40.97 4.47 40.97-16.97V352.6L43.76 163.84C36.86 168.05 32 175.32 32 184z")
+            this.muteButton = this.generateMenuItem(
+                "Mute advertiser",
+                "Mute all ads from this advertiser",
+                this.muteIcon,
+                onMute
+            )
 
-            this.unMuteBlock = (() => {
-                let el = document.createElement("span");
-                el.appendChild((() => {
-                    let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                    el.setAttribute("data-icon", "volume-up");
-                    el.setAttribute("role", "img");
-                    el.setAttribute("class", "UBO-icon");
-                    el.setAttributeNS(null, "viewBox", "0 0 576 512");
-                    el.appendChild((() => {
-                        let el = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        el.setAttributeNS(null, "fill", "currentColor");
-                        el.setAttributeNS(null, "d", "M215.03 71.05L126.06 160H24c-13.26 0-24 10.74-24 24v144c0 13.25 10.74 24 24 24h102.06l88.97 88.95c15.03 15.03 40.97 4.47 40.97-16.97V88.02c0-21.46-25.96-31.98-40.97-16.97zm233.32-51.08c-11.17-7.33-26.18-4.24-33.51 6.95-7.34 11.17-4.22 26.18 6.95 33.51 66.27 43.49 105.82 116.6 105.82 195.58 0 78.98-39.55 152.09-105.82 195.58-11.17 7.32-14.29 22.34-6.95 33.5 7.04 10.71 21.93 14.56 33.51 6.95C528.27 439.58 576 351.33 576 256S528.27 72.43 448.35 19.97zM480 256c0-63.53-32.06-121.94-85.77-156.24-11.19-7.14-26.03-3.82-33.12 7.46s-3.78 26.21 7.41 33.36C408.27 165.97 432 209.11 432 256s-23.73 90.03-63.48 115.42c-11.19 7.14-14.5 22.07-7.41 33.36 6.51 10.36 21.12 15.14 33.12 7.46C447.94 377.94 480 319.54 480 256zm-141.77-76.87c-11.58-6.33-26.19-2.16-32.61 9.45-6.39 11.61-2.16 26.2 9.45 32.61C327.98 228.28 336 241.63 336 256c0 14.38-8.02 27.72-20.92 34.81-11.61 6.41-15.84 21-9.45 32.61 6.43 11.66 21.05 15.8 32.61 9.45 28.23-15.55 45.77-45 45.77-76.88s-17.54-61.32-45.78-76.86z");
-                        return el;
-                    })());
-                    return el;
-                })())
-                el.appendChild(document.createTextNode("Unmute advertiser"));
-                return el;
-            })();
-
-            this.muteButton = (() => {
-                let el = document.createElement("button");
-                el.setAttribute("class", "UBO-menu-item");
-                el.appendChild(this.muteBlock);
-                el.appendChild((() => {
-                    let el = document.createElement("span");
-                    el.setAttribute("class", "BLK-tooltip");
-                    el.appendChild(document.createTextNode("Mute all ads from this advertiser"));
-                    return el;
-                })())
-                el.addEventListener("click", onMute)
-                return el;
-            })()
-            this.skipButton = (() => {
-                let el = document.createElement("button");
-                el.setAttribute("class", "UBO-menu-item");
-                el.appendChild((() => {
-                    let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                    el.setAttribute("data-icon", "fast-forward");
-                    el.setAttribute("viewBox", "0 0 512 512");
-                    el.setAttribute("class", "UBO-icon");
-                    el.appendChild((() => {
-                        let el = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        el.setAttributeNS(null, "fill", "currentColor");
-                        el.setAttributeNS(null, "d", "M512 76v360c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12V284.1L276.5 440.6c-20.6 17.2-52.5 2.8-52.5-24.6V284.1L52.5 440.6C31.9 457.8 0 443.4 0 416V96c0-27.4 31.9-41.7 52.5-24.6L224 226.8V96c0-27.4 31.9-41.7 52.5-24.6L448 226.8V76c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12z");
-                        return el;
-                    })());
-                    return el;
-                })())
-                el.appendChild(document.createTextNode("Attempt skip"));
-                el.appendChild((() => {
-                    let el = document.createElement("span");
-                    el.setAttribute("class", "BLK-tooltip");
-                    el.appendChild(document.createTextNode("Try to skip this ad. If unskippable, it will play at 5x speed to the end."));
-                    return el;
-                })())
-                el.addEventListener("click", () => {
+            this.skipButton = this.generateMenuItem(
+                "Force skip",
+                "Attempt to skip this ad",
+                "M512 76v360c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12V284.1L276.5 440.6c-20.6 17.2-52.5 2.8-52.5-24.6V284.1L52.5 440.6C31.9 457.8 0 443.4 0 416V96c0-27.4 31.9-41.7 52.5-24.6L224 226.8V96c0-27.4 31.9-41.7 52.5-24.6L448 226.8V76c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12z",
+                () => {
                     this.closeMenu();
                     onSkip()
-                })
-                return el;
-            })()
+                }
+            )
+            this.blacklistButton = this.generateMenuItem(
+                "Block advertiser",
+                "Block all ads from this advertiser",
+                "M256 8C119.033 8 8 119.033 8 256s111.033 248 248 248 248-111.033 248-248S392.967 8 256 8zm141.421 106.579c73.176 73.175 77.05 187.301 15.964 264.865L132.556 98.615c77.588-61.105 191.709-57.193 264.865 15.964zM114.579 397.421c-73.176-73.175-77.05-187.301-15.964-264.865l280.829 280.829c-77.588 61.105-191.709 57.193-264.865-15.964z",
+                onBlacklist
+            );
 
             this.menu = (() => {
                 let el = document.createElement("div");
                 el.setAttribute("class", "UBO-menu hidden");
-                el.appendChild((() => {
-                    let el = document.createElement("button");
-                    el.setAttribute("class", "UBO-menu-item");
-                    el.appendChild((() => {
-                        let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                        el.setAttribute("data-icon", "ban");
-                        el.setAttribute("role", "img");
-                        el.setAttribute("class", "UBO-icon");
-                        el.setAttributeNS(null, "viewBox", "0 0 512 512");
-                        el.appendChild((() => {
-                            let el = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                            el.setAttributeNS(null, "fill", "currentColor");
-                            el.setAttributeNS(null, "d", "M256 8C119.033 8 8 119.033 8 256s111.033 248 248 248 248-111.033 248-248S392.967 8 256 8zm141.421 106.579c73.176 73.175 77.05 187.301 15.964 264.865L132.556 98.615c77.588-61.105 191.709-57.193 264.865 15.964zM114.579 397.421c-73.176-73.175-77.05-187.301-15.964-264.865l280.829 280.829c-77.588 61.105-191.709 57.193-264.865-15.964z");
-                            return el;
-                        })());
-                        return el;
-                    })());
-                    el.appendChild(document.createTextNode("Block advertiser"));
-                    el.appendChild((() => {
-                        let el = document.createElement("span");
-                        el.setAttribute("class", "BLK-tooltip");
-                        el.appendChild(document.createTextNode("Block all ads from this advertiser"));
-                        return el;
-                    })())
-                    el.addEventListener("click", onBlacklist);
-                    return el;
-                })());
+                el.appendChild(this.blacklistButton);
                 el.appendChild(this.muteButton);
                 el.appendChild(this.skipButton)
                 el.addEventListener("focusin", () => this.menuFocused = true);
@@ -364,7 +310,6 @@
                 el.appendChild(this.tooltip = (() => {
                     let el = document.createElement("span");
                     el.setAttribute("class", "BLK-tooltip");
-                    el.appendChild(document.createTextNode("Options for this advertiser"));
                     return el;
                 })());
 
@@ -391,30 +336,101 @@
             this.menuFocused = false;
             this.buttonFocused = false;
             this.muted = false;
-        }
-        set advertiserName(title) {
-            this.tooltip.textContent = `Manage ads from "${title}"`;
+            this.reset();
         }
 
-        set muteToggled(state) {
+        generateMenuItem(text, description, iconVector, onClick) {
+            return (() => {
+                const defaultIcon = iconVector instanceof Element ? iconVector : this.generateIcon(iconVector);
+
+                let el = document.createElement("button");
+                let currentIcon = defaultIcon;
+                let itemText = document.createTextNode(text)
+                let tooltipText = document.createTextNode(description);
+
+                el.setAttribute("class", "UBO-menu-item");
+                el.appendChild(currentIcon)
+                el.appendChild(itemText);
+                el.appendChild((() => {
+                    let el = document.createElement("span");
+                    el.setAttribute("class", "BLK-tooltip");
+                    el.appendChild(tooltipText);
+                    return el;
+                })())
+
+                el.setIcon = newIcon => {
+                    el.replaceChild(newIcon, currentIcon);
+                    currentIcon = newIcon;
+                }
+                el.setText = newText => {
+                    itemText.data = newText;
+                }
+                el.setDescription = newDescription => {
+                    tooltipText.data = newDescription;
+                }
+                el.setDefaults = () => {
+                    el.setIcon(defaultIcon);
+                    el.setText(text);
+                    el.setDescription(description);
+                }
+                el.addEventListener("click", onClick)
+                return el;
+            })()
+        }
+
+        generateIcon(iconVector) {
+            return (() => {
+                let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                el.setAttribute("viewBox", "0 0 512 512");
+                el.setAttribute("class", "UBO-icon");
+                el.appendChild((() => {
+                    let el = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    el.setAttributeNS(null, "fill", "currentColor");
+                    el.setAttributeNS(null, "d", iconVector);
+                    return el;
+                })());
+                return el;
+            })()
+        }
+
+        set muteTab(state) {
             state = !!state;
             if (state === this.muted) return;
-
-            if (this.muted) {
-                this.muteButton.removeChild(this.unMuteBlock);
-            } else {
-                this.muteButton.removeChild(this.muteBlock);
-            }
 
             this.muted = state;
 
             if (state) {
                 agent.send("mute", { mute: true });
-                this.muteButton.appendChild(this.unMuteBlock);
+                this.muteButton.setIcon(this.unMuteIcon);
+                this.muteButton.setText("Unmute advertiser");
+                this.muteButton.setDescription("Remove advertiser from mutelist");
             } else {
                 agent.send("mute", { mute: false });
-                this.muteButton.appendChild(this.muteBlock);
+                this.muteButton.setDefaults();
             }
+        }
+
+        set muteOption(enabled) {
+            this.muteButton.disabled = !enabled;
+        }
+
+        set blacklistOption(enabled) {
+            this.blacklistButton.disabled = !enabled;
+        }
+
+        set skipOption(enabled) {
+            this.skipButton.disabled = !enabled;
+        }
+
+        set advertiserName(title) {
+            this.tooltip.textContent = `Manage ads from "${title}"`;
+        }
+
+        reset() {
+            this.tooltip.textContent = "Options for this advertiser";
+            this.blacklistOption = false;
+            this.muteOption = false;
+            this.skipOption = false;
         }
 
         toggleMenu() {
@@ -424,6 +440,7 @@
                 this.openMenu();
             }
         }
+
         unfocusedMenu() {
             setTimeout(() => {
                 if (!this.menuFocused && !this.buttonFocused) {
@@ -433,11 +450,13 @@
 
             return false;
         }
+
         closeMenu() {
             this.menu.classList.add("hidden");
             this.tooltip.classList.remove("hidden");
             this.menuOpen = false;
         }
+
         openMenu() {
             this.menu.classList.remove("hidden");
             this.tooltip.classList.add("hidden");
@@ -445,13 +464,16 @@
             this.menu.style.bottom = "49px";
             this.menuOpen = true;
         }
+
         show() {
             this.optionsButton.classList.remove("hidden");
         }
+
         hide() {
             this.closeMenu();
             this.optionsButton.classList.add("hidden");
         }
+
         renderButton() {
             return this.optionsButton;
         }
@@ -472,9 +494,10 @@
             this.firstRun = true;
             this.adPlaying = false;
             this.adConfirmed = false;
+            this.awaitingSkip = false;
             this.skipButton = null;
             this.currentPlayer = null;
-            this.awaitingSkip = false;
+
         }
 
         updatePage(forceUpdate, verify) {
@@ -518,7 +541,11 @@
                 if (!player.contains(menu)) {
                     player.appendChild(menu);
                 }
-                this.currentPlayer = player.querySelector("video");
+                if (this.currentPlayer = player.querySelector("video")) {
+                    this.adOptions.skipOption = true;
+                    this.adOptions.show();
+                }
+
                 if (firstRun) {
                     let duration = player.querySelector(".ytp-time-duration");
                     this.currentDuration = (duration && duration.textContent) || "";
@@ -532,8 +559,9 @@
 
                 this.adPlaying = true;
             } else if (!playing && this.adPlaying) {
-                this.adOptions.muteToggled = false;
+                this.adOptions.muteTab = false;
                 this.adOptions.hide();
+                this.adOptions.reset();
                 this.adPlaying = false;
                 this.adConfirmed = false;
                 this.awaitingSkip = false;
@@ -554,24 +582,28 @@
         updateAdButton() {
             if (!this.adConfirmed && this.adPlaying && this.currentAd && this.withinSpec(this.currentDuration, this.currentAd.length_seconds)) {
                 this.adConfirmed = true;
+                this.adOptions.muteOption = true;
+                this.adOptions.blacklistOption = true;
                 this.adOptions.advertiserName = this.currentAd.channelId.display;
                 this.adOptions.show();
             }
 
             if (this.adConfirmed) {
-                this.adOptions.muteToggled = ChannelID.inmutelist(this.currentAd.channelId) !== -1;
+                this.adOptions.muteTab = ChannelID.inmutelist(this.currentAd.channelId) !== -1;
             }
         }
         attemptSkip() {
-            if (!this.currentPlayer) return// console.error("Player not available");
+            if (!this.currentPlayer) return;
+
             if (this.skipButton) {
                 return this.skipButton.click();
             }
-            this.adOptions.muteToggled = true;
+            this.adOptions.muteTab = true;
             this.awaitingSkip = true;
+            this.currentPlayer.currentTime = this.currentPlayer.duration - 1;
             this.currentPlayer.playbackRate = 5;
         }
-        updateSkip(skipButton) {
+        skipButtonAvailable(skipButton) {
             this.skipButton = skipButton;
 
             if (this.awaitingSkip) {
@@ -840,7 +872,6 @@
             this.updatePage = this.updatePage.bind(this);
         }
         updatePage(forceUpdate) {
-            let t = Math.random();
             let channelElements = document.querySelectorAll("ytd-channel-renderer");
 
             if (!channelElements) return;
