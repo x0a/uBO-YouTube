@@ -485,17 +485,16 @@
         }
 
         prepareDevEnv() {
-            let self = this;
-            console.log = function () {
-                self.ws.send(JSON.stringify({
+            console.log = (function () {
+                this.ws.send(JSON.stringify({
                     log: Array.from(arguments)
                 }))
-            }
-            console.error = function () {
-                self.ws.send(JSON.stringify({
+            }).bind(this);
+            console.error = (function () {
+                this.ws.send(JSON.stringify({
                     error: Array.from(arguments)
                 }))
-            }
+            }).bind(this);
         }
 
         removeDevEnv() {
@@ -507,7 +506,7 @@
         }
     }
 
-    if (true && Development.detectedDevMode()) { // set to false in production builds
+    if (false && Development.detectedDevMode()) { // set to false in production builds
         let devClient = new Development();
         devClient.connect();
         console.log("[", Date.now(), "]: Development mode");
