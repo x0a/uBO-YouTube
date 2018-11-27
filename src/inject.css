@@ -105,16 +105,23 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     display: block;
     text-align: left;
     background-color: rgba(0, 0, 0, 0.0);
-    color: rgb(238, 238, 238);
     border: none;
     width: 100%;
     height: 33px;
     font-weight: 500;
     font-size: 118%;
-    cursor: pointer;
     padding-left: 15px;
     padding-right: 15px;
     font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif;
+}
+
+.UBO-menu-item:enabled{
+    color: rgb(238, 238, 238);
+    cursor: pointer;
+}
+.UBO-menu-item:disabled{
+    color: rgb(126, 123, 123);
+    cursor: default;
 }
 
 .UBO-menu-item .BLK-tooltip{
@@ -123,7 +130,7 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     bottom: auto;
 }
 
-.UBO-menu-item:hover {
+.UBO-menu-item:hover:enabled {
     background-color: rgba(255, 255, 255, .1);
 }
 .UBO-menu-item:hover .BLK-tooltip{
