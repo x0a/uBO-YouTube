@@ -160,7 +160,7 @@
                         pages.video.setDataNode(userInfo)
                         pages.video.updatePage();
                     } else if (this.isRelatedUpdate(mutation)) {
-                        this.pollUpdate(pages.channel.updateVideos);
+                        this.pollUpdate(pages.video.updateVideos);
                     } else if (player = this.isPlayerUpdate(mutation)) {
                         pages.video.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
                     } else if (this.isPlayerDurationUpdate(mutation)) {
@@ -706,7 +706,7 @@
         updateVideos(whitelisted, forceUpdate) {
             this.updateInfobar(this.dataNode, whitelisted);
             let relatedVideos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer");
-
+            
             pages.updateVideos(relatedVideos, forceUpdate)
         }
 
