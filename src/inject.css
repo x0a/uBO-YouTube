@@ -3,7 +3,7 @@
     padding: 0 5.5px 0px 6px !important;
 }
 
-.UBO-button.hidden {
+.UBO-button.hidden, .UBO-menu.hidden {
     display: none;
 }
 
