@@ -3,9 +3,18 @@
 // This content script is to act as a segway between
 // the locally-injected script which contains the main code
 // and the background script.
+declare var browser: any;
+declare var chrome: any;
 
-(function (window, document, browser, console, undefined) {
+(function (window, document, browser, console, undefined?: any) {
     class InitManager {
+        queue: Array<any>;
+        ready: boolean;
+        head: HTMLElement;
+        firstRun: Promise<any>;
+        jsFile: HTMLScriptElement;
+        cssFile: HTMLLinkElement;
+
         constructor(insertLocation = document.documentElement) {
             this.onBrowserMessage = this.onBrowserMessage.bind(this);
             this.getSettings = this.getSettings.bind(this);
@@ -33,7 +42,7 @@
             browser.runtime.onMessage.addListener(this.onBrowserMessage);
         }
 
-        onBrowserMessage(message) {
+        onBrowserMessage(message: any) {
             if (!this.ready) {
                 this.queue.push(message);
                 console.log('pushing to queue');
@@ -41,7 +50,7 @@
                 this.parseMessage(message);
             }
         }
-        parseMessage(message) {
+        parseMessage(message: any) {
             if (message.action === "update") {
                 agent.send("settings-update", { settings: message.settings, initiator: message.initiator });
             } else if (message.action === "ad-update") {
@@ -55,7 +64,7 @@
         }
         retrieveSettings() {
             return new Promise(resolve => {
-                browser.runtime.sendMessage({ action: "get-lists" }, response => resolve({
+                browser.runtime.sendMessage({ action: "get-lists" }, (response: any) => resolve({
                     settings: response,
                     accessURLs: {
                         ICO: browser.runtime.getURL("img/icon_16.png")
@@ -88,18 +97,23 @@
     }
 
     class AdWatcher {
-        constructor(onReceiveSettings) {
+        onReceiveSettings: Function;
+        scriptWatcher: MutationObserver;
+        payloadBeginning: string;
+        payloadEnd: string;
+
+        constructor(onReceiveSettings: () => {}) {
             this.onReceiveSettings = onReceiveSettings;
             this.onScript = this.onScript.bind(this);
 
-            if(!("onbeforescriptexecute" in document)){
+            if (!("onbeforescriptexecute" in document)) {
                 this.scriptWatcher = this.polyfill();
             }
 
             document.addEventListener("beforescriptexecute", this.onScript);
         }
 
-        onScript(event) {
+        onScript(event: CustomEvent) {
             // Events from our polyfill contain the target in event.detail
             // Native events contain the target in event.target.
             let script = event.detail || event.target;
@@ -122,18 +136,18 @@
                 }
             }
         }
-        isCorrectScript(el) {
+        isCorrectScript(el: HTMLScriptElement) {
             const search = "\\u003c?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?\\u003e\\n\\u003cvmap:VMAP";
 
             return el.parentElement && el.parentElement.id === "player-wrap" &&
                 el.id !== "replacement" &&
                 el.textContent.indexOf(search) !== -1;
         }
-        compilePayload(object){
+        compilePayload(object: any) {
             let string = JSON.stringify(object);
             return this.payloadBeginning + string + this.payloadEnd;
         }
-        extractData(code) {
+        extractData(code: string) {
             const beginningSearch = "ytplayer.config = ";
             let beginning = code.indexOf(beginningSearch)
             let end = code.indexOf(";ytplayer.load");
@@ -152,7 +166,7 @@
                 return false;
             }
         }
-        parseVMAP(vmap) {
+        parseVMAP(vmap: string): XMLDocument {
             try {
                 let parser = new DOMParser();
                 let parsed = parser.parseFromString(vmap, "text/xml");
@@ -161,7 +175,7 @@
                 console.log("Failed to parse VMAP", e);
             }
         }
-        insertReplacement(parent, code) {
+        insertReplacement(parent: HTMLElement, code: string) {
             return parent.appendChild((() => {
                 let el = document.createElement("script");
                 el.setAttribute("id", "replacement");
@@ -170,17 +184,17 @@
                 return el;
             })());
         }
-        polyfill(){
+        polyfill() {
             let scriptWatcher = new MutationObserver(mutations => {
-                for(let mutation of mutations){
-                    for(let node of mutation.addedNodes){
-                        if(node.tagName === "SCRIPT"){
+                for (let mutation of mutations) {
+                    for (let node of mutation.addedNodes as NodeListOf<HTMLElement>) {
+                        if (node.tagName === "SCRIPT") {
                             let syntheticEvent = new CustomEvent("beforescriptexecute", {
                                 detail: node,
                                 cancelable: true
                             })
 
-                            if(!document.dispatchEvent(syntheticEvent)){
+                            if (!document.dispatchEvent(syntheticEvent)) {
                                 node.remove();
                             }
                         }
@@ -195,15 +209,30 @@
             return scriptWatcher;
         }
         destroy() {
-            if(this.scriptWatcher){
+            if (this.scriptWatcher) {
                 this.scriptWatcher.disconnect();
             }
             document.removeEventListener("beforescriptexecute", this.onScript);
         }
     }
 
+    interface AgentEvent {
+        [eventName: string]: Array<Function>
+    }
+
+    interface AgentResolver {
+        id: string;
+        resolver: Function;
+        rejector: Function;
+    }
+
     class MessageAgent {
-        constructor(identifier) {
+        instance: string;
+        resolvers: Array<AgentResolver>;
+        events: AgentEvent;
+        requestsPending: Array<Promise<void>>;
+
+        constructor(identifier?: string) {
             this.instance = identifier || Math.random().toString(36).substring(7); //used to differentiate between us and others
             this.resolvers = [];
             this.events = {};
@@ -212,7 +241,7 @@
 
             window.addEventListener("message", this.messageListener);
         }
-        on(event, listener) {
+        on(event: string, listener: Function) {
             if (typeof listener !== "function") throw "Listener must be a function";
             if (!this.events[event]) this.events[event] = [];
             this.events[event].push(listener);
@@ -220,15 +249,23 @@
             return this;
         }
 
-        send(event, message) {
+        send(event: string, message?: any) {
             let callbackId = Math.random().toString(36).substring(7);
             window.postMessage({ event: event, message: message, callbackId: callbackId, instance: this.instance }, "*");
 
-            return new Promise((resolve, reject) => {
+            let p: Promise<any> = new Promise((resolve, reject) => {
                 this.resolvers.push({ id: callbackId, resolver: resolve, rejector: reject });
+            }).then(response => {
+                let i = this.requestsPending.findIndex(item => item === p);
+                this.requestsPending.splice(i, 1);
+                return response;
+            }).catch(err => {
+                return err;
             })
+            this.requestsPending.push(p);
+            return p;
         }
-        messageListener(e) {
+        messageListener(e: MessageEvent) {
             let revent = e.data;
             let promises = [];
 
@@ -272,8 +309,7 @@
         }
         destroy() {
             Object.keys(this.events).forEach(key => this.events[key] = []);
-
-            return Promise.all(this.requestsPending.concat(this.resolvers)).then(() => {
+            return Promise.all(this.requestsPending).then(() => {
                 window.removeEventListener("message", this.messageListener);
                 this.resolvers = null;
                 this.events = null;
@@ -296,23 +332,23 @@
     agent.on("ready", () => {
         init.ready = true;
         init.pushPending();
-    }).on("get-settings", init.getSettings).on("set-settings", (changes) => {
+    }).on("get-settings", init.getSettings).on("set-settings", (changes: any) => {
         return new Promise((resolve) => {
-            browser.runtime.sendMessage({ action: "set", changes: changes }, response => resolve(response));
+            browser.runtime.sendMessage({ action: "set", changes: changes }, (response: any) => resolve(response));
         })
     }).on("recent-ad", () => {
         return new Promise((resolve) => {
-            browser.runtime.sendMessage({ action: "get-ads", type: "current-tab" }, response => resolve(response))
+            browser.runtime.sendMessage({ action: "get-ads", type: "current-tab" }, (response: any) => resolve(response))
         })
-    }).on("mute", change => {
+    }).on("mute", (change: any) => {
         return new Promise((resolve) => {
-            browser.runtime.sendMessage({ action: "mute", mute: change.mute || false }, response => resolve(response));
+            browser.runtime.sendMessage({ action: "mute", mute: change.mute || false }, (response: any) => resolve(response));
         });
     })
 
     init.inject();
 
-    let dejector;
+    let dejector: () => void;
 
     window.addEventListener("uBOWLInstance", dejector = () => {
         console.log("Unloading uBOWL..");

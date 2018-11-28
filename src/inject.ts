@@ -1,6 +1,49 @@
 "use strict";
 
-(function (window, document, console, undefined) {
+(function (window, document, console, undefined?: any) {
+    enum Mode{
+        VIDEO,
+        CHANNEL,
+        SEARCH,
+        ALLELSE
+    }
+    
+    enum Design{
+        LPOLY,
+        LBASIC
+    }
+    
+    interface Channel {
+        display: string,
+        username: string,
+        id: string
+    }
+
+    type WhitelistButtonInstance = WhitelistButtonBasic | WhitelistButtonPoly;
+    type WhitelistButtonFactory = typeof WhitelistButtonBasic | typeof WhitelistButtonPoly;
+    type ChannelList = Array<Channel>;
+
+    interface accessURL {
+        ICO: string;
+    }
+    
+    interface Action {
+        method: Function;
+        lastExecuted: number;
+        timeoutId: number;
+    }
+    
+    interface MutationElement extends MutationRecord {
+        target: HTMLElement;
+        addedNodes: NodeListOf<Element>;
+        removedNodes: NodeListOf<Element>;
+    }
+    
+    interface Settings {
+        whitelisted: ChannelList;
+        blacklisted: ChannelList;
+        muted: ChannelList;
+    }
 
     const VIDEO = 1;
     const CHANNEL = 2;
@@ -11,11 +54,17 @@
 
     /* ---------------------------- */
 
-    let settings = { whitelisted: [], blacklisted: [], muted: [] };
-    let accessURLs = {};
-    let pages, watcher, agent;
+    let settings: Settings;
+    let accessURLs: accessURL;
+    let pages: Page, watcher: MutationWatcher, agent: MessageAgent;
+
+
 
     class MutationWatcher {
+
+        watcher: MutationObserver;
+        queuedActions: Map<Function, Action>;
+
         constructor() {
             this.watcher = new MutationObserver(this.onMutation.bind(this));
             this.queuedActions = new Map();
@@ -31,7 +80,7 @@
             });
         }
 
-        isPlayerUpdate(mutation) {
+        isPlayerUpdate(mutation: MutationElement): HTMLElement {
             let player;
 
             if (mutation.target.id === "movie_player") {
@@ -45,17 +94,17 @@
                 }
             }
             if (player)
-                return player;
+                return player as HTMLElement;
             else
-                return false;
+                return null;
         }
 
-        isPlayerDurationUpdate(mutation) {
+        isPlayerDurationUpdate(mutation: MutationElement) {
             return mutation.target.className === "ytp-time-duration"
                 && mutation.addedNodes.length;
         }
 
-        isPolyUserInfo(mutation) {
+        isPolyUserInfo(mutation: MutationElement): HTMLElement {
             if (
                 (
                     mutation.target.id === "owner-name"
@@ -63,28 +112,28 @@
                 ) || (
                     mutation.type === "attributes"
                     && mutation.target.parentNode
-                    && mutation.target.parentNode.id === "owner-name"
+                    && (mutation.target.parentNode as HTMLElement).id === "owner-name"
                     && mutation.attributeName === "href"
                 )
             ) {
-                return mutation.target.closest("ytd-video-owner-renderer");
+                return mutation.target.closest("ytd-video-owner-renderer") as HTMLElement;
             } else {
-                return false;
+                return null;
             }
         }
-        isBasicUserInfo(mutation) {
+        isBasicUserInfo(mutation: MutationElement): HTMLElement {
             if (mutation.target.id === "watch7-container" && mutation.addedNodes.length) {
                 for (let node of mutation.addedNodes) {
                     if (node.id === "watch7-main-container") {
-                        return node;
+                        return node as HTMLElement;
                     }
                 }
             }
 
-            return false;
+            return null;
         }
 
-        isRelatedUpdate(mutation) {
+        isRelatedUpdate(mutation: MutationElement) {
             return (
                 mutation.type === "attributes"
                 && mutation.target.id === "continuations"
@@ -92,7 +141,7 @@
             );
         }
 
-        hasNewItems(mutation) {
+        hasNewItems(mutation: MutationElement) {
             return (
                 mutation.type === "attributes"
                 && mutation.target.localName === "yt-page-navigation-progress"
@@ -103,7 +152,7 @@
                     && (mutation.target.id === "items" || mutation.target.id === "contents")
                 )
         }
-        finishedLoadingBasic(mutation) {
+        finishedLoadingBasic(mutation: MutationElement) {
             for (let node of mutation.removedNodes) {
                 if (node.id === "progress") {
                     return true; // old layout, progress bar removed
@@ -111,15 +160,17 @@
             }
             return false;
         }
-        isAdSkipButton(mutation) {
+
+        isAdSkipButton(mutation: MutationElement) {
             return mutation.type === "attributes"
                 && mutation.target.classList.contains("videoAdUiSkipContainer")
                 && mutation.target.style.display !== "none"
                 && mutation.target.querySelector("button");
         }
-        pollUpdate(method) {
+
+        pollUpdate(method: Function) {
             // To prevent excessive updating, wait
-            let ticket;
+            let ticket: Action;
             let action = () => {
                 ticket.lastExecuted = Date.now();
                 method();
@@ -135,18 +186,18 @@
                 if (Date.now() - ticket.lastExecuted > 400) {
                     action();
                 } else {
-                    ticket.timeoutId = setTimeout(action, 50);
+                    ticket.timeoutId = window.setTimeout(action, 50);
                 }
             } else {
                 ticket = {
                     method: method,
                     lastExecuted: Date.now(),
-                    timeoutId: setTimeout(action, 50)
+                    timeoutId: window.setTimeout(action, 50)
                 }
                 this.queuedActions.set(method, ticket)
             }
         }
-        onMutation(mutations) {
+        onMutation(mutations: Array<MutationElement>) {
             let mode = pages.getMode();
 
             for (let mutation of mutations) {
@@ -198,17 +249,19 @@
     }
 
     class WhitelistButton {
-        constructor(onClick, toggled) {
-            this.onClick = onClick;
+        toggled: boolean;
+        button: HTMLButtonElement;
+        buttonContainer: HTMLDivElement;
+
+        constructor(onClick: EventListener, toggled: boolean) {
             this.toggled = toggled;
 
             this.button = document.createElement("button");
             this.button.className = "UBO-button";
-            this.button.addEventListener("click", this.onClick);
+            this.button.addEventListener("click", onClick);
 
             this.buttonContainer = document.createElement("div");
             this.buttonContainer.className = "UBO-button-container";
-            this.buttonContainer.appendChild(this.button);
         }
 
         off() {
@@ -229,10 +282,11 @@
     }
 
     class WhitelistButtonPoly extends WhitelistButton {
-        constructor(onClick, toggled) {
+        constructor(onClick: EventListener, toggled: boolean) {
             super(onClick, toggled);
             this.button.className += " UBO-poly " + (toggled ? " yt-uix-button-toggled" : "");
             this.button.innerHTML = "ADS";
+            this.buttonContainer.appendChild(this.button);
         }
         exists() {
             return !!this.buttonContainer.parentElement;
@@ -243,7 +297,7 @@
     }
 
     class WhitelistButtonBasic extends WhitelistButton {
-        constructor(onClick, toggled) {
+        constructor(onClick: EventListener, toggled: boolean) {
             super(onClick, toggled);
             this.button.className += " UBO-old yt-uix-button yt-uix-button-size-default yt-uix-button-subscribed-branded hover-enabled" + (toggled ? " yt-uix-button-toggled" : "");
             this.button.innerHTML = "Ads";
@@ -256,10 +310,31 @@
         }
     }
 
+    interface MenuItem extends HTMLButtonElement {
+        setText(newText: string): void;
+        setIcon(newIcon: Element): void;
+        setDescription(newDescription: string): void;
+        setDefaults(): void;
+    }
+
     class AdOptions {
-        constructor(onBlacklist, onMute, onSkip) {
+        unMuteIcon: Element;
+        muteIcon: Element;
+        muteButton: MenuItem;
+        skipButton: MenuItem;
+        blacklistButton: MenuItem;
+        menu: HTMLDivElement;
+        optionsButton: HTMLButtonElement;
+        tooltip: HTMLSpanElement;
+
+        buttonFocused: boolean;
+        menuFocused: boolean;
+        menuOpen: boolean;
+        muted: boolean;
+
+        constructor(onBlacklist: EventListener, onMute: EventListener, onSkip: () => {}) {
             this.toggleMenu = this.toggleMenu.bind(this);
-            this.unfocusedMenu = this.unfocusedMenu.bind(this);
+            this.lostFocus = this.lostFocus.bind(this);
 
             this.unMuteIcon = this.generateIcon("M215.03 71.05L126.06 160H24c-13.26 0-24 10.74-24 24v144c0 13.25 10.74 24 24 24h102.06l88.97 88.95c15.03 15.03 40.97 4.47 40.97-16.97V88.02c0-21.46-25.96-31.98-40.97-16.97zm233.32-51.08c-11.17-7.33-26.18-4.24-33.51 6.95-7.34 11.17-4.22 26.18 6.95 33.51 66.27 43.49 105.82 116.6 105.82 195.58 0 78.98-39.55 152.09-105.82 195.58-11.17 7.32-14.29 22.34-6.95 33.5 7.04 10.71 21.93 14.56 33.51 6.95C528.27 439.58 576 351.33 576 256S528.27 72.43 448.35 19.97zM480 256c0-63.53-32.06-121.94-85.77-156.24-11.19-7.14-26.03-3.82-33.12 7.46s-3.78 26.21 7.41 33.36C408.27 165.97 432 209.11 432 256s-23.73 90.03-63.48 115.42c-11.19 7.14-14.5 22.07-7.41 33.36 6.51 10.36 21.12 15.14 33.12 7.46C447.94 377.94 480 319.54 480 256zm-141.77-76.87c-11.58-6.33-26.19-2.16-32.61 9.45-6.39 11.61-2.16 26.2 9.45 32.61C327.98 228.28 336 241.63 336 256c0 14.38-8.02 27.72-20.92 34.81-11.61 6.41-15.84 21-9.45 32.61 6.43 11.66 21.05 15.8 32.61 9.45 28.23-15.55 45.77-45 45.77-76.88s-17.54-61.32-45.78-76.86z");
             this.muteIcon = this.generateIcon("M633.82 458.1l-69-53.33C592.42 360.8 608 309.68 608 256c0-95.33-47.73-183.58-127.65-236.03-11.17-7.33-26.18-4.24-33.51 6.95-7.34 11.17-4.22 26.18 6.95 33.51 66.27 43.49 105.82 116.6 105.82 195.58 0 42.78-11.96 83.59-33.22 119.06l-38.12-29.46C503.49 318.68 512 288.06 512 256c0-63.09-32.06-122.09-85.77-156.16-11.19-7.09-26.03-3.8-33.12 7.41-7.09 11.2-3.78 26.03 7.41 33.13C440.27 165.59 464 209.44 464 256c0 21.21-5.03 41.57-14.2 59.88l-39.56-30.58c3.38-9.35 5.76-19.07 5.76-29.3 0-31.88-17.53-61.33-45.77-76.88-11.58-6.33-26.19-2.16-32.61 9.45-6.39 11.61-2.16 26.2 9.45 32.61 11.76 6.46 19.12 18.18 20.4 31.06L288 190.82V88.02c0-21.46-25.96-31.98-40.97-16.97l-49.71 49.7L45.47 3.37C38.49-2.05 28.43-.8 23.01 6.18L3.37 31.45C-2.05 38.42-.8 48.47 6.18 53.9l588.36 454.73c6.98 5.43 17.03 4.17 22.46-2.81l19.64-25.27c5.41-6.97 4.16-17.02-2.82-22.45zM32 184v144c0 13.25 10.74 24 24 24h102.06l88.97 88.95c15.03 15.03 40.97 4.47 40.97-16.97V352.6L43.76 163.84C36.86 168.05 32 175.32 32 184z")
@@ -295,7 +370,7 @@
                 el.addEventListener("focusin", () => this.menuFocused = true);
                 el.addEventListener("focusout", () => {
                     this.menuFocused = false;
-                    this.unfocusedMenu();
+                    this.lostFocus();
                 });
                 return el;
             })();
@@ -328,10 +403,11 @@
                 el.addEventListener("focusin", () => this.buttonFocused = true);
                 el.addEventListener("focusout", () => {
                     this.buttonFocused = false;
-                    this.unfocusedMenu();
+                    this.lostFocus();
                 });
                 return el;
             })();
+
             this.menuOpen = false;
             this.menuFocused = false;
             this.buttonFocused = false;
@@ -339,11 +415,11 @@
             this.reset();
         }
 
-        generateMenuItem(text, description, iconVector, onClick) {
+        generateMenuItem(text: string, description: string, iconVector: string | Element, onClick: EventListener): MenuItem {
             return (() => {
                 const defaultIcon = iconVector instanceof Element ? iconVector : this.generateIcon(iconVector);
 
-                let el = document.createElement("button");
+                let el: MenuItem = <MenuItem>document.createElement("button");
                 let currentIcon = defaultIcon;
                 let itemText = document.createTextNode(text)
                 let tooltipText = document.createTextNode(description);
@@ -378,7 +454,7 @@
             })()
         }
 
-        generateIcon(iconVector) {
+        generateIcon(iconVector: string): Element {
             return (() => {
                 let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 el.setAttribute("viewBox", "0 0 512 512");
@@ -393,7 +469,7 @@
             })()
         }
 
-        set muteTab(state) {
+        set muteTab(state: boolean) {
             state = !!state;
             if (state === this.muted) return;
 
@@ -410,19 +486,19 @@
             }
         }
 
-        set muteOption(enabled) {
+        set muteOption(enabled: boolean) {
             this.muteButton.disabled = !enabled;
         }
 
-        set blacklistOption(enabled) {
+        set blacklistOption(enabled: boolean) {
             this.blacklistButton.disabled = !enabled;
         }
 
-        set skipOption(enabled) {
+        set skipOption(enabled: boolean) {
             this.skipButton.disabled = !enabled;
         }
 
-        set advertiserName(title) {
+        set advertiserName(title: boolean) {
             this.tooltip.textContent = `Manage ads from "${title}"`;
         }
 
@@ -441,7 +517,7 @@
             }
         }
 
-        unfocusedMenu() {
+        lostFocus() {
             setTimeout(() => {
                 if (!this.menuFocused && !this.buttonFocused) {
                     this.closeMenu();
@@ -483,7 +559,21 @@
     }
 
     class SingleChannelPage {
-        constructor(ButtonFactory) {
+        dataNode: HTMLElement;
+        buttonParent: HTMLElement;
+        whitelistButton: WhitelistButtonInstance;
+        adOptions: AdOptions;
+        channelId?: Channel;
+        currentAd: any;
+        currentDuration: string;
+        firstRun: boolean;
+        adPlaying: boolean;
+        adConfirmed: boolean;
+        awaitingSkip: boolean;
+        skipButton: HTMLButtonElement;
+        currentPlayer: HTMLVideoElement;
+
+        constructor(ButtonFactory: WhitelistButtonFactory) {
             this.dataNode = null
             this.buttonParent = null;
             this.whitelistButton = new ButtonFactory(this.toggleWhitelist.bind(this), false);
@@ -500,7 +590,7 @@
 
         }
 
-        updatePage(forceUpdate, verify) {
+        updatePage(forceUpdate?: boolean, verify?: boolean) {
             if (!this.dataNode && !this.setDataNode()) return;// console.error("Container not available");
 
             this.channelId = this.getChannelId(this.dataNode);
@@ -513,7 +603,7 @@
                 this.insertButton(this.whitelistButton);
                 // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
                 if (this.firstRun) {
-                    let player = document.querySelector("#movie_player");
+                    let player = document.querySelector("#movie_player") as HTMLElement;
 
                     if (player) {
                         this.updateAdPlaying(player, !!player.classList.contains("ad-showing"), true);
@@ -527,7 +617,7 @@
             this.updateVideos(whitelisted, forceUpdate);
         }
 
-        updateAdPlaying(player, playing, firstRun = false) {
+        updateAdPlaying(player: HTMLElement, playing: boolean, firstRun = false) {
             if (playing && !this.adPlaying) {
                 let container = player.querySelector(".ytp-right-controls");
                 if (!container) return console.error("Can't find .ytp-right-controls");
@@ -574,7 +664,7 @@
                 this.updateAdButton();
             }
         }
-        updateAdInformation(ad) {
+        updateAdInformation(ad: any) {
             this.currentAd = ad;
             this.updateAdButton();
         }
@@ -603,19 +693,19 @@
             this.currentPlayer.currentTime = this.currentPlayer.duration - 1;
             this.currentPlayer.playbackRate = 5;
         }
-        skipButtonAvailable(skipButton) {
-            this.skipButton = skipButton;
+        skipButtonAvailable(skipButton: HTMLElement) {
+            this.skipButton = skipButton as HTMLButtonElement;
 
             if (this.awaitingSkip) {
                 this.skipButton.click();
             }
         }
-        updateDuration(duration) {
+        updateDuration(duration: string) {
             this.currentDuration = duration;
             this.updateAdButton()
         }
 
-        withinSpec(durationText, target) {
+        withinSpec(durationText: string, target: number) {
             let duration = this.toSeconds(durationText);
 
             if (!duration) {
@@ -625,7 +715,7 @@
             }
         }
 
-        toSeconds(durationText) {
+        toSeconds(durationText: string): number {
             if (!durationText)
                 return 0;
             else {
@@ -633,7 +723,7 @@
                 let duration = 0;
 
                 for (let i = 0; i < durationParts.length; i++) {
-                    if (isNaN(durationParts[i])) return 0;
+                    if (~~durationParts[i] === 0) return 0;
                     duration += ~~durationParts[i] * Math.pow(60, durationParts.length - i - 1)
                 }
 
@@ -677,8 +767,17 @@
             }
 
         }
-    }
+        setDataNode(/* override */node?: HTMLElement) { return node }
+        insertButton(/* override */button: WhitelistButtonInstance) { }
+        updateVideos(/* override */whitelisted: boolean, forceUpdate: boolean) { }
+        getChannelId(/* override */node: HTMLElement): Channel { return ChannelID.createNew(); }
 
+    }
+    interface InfoLink extends HTMLAnchorElement {
+        channelId: string;
+        sethref: string;
+        whitelisted: boolean;
+    }
     class VideoPagePoly extends SingleChannelPage {
         constructor() {
             super(WhitelistButtonPoly);
@@ -687,15 +786,15 @@
             this.updateVideos = this.updateVideos.bind(this);
         }
 
-        setDataNode(container) {
+        setDataNode(container: HTMLElement) {
             return this.dataNode = container || this.dataNode || document.querySelector("ytd-video-owner-renderer");
         }
 
-        setParentNode(parent) {
+        setParentNode(parent: HTMLElement) {
             return this.buttonParent = parent || this.buttonParent;
         }
-        insertButton(button) {
-            this.setParentNode(this.dataNode.parentNode);
+        insertButton(button: WhitelistButtonInstance) {
+            this.setParentNode(this.dataNode.parentNode as HTMLElement);
 
             if (this.dataNode.nextSibling) {
                 this.buttonParent.insertBefore(button.render(), this.dataNode.nextSibling);
@@ -703,19 +802,19 @@
                 this.buttonParent.appendChild(button.render());
             }
         }
-        updateVideos(whitelisted, forceUpdate) {
+        updateVideos(whitelisted: boolean, forceUpdate: boolean) {
             this.updateInfobar(this.dataNode, whitelisted);
-            let relatedVideos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer");
-            
+            let relatedVideos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer") as NodeListOf<VideoPoly>;
+
             pages.updateVideos(relatedVideos, forceUpdate)
         }
 
-        updateInfobar(container, whitelisted, channelId = this.channelId) {
+        updateInfobar(container: HTMLElement, whitelisted: boolean, channelId = this.channelId) {
             container = this.setDataNode(container);
             if (!container) return false;
             if (!channelId) return false;
 
-            let links = container.querySelectorAll("a");
+            let links = container.querySelectorAll("a") as NodeListOf<InfoLink>;
 
             for (let link of links) {
                 // this link hasn't been looked at
@@ -730,11 +829,11 @@
             }
         }
 
-        getChannelId(container) {
+        getChannelId(container: HTMLElement) {
             let channelId = ChannelID.createNew();
             container = this.setDataNode(container);
 
-            if (!container) return false;
+            if (!container) return null;
 
             channelId.username = ChannelID.getUsernameFromURL(oGet(container, "data.navigationEndpoint.browseEndpoint.canonicalBaseUrl")) || ""
             channelId.id = oGet(container, "data.navigationEndpoint.browseEndpoint.browseId") || "";
@@ -751,10 +850,10 @@
             this.updatePage = this.updatePage.bind(this);
             this.updateVideos = this.updateVideos.bind(this);
         }
-        setDataNode(container) {
+        setDataNode(container: HTMLElement) {
             return this.dataNode = container || this.dataNode || document.querySelector("#watch7-user-header");
         }
-        setParentNode(parent) {
+        setParentNode(parent?: HTMLElement) {
             let tParent = parent || this.buttonParent;
 
             if (!tParent) {
@@ -767,7 +866,7 @@
 
             return this.buttonParent = tParent;
         }
-        insertButton(button) {
+        insertButton(button: WhitelistButtonInstance) {
             this.setParentNode();
 
             if (this.buttonParent.nextSibling) {
@@ -776,17 +875,17 @@
                 this.buttonParent.parentNode.appendChild(button.render());
             }
         }
-        updateVideos(whitelisted, forceUpdate) {
+        updateVideos(whitelisted: boolean, forceUpdate: boolean) {
             this.updateInfobar(this.dataNode, whitelisted);
             pages.updateRelatedBasic(forceUpdate);
         }
-        updateInfobar(container, whitelisted, channelId = this.channelId) {
+        updateInfobar(container: HTMLElement, whitelisted: boolean, channelId = this.channelId) {
 
         }
-        getChannelId(container) {
+        getChannelId(container: HTMLElement) {
             this.setDataNode(container);
-            let links = this.dataNode.querySelectorAll("a");
-            return ChannelID.validate(ChannelID.extractFromLinks(links));
+            let links = this.dataNode.querySelectorAll("a") as ArrayLike<any>;
+            return ChannelID.validate(ChannelID.extractFromLinks(links as Array<any>));
         }
     }
 
@@ -799,28 +898,28 @@
             this.updateVideos = this.updateVideos.bind(this);
         }
 
-        setDataNode(container) {
+        setDataNode(container: HTMLElement) {
             // ytd-page-manager contains data at .data.response.metadata
             // whereas ytd-browse contains data at .data.metadata
             return this.dataNode = container || this.dataNode || document.querySelector("ytd-page-manager");//"ytd-browse");
         }
 
-        setParentNode(parent) {
+        setParentNode(parent?: HTMLElement) {
             return this.buttonParent = parent || this.buttonParent || document.querySelector("#edit-buttons");
         }
-        insertButton(button) {
+        insertButton(button: WhitelistButtonInstance) {
             this.setParentNode();
             this.buttonParent.appendChild(button.render());
         }
 
-        updateVideos(whitelisted, forceUpdate) {
+        updateVideos(whitelisted: boolean, forceUpdate: boolean) {
             pages.updateAllVideos(forceUpdate, this.channelId);
         }
 
-        getChannelId(container) {
+        getChannelId(container: HTMLElement) {
             let channelId = ChannelID.createNew();
             container = this.setDataNode(container);
-            if (!container) return false;
+            if (!container) return null;
 
             channelId.username = oGet(container, "data.response.metadata.channelMetadataRenderer.doubleclickTrackingUsername") || "";
             channelId.display = oGet(container, "data.response.metadata.channelMetadataRenderer.title") || "";
@@ -837,24 +936,24 @@
             this.updatePage = this.updatePage.bind(this);
             this.updateVideos = this.updateVideos.bind(this);
         }
-        setDataNode() {
-            return true;
+        setDataNode(node?: HTMLElement) {
+            return node;
         }
 
-        setParentNode(parent) {
+        setParentNode(parent?: HTMLElement) {
             return this.buttonParent = parent || this.buttonParent || document.querySelector(".primary-header-actions");
         }
-        insertButton(button) {
+        insertButton(button: WhitelistButtonBasic) {
             this.setParentNode();
             this.buttonParent.appendChild(button.render());
         }
 
-        updateVideos(whitelisted, forceUpdate) {
+        updateVideos(whitelisted: boolean, forceUpdate: boolean) {
             pages.updateAllVideosBasic(whitelisted, forceUpdate);
         }
         getChannelId() {
-            let links = [location]
-            let link = document.querySelector("link[rel='canonical']");
+            let links = [location as any] as Array<any>
+            let link = document.querySelector("link[rel='canonical']") as any
 
             if (link) {
                 links.push(link);
@@ -866,13 +965,15 @@
             return ChannelID.validate(channelId)
         }
     }
-
+    interface ChannelElement extends HTMLDivElement {
+        whitelistButton: WhitelistButtonPoly;
+    }
     class SearchPagePoly {
         constructor() {
             this.updatePage = this.updatePage.bind(this);
         }
-        updatePage(forceUpdate) {
-            let channelElements = document.querySelectorAll("ytd-channel-renderer");
+        updatePage(forceUpdate?: boolean) {
+            let channelElements: NodeListOf<ChannelElement> = document.querySelectorAll("ytd-channel-renderer");
 
             if (!channelElements) return;
 
@@ -894,7 +995,7 @@
 
             pages.updateAllVideos(forceUpdate)
         }
-        toggleWhitelist(dataNode) {
+        toggleWhitelist(dataNode: HTMLElement) {
             let channelId = this.getChannelId(dataNode);
             if (!channelId) throw "Channel ID not available";
 
@@ -904,7 +1005,7 @@
                 ChannelID.whitelistAdd(channelId);
             }
         }
-        getChannelId(container) {
+        getChannelId(container: HTMLElement) {
             let channelId = ChannelID.createNew();
             if (!container) throw "Search element required to get channelId under search mode";
 
@@ -918,48 +1019,47 @@
 
     class SearchPageBasic {
         constructor() {
-            this.udpatePage = this.updatePage.bind(this);
+            this.updatePage = this.updatePage.bind(this);
         }
-        updatePage(forceUpdate) {
+        updatePage(forceUpdate: boolean) {
 
         }
     }
-
     class ChannelID {
-        static createNew() {
+        static createNew(): Channel {
             return { id: "", username: "", display: "" };
         }
-        static getUsernameFromURL(url) {
+        static getUsernameFromURL(url: string): string {
             if (!url) return "";
             let matches = url.match(/\/user\/(.+)/);
             if (matches && matches.length > 1)
                 return matches[1];
         }
-        static whitelistRemove(channelId) {
+        static whitelistRemove(channelId: Channel) {
             return agent.send("set-settings", { channelId: channelId, type: "remove-white" });
         }
-        static whitelistAdd(channelId) {
+        static whitelistAdd(channelId: Channel) {
             return agent.send("set-settings", { channelId: channelId, type: "add-white" });
         }
-        static inmutelist(search, idOnly) {
+        static inmutelist(search: Channel | string, idOnly = false) {
             return ChannelID.searchlist(settings.muted, search, idOnly);
         }
 
-        static inwhitelist(search, idOnly) {
+        static inwhitelist(search: Channel | string, idOnly = false) {
             return ChannelID.searchlist(settings.whitelisted, search, idOnly)
         }
 
-        static searchlist(object, channelId, idOnly) {
+        static searchlist(object: ChannelList, channelId: Channel | string, idOnly?: boolean) {
             if (!channelId) return;
 
-            let id, username;
+            let id: string, username: string;
 
             if (idOnly) {
-                id = channelId;
+                id = channelId as string;
                 username = "";
             } else {
-                id = channelId.id;
-                username = channelId.username;
+                id = (channelId as Channel).id;
+                username = (channelId as Channel).username;
             }
 
             const validId = id.length > 4;
@@ -973,14 +1073,14 @@
             return -1;
         }
 
-        static validate(channelId) {
+        static validate(channelId: Channel): Channel {
             if (channelId.id || channelId.username)
                 return channelId;
             else
-                return false;
+                return null;
         }
 
-        static extractFromLinks(links) {
+        static extractFromLinks(links: Array<any>): Channel {
             let channelId = ChannelID.createNew();
 
             for (let link of links) {
@@ -1002,9 +1102,20 @@
             return channelId;
         }
     }
-
+    interface VideoBasic extends HTMLDivElement {
+        processed: boolean;
+    }
+    interface VideoPoly extends HTMLDivElement {
+        data: any;
+    }
     class Page {
-        constructor(design) {
+        video: VideoPagePoly | VideoPageBasic;
+        channel: ChannelPagePoly | ChannelPageBasic;
+        search: SearchPagePoly | SearchPageBasic;
+        currentURL: string;
+        mode: number;
+
+        constructor(design: Design) {
             if (design === LPOLY) {
                 this.video = new VideoPagePoly();
                 this.channel = new ChannelPagePoly();
@@ -1019,13 +1130,13 @@
             this.updateAllVideos = this.updateAllVideos.bind(this);
         }
         static getDesign() {
-            if (window.Polymer || document.querySelector("ytd-app")) {
+            if ((window as any).Polymer || document.querySelector("ytd-app")) {
                 return LPOLY;
             } else {
                 return LBASIC;
             }
         }
-        getMode() {
+        getMode(): Mode {
             let newURL = location.href;
 
             if (newURL !== this.currentURL) {
@@ -1035,7 +1146,7 @@
                 return this.mode;
             }
         }
-        determineMode(url = location.href) {
+        determineMode(url = location.href): Mode {
             if (url.indexOf("youtube.com/watch?") !== -1) {
                 return VIDEO;
             } else if (url.indexOf("youtube.com/channel/") !== -1 || url.indexOf("youtube.com/user/") !== -1) {
@@ -1047,7 +1158,7 @@
             }
         }
 
-        update(forceUpdate, verify) {
+        update(forceUpdate?: boolean, verify?: boolean) {
             let mode = this.getMode();
 
             if (mode === VIDEO) {
@@ -1061,14 +1172,14 @@
             }
         }
 
-        updateAd(ad, mode = this.getMode()) {
+        updateAd(ad: any, mode = this.getMode()) {
             if (mode === VIDEO) {
                 this.video.updateAdInformation(ad);
             } else if (mode === CHANNEL) {
                 this.channel.updateAdInformation(ad);
             }
         }
-        updateVideos(videos, forceUpdate, channelId) {
+        updateVideos(videos: NodeListOf<VideoPoly>, forceUpdate?: boolean, channelId?: Channel) {
             for (let video of videos) {
                 if (!forceUpdate && video.data.processed) continue;
 
@@ -1076,7 +1187,7 @@
                     (channelId && channelId.id);
 
                 if (id) {
-                    let links = video.querySelectorAll("a[href^='/watch?']");
+                    let links = video.querySelectorAll("a[href^='/watch?']") as NodeListOf<HTMLAnchorElement>;
                     if (!links.length) continue;
 
                     let destURL = video.data.originalHref;
@@ -1106,13 +1217,15 @@
                 }
             }
         }
-        updateAllVideos(forceUpdate, channelId) {
-            let videos = document.querySelectorAll("ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer");
+        updateAllVideos(forceUpdate?: boolean, channelId?: Channel) {
+            const query = "ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer";
+            const videos = document.querySelectorAll(query) as NodeListOf<VideoPoly>;
 
             return this.updateVideos(videos, forceUpdate, channelId);
         }
-        updateAllVideosBasic(whitelisted, forceUpdate = false) {
-            let videos = document.querySelectorAll(".yt-lockup-video");
+
+        updateAllVideosBasic(whitelisted: boolean, forceUpdate = false) {
+            let videos: NodeListOf<VideoBasic> = document.querySelectorAll(".yt-lockup-video");
 
             for (let vid of videos) {
                 if (!forceUpdate && vid.processed) continue;
@@ -1122,7 +1235,7 @@
                     inwhite = whitelisted;
                 } else {
                     let user = vid.querySelector(".stat.attribution span");
-                    let values = { username: "" };
+                    let values = ChannelID.createNew();
 
                     if (!user || !(values.username = user.textContent))
                         continue;
@@ -1138,8 +1251,8 @@
                 vid.processed = true;
             }
         }
-        updateRelatedBasic(forceUpdate) {
-            let videos = document.querySelectorAll(".video-list-item");
+        updateRelatedBasic(forceUpdate: boolean) {
+            let videos: NodeListOf<VideoBasic> = document.querySelectorAll(".video-list-item");
 
             for (let vid of videos) {
                 if (!forceUpdate && vid.processed) continue;
@@ -1161,7 +1274,7 @@
                 vid.processed = true;
             }
         }
-        updateURL(channelId, verify) {
+        updateURL(channelId: Channel, verify: boolean) {
             if (!channelId) throw "No channel ID passed to updateURL";
 
             if (location.href.indexOf("&disableadblock=1") !== -1) {
@@ -1181,7 +1294,7 @@
             }
         }
 
-        reflectURLFlag(url, shouldContain) {
+        reflectURLFlag(url: string, shouldContain: boolean): string {
             // take url, return url with flags removed if add is off
             // return url with flags added if add is on
             let search = /((?!\?)igno=re&disableadblock=1&?)|(&disableadblock=1)/g
@@ -1196,7 +1309,7 @@
             }
         }
 
-        confirmDisabled() {
+        confirmDisabled(): void {
             setTimeout(() =>
                 fetch("https://www.youtube.com/favicon.ico?ads=true").catch(() =>
                     prompt("Ads may still be blocked, make sure you've added the following rule to your uBlock Origin whitelist", "*youtube.com/*&disableadblock=1")
@@ -1204,9 +1317,21 @@
                 , 300);
         }
     }
-
+    interface AgentResolver {
+        id: string;
+        resolver: Function;
+        rejector: Function;
+    }
+    interface AgentEvent {
+        [eventName: string]: Array<Function>
+    }
     class MessageAgent {
-        constructor(identifier) {
+        instance: string;
+        resolvers: Array<AgentResolver>;
+        events: AgentEvent;
+        requestsPending: Array<Promise<void>>;
+
+        constructor(identifier?: string) {
             this.instance = identifier || Math.random().toString(36).substring(7); //used to differentiate between us and others
             this.resolvers = [];
             this.events = {};
@@ -1215,7 +1340,7 @@
 
             window.addEventListener("message", this.messageListener);
         }
-        on(event, listener) {
+        on(event: string, listener: Function) {
             if (typeof listener !== "function") throw "Listener must be a function";
             if (!this.events[event]) this.events[event] = [];
             this.events[event].push(listener);
@@ -1223,15 +1348,23 @@
             return this;
         }
 
-        send(event, message) {
+        send(event: string, message?: any) {
             let callbackId = Math.random().toString(36).substring(7);
             window.postMessage({ event: event, message: message, callbackId: callbackId, instance: this.instance }, "*");
 
-            return new Promise((resolve, reject) => {
+            let p: Promise<any> = new Promise((resolve, reject) => {
                 this.resolvers.push({ id: callbackId, resolver: resolve, rejector: reject });
+            }).then(response => {
+                let i = this.requestsPending.findIndex(item => item === p);
+                this.requestsPending.splice(i, 1);
+                return response;
+            }).catch(err => {
+                return err;
             })
+            this.requestsPending.push(p);
+            return p;
         }
-        messageListener(e) {
+        messageListener(e: MessageEvent) {
             let revent = e.data;
             let promises = [];
 
@@ -1275,7 +1408,7 @@
         }
         destroy() {
             Object.keys(this.events).forEach(key => this.events[key] = []);
-            return Promise.all(this.requestsPending.concat(this.resolvers)).then(() => {
+            return Promise.all(this.requestsPending).then(() => {
                 window.removeEventListener("message", this.messageListener);
                 this.resolvers = null;
                 this.events = null;
@@ -1285,7 +1418,7 @@
 
     }
 
-    function oGet(object, key) {
+    function oGet(object: any, key: string) {
         let levels = key.split(/[\[\]\.]+/);
         let current = object;
 
@@ -1302,16 +1435,67 @@
         return current;
     }
 
-    function init() {
-        pages = new Page(Page.getDesign());
+    class HasteLoader {
+        watcher: MutationObserver;
+        designConfirmed: (design: Design) => void;
+
+        constructor() {
+            this.watcher = new MutationObserver(mutations => {
+                for (let mutation of mutations) {
+                    if (mutation.type === "childList") {
+                        for (let node of mutation.addedNodes) {
+                            if (node.nodeName === "BODY") {
+                                return this.switchToBody();
+                            } else if (node.nodeName === "SCRIPT") {
+                                if ((node as HTMLScriptElement).src.indexOf("polymer.js") !== -1) {
+                                    return this.confirmDesign(LPOLY);
+                                }
+                            } else if ((node as Element).localName === "ytd-app") {
+                                return this.confirmDesign(LPOLY);
+                            }
+                        }
+                    }
+                }
+            });
+            this.designConfirmed = null;
+            this.contentLoaded = this.contentLoaded.bind(this)
+        }
+        confirmDesign(design: Design) {
+            this.watcher.disconnect();
+            document.removeEventListener("DOMContentLoaded", this.contentLoaded)
+            return this.designConfirmed(design);
+        }
+        getDesign(): Promise<Design> {
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+                return Promise.resolve(Page.getDesign());
+            } else {
+                return new Promise(resolve => {
+                    this.designConfirmed = resolve;
+                    this.watcher.observe(document.documentElement, { childList: true });
+                    document.addEventListener("DOMContentLoaded", this.contentLoaded);
+                })
+            }
+        }
+        contentLoaded() {
+            this.confirmDesign(Page.getDesign());
+        }
+        switchToBody() {
+            this.watcher.disconnect();
+            this.watcher.observe(document.body, { childList: true });
+        }
+
+    }
+
+    function init(design: Design) {
+        pages = new Page(design || Page.getDesign());
         watcher = new MutationWatcher();
         pages.update(true);
         watcher.start();
-
-        agent.on("settings-update", updated => {
+        
+        agent.on("settings-update", (updated: any) => {
             settings = updated.settings;
             pages.update(true, updated.initiator)
-        }).on("ad-update", ad => {
+        }).on("ad-update", (ad: any) => {
             pages.updateAd(ad);
         }).on("destroy", () => {
             console.log("Detaching inject script..");
@@ -1338,13 +1522,9 @@
         settings = response.settings;
         accessURLs = response.accessURLs;
 
-        if (document.readyState === "complete" || document.readyState === "interactive") {
-            init(); // DOMContentAlreadyLoaded
-        } else {
-            document.addEventListener("DOMContentLoaded", init);
-        }
+        let load = new HasteLoader();
+        load.getDesign().then(design => init(design));
     });
-
     return {
         Page: Page,
         VideoPageBasic: VideoPageBasic,

@@ -43,10 +43,12 @@
     "gulp-if": "^2.0.2",
     "gulp-json-editor": "^2.4.1",
     "gulp-pug": "^4.0.1",
+    "gulp-typescript": "^5.0.0-alpha.3",
     "gulp-uglify-es": "^1.0.4",
     "gulp-util": "^3.0.8",
     "merge-stream": "^1.0.1",
     "reactstrap": "^6.4.0",
+    "typescript": "^3.1.6",
     "webpack-stream": "^5.1.1",
     "websocket": "^1.0.28"
   },

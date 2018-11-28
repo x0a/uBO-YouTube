@@ -9,6 +9,8 @@ let del = require("del");
 let gulpif = require("gulp-if");
 let mergestream = require("merge-stream");
 let webpack = require("webpack-stream");
+let ts = require("gulp-typescript");
+let tsProject = ts.createProject("tsconfig.json");
 let Archiver = require("gulp-archiver2");
 let wsServer = require('websocket').server;
 let build = false, production = false, chrome = new Archiver("zip"), webext = new Archiver("zip"); //gulp-if requires that these be defined somehow
@@ -35,14 +37,18 @@ gulp.task("css", () => {
 });
 
 gulp.task("js", () => {
-    let seek = ["src/*.js"];
-
-    if (!build) {
-        seek.push("src/pages/devel.js");
-    }
-
-    return gulp.src(seek)
+    return gulp.src("src/pages/*.js")
         .pipe(gulpif(production, uglify()))
+        .pipe(gulp.dest("dist/chrome/debug"))
+        .pipe(gulp.dest("dist/webext/debug"))
+        .pipe(gulpif(build, webext.add()))
+        .pipe(gulpif(build, chrome.add()))
+});
+
+gulp.task("ts", () => {
+    return tsProject.src()
+        .pipe(tsProject())
+        //.pipe(gulpif(production, uglify()))
         .pipe(gulp.dest("dist/chrome/debug"))
         .pipe(gulp.dest("dist/webext/debug"))
         .pipe(gulpif(build, webext.add()))
@@ -159,8 +165,8 @@ gulp.task("watch", () => {
     gulp.watch("src/pages/*.jsx", gulp.series("jsx")); // this,
     gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
     gulp.watch("shared/manifest.json", gulp.series("manifest", "fullreload"));
-    gulp.watch("src/background.js", gulp.series("js", "fullreload")); // core js changes (background.js) require reload
-    gulp.watch(["!src/background.js", "src/*.js"], gulp.series("js", "partialreload")); // content.js doesnt require full reload, only script reloading
+    gulp.watch("src/background.ts", gulp.series("ts", "fullreload")); // core js changes (background.js) require reload
+    gulp.watch(["!src/background.ts", "src/*.ts"], gulp.series("ts", "partialreload")); // content.js doesnt require full reload, only script reloading
 })
 
 gulp.task("fullreload", cb => {
@@ -221,7 +227,7 @@ gulp.task("done", cb => {
     cb();
 });
 
-gulp.task("default", gulp.series("clean", gulp.parallel("css", "js", "jsx", "lib", "pug", "img"), "manifest", "build-end", "done"))
+gulp.task("default", gulp.series("clean", gulp.parallel("css", "ts", "jsx", "lib", "pug", "img"), "manifest", "build-end", "done"))
 
 gulp.task("build", gulp.series("build-start", "default"));
 
