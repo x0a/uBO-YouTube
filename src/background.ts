@@ -1,13 +1,31 @@
-// @ts-check
 "use strict";
 
-(function (window, browser, undefined) {
-    let settings; // :SettingsManager
-    let ads; // :AdManager
+(function (window, browser, undefined?: any) {
+    interface Channel {
+        display: string,
+        username: string,
+        id: string
+    }
+    type ChannelList = Array<Channel>;
+    interface Settings {
+        whitelisted: ChannelList;
+        blacklisted: ChannelList;
+        muted: ChannelList;
+    }
+    interface Tab{
+        id: number;
+    }
+
+    let settings: SettingsManager; 
+    let ads: AdManager;
 
     class SettingsManager {
-        constructor(settings) {
-            if (!settings) settings = {};
+        whitelisted: ChannelList;
+        blacklisted: ChannelList;
+        muted: ChannelList;
+
+        constructor(settings: Settings) {
+            if (!settings) settings = {} as Settings;
             if (!settings.whitelisted) settings.whitelisted = [];
             if (!settings.blacklisted) settings.blacklisted = [];
             if (!settings.muted) settings.muted = [];
@@ -17,11 +35,11 @@
             this.muted = settings.muted;
         }
 
-        updateAll(originTab) {
-            browser.tabs.query({}, tabs => {
+        updateAll(originTab: Tab) {
+            browser.tabs.query({}, (tabs: any) => {
                 for (let tab of tabs) {
                     const origin = (originTab && originTab.id === tab.id) || false;
-                    browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, initiator: origin }, response => {
+                    browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, initiator: origin }, (response?: any) => {
                         //console.log(response);
                     });
                 }
@@ -29,7 +47,7 @@
         }
 
         static injectAll() {
-            browser.tabs.query({}, tabs => {
+            browser.tabs.query({}, (tabs: any) => {
                 for (let tab of tabs) {
                     try {
                         browser.tabs.executeScript(tab.id, { file: "content.js" }, () => {
@@ -40,7 +58,7 @@
             });
         }
 
-        addToWhitelist(channelId) {
+        addToWhitelist(channelId: Channel) {
             if (this.inWhitelist(channelId.id) === -1) {
                 this.whitelisted.push(channelId);
                 return true;
@@ -48,7 +66,7 @@
             return false;
         }
 
-        addToBlacklist(channelId) {
+        addToBlacklist(channelId: Channel) {
             if (this.inBlacklist(channelId.id) === -1) {
                 this.blacklisted.push(channelId);
                 return true;
@@ -56,7 +74,7 @@
             return false;
         }
 
-        addToMutelist(channelId) {
+        addToMutelist(channelId: Channel) {
             if (this.inMutelist(channelId.id) === -1) {
                 this.muted.push(channelId);
                 return true;
@@ -64,7 +82,7 @@
             return false;
         }
 
-        removeFromWhitelist(id) {
+        removeFromWhitelist(id: string) {
             let i = -1;
             let removeCount = 0;
 
@@ -74,7 +92,7 @@
             }
             return removeCount;
         }
-        removeFromBlacklist(id) {
+        removeFromBlacklist(id: string) {
             let i = -1;
             let removeCount = 0;
 
@@ -84,7 +102,7 @@
             }
             return removeCount;
         }
-        removeFromMutelist(id) {
+        removeFromMutelist(id: string) {
             let i = -1;
             let removeCount = 0;
 
@@ -94,21 +112,21 @@
             }
             return removeCount;
         }
-        inWhitelist(id) {
+        inWhitelist(id: string) {
             for (let index in this.whitelisted) {
                 if (this.whitelisted[index].id === id)
                     return ~~index;
             }
             return -1;
         }
-        inBlacklist(id) {
+        inBlacklist(id: string) {
             for (let index in this.blacklisted) {
                 if (this.blacklisted[index].id === id)
                     return ~~index;
             }
             return -1;
         }
-        inMutelist(id) {
+        inMutelist(id: string) {
             for (let index in this.muted) {
                 if (this.muted[index].id === id)
                     return ~~index;
@@ -130,8 +148,16 @@
             })
         }
     }
+    interface PendingItem {
+        promise: Promise<Ad>;
+        details: any;
+    }
 
     class AdManager {
+        ads: Array<Ad>;
+        pending: Array<PendingItem>
+        apiAvailable: boolean;
+
         constructor() {
             this.ads = [];
             this.pending = [];
@@ -139,20 +165,24 @@
             this.checkPermissions();
         }
 
-        push(ad) {
+        push(ad: Ad) {
             while (this.ads.length > 20) {
                 this.ads.shift(); // just trim a little off the top fam
             }
             this.ads.push(ad);
         }
 
-        queue(details) {
+        queue(details: any): Array<Function> {
             let resolver, rejector;
 
-            let promise = new Promise((resolve, reject) => {
+            let promise = new Promise<Ad>((resolve, reject) => {
                 resolver = resolve;
-                rejector = reject
-            }).then(ad => {
+                rejector = reject;
+            });
+
+            this.pending.push({ details: details, promise: promise });
+
+            promise.then((ad: Ad) => {
                 this.pending.splice(this.pending.findIndex(item => promise === item.promise), 1)
                 this.push(ad);
                 this.sendToTab(ad.details.tabId, ad);
@@ -160,27 +190,28 @@
                 console.error("No UCID available", ad)
             });
 
-            this.pending.push({ details: details, promise: promise });
-
             return [resolver, rejector];
         }
-        get() {
+
+        get(): Promise<Array<Ad>> {
             let promises = []
             for (let i = this.pending.length - 1; i > -1; i--) {
                 promises.push(this.pending[i].promise)
             }
             return Promise.all(promises).then(() => this.ads);
         }
-        sendToTab(tabId, ad) {
-            browser.tabs.query({}, tabs => {
+
+        sendToTab(tabId: number, ad: Ad) {
+            browser.tabs.query({}, (tabs: Array<Tab>) => {
                 for (let tab of tabs) {
                     if (tab.id !== tabId) continue;
-                    browser.tabs.sendMessage(tab.id, { action: "ad-update", ad: ad }, response => { });
+                    browser.tabs.sendMessage(tab.id, { action: "ad-update", ad: ad }, (response?: any) => { });
                     return;
                 }
             });
         }
-        getLastAdFromTab(tabId) /** :Promise */ {
+
+        getLastAdFromTab(tabId: number): Promise<Ad> {
             for (let i = this.pending.length - 1; i > -1; i--) {
                 if (this.pending[i].details.tabId === tabId) {
                     return this.pending[i].promise;
@@ -196,20 +227,23 @@
             return Promise.reject();
         }
 
-        findChannelFromPreviousAd(id) {
-            return this.ads.find(item => item.channelId.id === id)
+        findChannelFromPreviousAd(id: string): Channel {
+            let ad = this.ads.find(item => item.channelId.id === id);
+
+            if (ad) {
+                return ad.channelId;
+            }
         }
 
-        findPrevAdByVideoId(videoId) {
+        findPrevAdByVideoId(videoId: string): Ad {
             for (let ad of this.ads) {
                 if (ad.video_id === videoId) {
                     return ad;
                 }
             }
-            return false;
         }
 
-        fetchChannelTitle(id) {
+        fetchChannelTitle(id: string): Promise<string> {
             if (this.apiAvailable) {
                 // if user enabled the gAPI permission, use it because its 80% faster
                 return fetch("https://content.googleapis.com/youtube/v3/channels?part=snippet&id=" + id + "&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo")
@@ -242,20 +276,20 @@
             }
         }
 
-        getChannelFromURL(url) {
-            if (!url) return false;
+        getChannelFromURL(url: string): string {
+            if (!url) return "";
 
             let matches = url.match(/\/channel\/([\w-]+)(?:\/|$|\?)/);
 
             if (matches && matches[1])
                 return matches[1];
             else
-                return false;
+                return "";
         }
 
-        parseURL(url) {
+        parseURL(url: string): ParsedURL {
             let parser = document.createElement('a');
-            let params = {}
+            let params = {} as Ad
             let queries;
 
             parser.href = url.replace(/\+/g, '%20'); // Let the browser do the work
@@ -274,22 +308,42 @@
                 port: parser.port,
                 pathname: parser.pathname,
                 search: parser.search,
-                params: params,
+                params: params as Ad,
                 hash: parser.hash
             };
         }
-        checkPermissions(){
+        checkPermissions() {
             let neededPerms = { origins: ["*://*.content.googleapis.com/"] };
-            gCall(browser.permissions.contains, neededPerms, granted => this.apiAvailable = granted);
+            gCall(browser.permissions.contains, neededPerms, (granted: boolean) => this.apiAvailable = granted);
         }
     }
+    interface Ad {
+        [propertyName: string]: any
+        details?: any;
+        channelId?: Channel;
+        video_id?: string;
+        channel_url?: string;
+        ucid?: string;
+        author?: string;
+        blocked?: boolean;
+    }
 
-    browser.storage.sync.get(null, items => {
+    interface ParsedURL {
+        protocol: string;
+        host: string;
+        hostname: string;
+        port: string;
+        pathname: string;
+        search: string;
+        params: Ad;
+        hash: string;
+    }
+    browser.storage.sync.get(null, (items: Settings) => {
 
         settings = new SettingsManager(items);
         ads = new AdManager();
 
-        browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        browser.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
             let sendError = null;
 
             if (message.action === "get-lists") {
@@ -344,24 +398,24 @@
                     muted: message.mute
                 });
                 sendResponse({ error: "" });
-            } else if (message.action = "permission"){
-                if(message.type = "google-api"){
+            } else if (message.action = "permission") {
+                if (message.type = "google-api") {
                     ads.checkPermissions();
                 }
                 sendResponse({ error: "" });
             }
         });
 
-        browser.webRequest.onBeforeSendHeaders.addListener(details => {
+        browser.webRequest.onBeforeSendHeaders.addListener((details: any) => {
             if (details.tabId === -1) return; //probably came from an extension, which we don't want to process
-            
+
             let request = new XMLHttpRequest();
             let url = ads.parseURL(details.url);
-            let ad = {};
+            let ad: Ad = {};
             let [done, failed] = ads.queue(details);
             let shouldCancel = false;
             let gotChannelTitle;
-            
+
             if (url.pathname === "/get_video_info" && url.params.video_id) {
                 let prevAd = ads.findPrevAdByVideoId(url.params.video_id);
 
@@ -436,7 +490,14 @@
     SettingsManager.injectAll();
 
     class Development {
-        constructor(server) {
+        developmentServer: string;
+        originalLog = () => { };
+        originalErr = () => { };
+        reconnectInterval: number;
+        timeoutInt: number;
+        ws: WebSocket;
+
+        constructor(server?: string) {
             this.developmentServer = server || "ws://127.0.0.1:3050";
             this.originalLog = console.log;
             this.originalErr = console.error;
@@ -481,7 +542,7 @@
         queueConnection() {
             if (this.timeoutInt)
                 clearInterval(this.timeoutInt);
-            this.timeoutInt = setTimeout(this.connect, this.reconnectInterval);
+            this.timeoutInt = window.setTimeout(this.connect, this.reconnectInterval);
         }
 
         prepareDevEnv() {
@@ -506,21 +567,21 @@
         }
     }
 
-    if (false && Development.detectedDevMode()) { // set to false in production builds
+    if (true && Development.detectedDevMode()) { // set to false in production builds
         let devClient = new Development();
         devClient.connect();
         console.log("[", Date.now(), "]: Development mode");
     }
 
-    function gCall(func, args, callback) {
+    function gCall(func: Function, args: any, callback: (response: any) => {}) {
         let ret = func(args, callback);
         if (ret instanceof Promise) {
             ret.then(callback);
         }
     }
 
-    function cloneObject(obj) {
+    function cloneObject(obj: any) {
         return JSON.parse(JSON.stringify(obj));
     }
-    //@ts-ignore
+
 })(window, (() => { let api; try { api = browser; } catch (e) { api = chrome }; return api })())
