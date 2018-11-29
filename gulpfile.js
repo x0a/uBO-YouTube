@@ -163,7 +163,9 @@ gulp.task("watch", () => {
     gulp.watch("src/*.css", gulp.series("css"));
     gulp.watch("src/pages/*.pug", gulp.series("pug"))
     gulp.watch("src/pages/*.jsx", gulp.series("jsx")); // this,
-    gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
+    if(!production){
+        gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
+    }
     gulp.watch("shared/manifest.json", gulp.series("manifest", "fullreload"));
     gulp.watch("src/background.ts", gulp.series("ts", "fullreload")); // core js changes (background.js) require reload
     gulp.watch(["!src/background.ts", "src/*.ts"], gulp.series("ts", "partialreload")); // content.js doesnt require full reload, only script reloading
