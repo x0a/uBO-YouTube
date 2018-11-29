@@ -6,12 +6,17 @@
 declare var browser: any;
 declare var chrome: any;
 
-(function (window, document, browser, console, undefined?: any) {
+import {
+    AgentResolver, AgentEvent
+} from "./typings";
+
+(function (window, document, browser, console, undefined?: undefined) {
     class InitManager {
         queue: Array<any>;
+        firstRun: Promise<any>;
+
         ready: boolean;
         head: HTMLElement;
-        firstRun: Promise<any>;
         jsFile: HTMLScriptElement;
         cssFile: HTMLLinkElement;
 
@@ -214,16 +219,6 @@ declare var chrome: any;
             }
             document.removeEventListener("beforescriptexecute", this.onScript);
         }
-    }
-
-    interface AgentEvent {
-        [eventName: string]: Array<Function>
-    }
-
-    interface AgentResolver {
-        id: string;
-        resolver: Function;
-        rejector: Function;
     }
 
     class MessageAgent {

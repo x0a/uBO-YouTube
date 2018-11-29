@@ -1,22 +1,16 @@
 "use strict";
 
-(function (window, browser, undefined?: any) {
-    interface Channel {
-        display: string,
-        username: string,
-        id: string
-    }
-    type ChannelList = Array<Channel>;
-    interface Settings {
-        whitelisted: ChannelList;
-        blacklisted: ChannelList;
-        muted: ChannelList;
-    }
-    interface Tab{
-        id: number;
-    }
+declare var browser: any;
+declare var chrome: any;
 
-    let settings: SettingsManager; 
+import {
+    Channel, ChannelList, Settings,
+    Tab, Ad, PendingItem, ParsedURL
+} from "./typings";
+
+(function (window, browser, undefined?: undefined) {
+
+    let settings: SettingsManager;
     let ads: AdManager;
 
     class SettingsManager {
@@ -147,10 +141,6 @@
                 setTimeout(resolve, 800) // resolve anyway if it takes too long, for Edge
             })
         }
-    }
-    interface PendingItem {
-        promise: Promise<Ad>;
-        details: any;
     }
 
     class AdManager {
@@ -317,27 +307,7 @@
             gCall(browser.permissions.contains, neededPerms, (granted: boolean) => this.apiAvailable = granted);
         }
     }
-    interface Ad {
-        [propertyName: string]: any
-        details?: any;
-        channelId?: Channel;
-        video_id?: string;
-        channel_url?: string;
-        ucid?: string;
-        author?: string;
-        blocked?: boolean;
-    }
 
-    interface ParsedURL {
-        protocol: string;
-        host: string;
-        hostname: string;
-        port: string;
-        pathname: string;
-        search: string;
-        params: Ad;
-        hash: string;
-    }
     browser.storage.sync.get(null, (items: Settings) => {
 
         settings = new SettingsManager(items);

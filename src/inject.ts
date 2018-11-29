@@ -1,50 +1,13 @@
 "use strict";
+import {
+    Channel, Settings, AccessURL,
+    Action, MutationElement, ChannelList,
+    Design, Mode, MenuItem,
+    InfoLink, VideoPoly, VideoBasic,
+    AgentEvent, AgentResolver, Ad
+} from "./typings";
 
-(function (window, document, console, undefined?: any) {
-    enum Mode{
-        VIDEO,
-        CHANNEL,
-        SEARCH,
-        ALLELSE
-    }
-    
-    enum Design{
-        LPOLY,
-        LBASIC
-    }
-    
-    interface Channel {
-        display: string,
-        username: string,
-        id: string
-    }
-
-    type WhitelistButtonInstance = WhitelistButtonBasic | WhitelistButtonPoly;
-    type WhitelistButtonFactory = typeof WhitelistButtonBasic | typeof WhitelistButtonPoly;
-    type ChannelList = Array<Channel>;
-
-    interface accessURL {
-        ICO: string;
-    }
-    
-    interface Action {
-        method: Function;
-        lastExecuted: number;
-        timeoutId: number;
-    }
-    
-    interface MutationElement extends MutationRecord {
-        target: HTMLElement;
-        addedNodes: NodeListOf<Element>;
-        removedNodes: NodeListOf<Element>;
-    }
-    
-    interface Settings {
-        whitelisted: ChannelList;
-        blacklisted: ChannelList;
-        muted: ChannelList;
-    }
-
+(function (window, document, console, undefined?: undefined) {
     const VIDEO = 1;
     const CHANNEL = 2;
     const SEARCH = 3;
@@ -53,9 +16,15 @@
     const LBASIC = 1; // old basic layout, less and less supported as time goes on
 
     /* ---------------------------- */
+    type WhitelistButtonInstance = WhitelistButtonBasic | WhitelistButtonPoly;
+    type WhitelistButtonFactory = typeof WhitelistButtonBasic | typeof WhitelistButtonPoly;
+
+    interface ChannelElement extends HTMLDivElement {
+        whitelistButton: WhitelistButtonPoly;
+    }
 
     let settings: Settings;
-    let accessURLs: accessURL;
+    let accessURLs: AccessURL;
     let pages: Page, watcher: MutationWatcher, agent: MessageAgent;
 
 
@@ -121,6 +90,7 @@
                 return null;
             }
         }
+
         isBasicUserInfo(mutation: MutationElement): HTMLElement {
             if (mutation.target.id === "watch7-container" && mutation.addedNodes.length) {
                 for (let node of mutation.addedNodes) {
@@ -152,7 +122,8 @@
                     && (mutation.target.id === "items" || mutation.target.id === "contents")
                 )
         }
-        finishedLoadingBasic(mutation: MutationElement) {
+
+        finishedLoadingBasic(mutation: MutationElement): boolean {
             for (let node of mutation.removedNodes) {
                 if (node.id === "progress") {
                     return true; // old layout, progress bar removed
@@ -197,6 +168,7 @@
                 this.queuedActions.set(method, ticket)
             }
         }
+
         onMutation(mutations: Array<MutationElement>) {
             let mode = pages.getMode();
 
@@ -243,6 +215,7 @@
 
             }
         }
+
         destroy() {
             this.watcher.disconnect();
         }
@@ -310,13 +283,6 @@
         }
     }
 
-    interface MenuItem extends HTMLButtonElement {
-        setText(newText: string): void;
-        setIcon(newIcon: Element): void;
-        setDescription(newDescription: string): void;
-        setDefaults(): void;
-    }
-
     class AdOptions {
         unMuteIcon: Element;
         muteIcon: Element;
@@ -366,7 +332,7 @@
                 el.setAttribute("class", "UBO-menu hidden");
                 el.appendChild(this.blacklistButton);
                 el.appendChild(this.muteButton);
-                el.appendChild(this.skipButton)
+                el.appendChild(this.skipButton);
                 el.addEventListener("focusin", () => this.menuFocused = true);
                 el.addEventListener("focusout", () => {
                     this.menuFocused = false;
@@ -416,42 +382,40 @@
         }
 
         generateMenuItem(text: string, description: string, iconVector: string | Element, onClick: EventListener): MenuItem {
-            return (() => {
-                const defaultIcon = iconVector instanceof Element ? iconVector : this.generateIcon(iconVector);
+            const defaultIcon = iconVector instanceof Element ? iconVector : this.generateIcon(iconVector);
 
-                let el: MenuItem = <MenuItem>document.createElement("button");
-                let currentIcon = defaultIcon;
-                let itemText = document.createTextNode(text)
-                let tooltipText = document.createTextNode(description);
+            let el: MenuItem = document.createElement("button") as MenuItem;
+            let currentIcon = defaultIcon;
+            let itemText = document.createTextNode(text);
+            let tooltipText = document.createTextNode(description);
 
-                el.setAttribute("class", "UBO-menu-item");
-                el.appendChild(currentIcon)
-                el.appendChild(itemText);
-                el.appendChild((() => {
-                    let el = document.createElement("span");
-                    el.setAttribute("class", "BLK-tooltip");
-                    el.appendChild(tooltipText);
-                    return el;
-                })())
-
-                el.setIcon = newIcon => {
-                    el.replaceChild(newIcon, currentIcon);
-                    currentIcon = newIcon;
-                }
-                el.setText = newText => {
-                    itemText.data = newText;
-                }
-                el.setDescription = newDescription => {
-                    tooltipText.data = newDescription;
-                }
-                el.setDefaults = () => {
-                    el.setIcon(defaultIcon);
-                    el.setText(text);
-                    el.setDescription(description);
-                }
-                el.addEventListener("click", onClick)
+            el.setAttribute("class", "UBO-menu-item");
+            el.appendChild(currentIcon);
+            el.appendChild(itemText);
+            el.appendChild((() => {
+                let el = document.createElement("span");
+                el.setAttribute("class", "BLK-tooltip");
+                el.appendChild(tooltipText);
                 return el;
-            })()
+            })())
+
+            el.setIcon = newIcon => {
+                el.replaceChild(newIcon, currentIcon);
+                currentIcon = newIcon;
+            }
+            el.setText = newText => {
+                itemText.data = newText;
+            }
+            el.setDescription = newDescription => {
+                tooltipText.data = newDescription;
+            }
+            el.setDefaults = () => {
+                el.setIcon(defaultIcon);
+                el.setText(text);
+                el.setDescription(description);
+            }
+            el.addEventListener("click", onClick);
+            return el;
         }
 
         generateIcon(iconVector: string): Element {
@@ -498,7 +462,7 @@
             this.skipButton.disabled = !enabled;
         }
 
-        set advertiserName(title: boolean) {
+        set advertiserName(title: string) {
             this.tooltip.textContent = `Manage ads from "${title}"`;
         }
 
@@ -564,7 +528,7 @@
         whitelistButton: WhitelistButtonInstance;
         adOptions: AdOptions;
         channelId?: Channel;
-        currentAd: any;
+        currentAd: Ad;
         currentDuration: string;
         firstRun: boolean;
         adPlaying: boolean;
@@ -587,7 +551,7 @@
             this.awaitingSkip = false;
             this.skipButton = null;
             this.currentPlayer = null;
-
+            console.log(this);
         }
 
         updatePage(forceUpdate?: boolean, verify?: boolean) {
@@ -642,7 +606,7 @@
 
                     agent.send("recent-ad").then(message => {
                         if (message.error) return;
-                        this.currentAd = message.ad;
+                        this.currentAd = message.ad as Ad;
                         this.updateAdButton();
                     })
                 }
@@ -716,19 +680,16 @@
         }
 
         toSeconds(durationText: string): number {
-            if (!durationText)
-                return 0;
-            else {
-                let durationParts = durationText.split(":");
-                let duration = 0;
+            if (typeof durationText !== "string") return;
 
-                for (let i = 0; i < durationParts.length; i++) {
-                    if (~~durationParts[i] === 0) return 0;
-                    duration += ~~durationParts[i] * Math.pow(60, durationParts.length - i - 1)
-                }
+            let durationParts = durationText.split(":");
+            let seconds = 0, level = durationParts.length;
 
-                return duration;
+            for (let i = 0; i < durationParts.length; i++) {
+                seconds += ~~durationParts[i] * Math.pow(60, --level);
             }
+
+            return seconds;
         }
 
         addBlacklist() {
@@ -773,11 +734,7 @@
         getChannelId(/* override */node: HTMLElement): Channel { return ChannelID.createNew(); }
 
     }
-    interface InfoLink extends HTMLAnchorElement {
-        channelId: string;
-        sethref: string;
-        whitelisted: boolean;
-    }
+
     class VideoPagePoly extends SingleChannelPage {
         constructor() {
             super(WhitelistButtonPoly);
@@ -965,9 +922,7 @@
             return ChannelID.validate(channelId)
         }
     }
-    interface ChannelElement extends HTMLDivElement {
-        whitelistButton: WhitelistButtonPoly;
-    }
+
     class SearchPagePoly {
         constructor() {
             this.updatePage = this.updatePage.bind(this);
@@ -1102,12 +1057,7 @@
             return channelId;
         }
     }
-    interface VideoBasic extends HTMLDivElement {
-        processed: boolean;
-    }
-    interface VideoPoly extends HTMLDivElement {
-        data: any;
-    }
+
     class Page {
         video: VideoPagePoly | VideoPageBasic;
         channel: ChannelPagePoly | ChannelPageBasic;
@@ -1317,14 +1267,7 @@
                 , 300);
         }
     }
-    interface AgentResolver {
-        id: string;
-        resolver: Function;
-        rejector: Function;
-    }
-    interface AgentEvent {
-        [eventName: string]: Array<Function>
-    }
+
     class MessageAgent {
         instance: string;
         resolvers: Array<AgentResolver>;
@@ -1435,7 +1378,10 @@
         return current;
     }
 
-    class HasteLoader {
+    class LoadHastener {
+        // This class helps us process the page 82% sooner than waiting for DOMContentLoaded
+        // By watching nodes for design indicators as they are added, we can begin processing
+        // the page after 600 ms, as opposed to the 3500 ms it can take to wait for DOMContentLoaded.
         watcher: MutationObserver;
         designConfirmed: (design: Design) => void;
 
@@ -1460,11 +1406,7 @@
             this.designConfirmed = null;
             this.contentLoaded = this.contentLoaded.bind(this)
         }
-        confirmDesign(design: Design) {
-            this.watcher.disconnect();
-            document.removeEventListener("DOMContentLoaded", this.contentLoaded)
-            return this.designConfirmed(design);
-        }
+
         getDesign(): Promise<Design> {
             if (document.readyState === "complete" || document.readyState === "interactive") {
                 return Promise.resolve(Page.getDesign());
@@ -1476,6 +1418,12 @@
                 })
             }
         }
+        confirmDesign(design: Design): void {
+            this.watcher.disconnect();
+            document.removeEventListener("DOMContentLoaded", this.contentLoaded)
+            this.designConfirmed(design);
+        }
+
         contentLoaded() {
             this.confirmDesign(Page.getDesign());
         }
@@ -1491,7 +1439,7 @@
         watcher = new MutationWatcher();
         pages.update(true);
         watcher.start();
-        
+
         agent.on("settings-update", (updated: any) => {
             settings = updated.settings;
             pages.update(true, updated.initiator)
@@ -1516,15 +1464,16 @@
             }
         }
     }
-
+    // MAIN ENTRY POINT
     agent = new MessageAgent();
     agent.send("get-settings").then(response => {
         settings = response.settings;
         accessURLs = response.accessURLs;
 
-        let load = new HasteLoader();
+        let load = new LoadHastener();
         load.getDesign().then(design => init(design));
     });
+
     return {
         Page: Page,
         VideoPageBasic: VideoPageBasic,
