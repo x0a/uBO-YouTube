@@ -104,14 +104,8 @@ interface Video{
 }
 
 interface ParsedURL {
-    protocol: string;
-    host: string;
-    hostname: string;
-    port: string;
     pathname: string;
-    search: string;
     params: Ad | Video;
-    hash: string;
 }
 
 export {

@@ -69,7 +69,7 @@ class Main extends Component {
     toggleSearch() {
         this.setState({ showSearch: !this.state.showSearch })
     }
-    removeMute(item){
+    removeMute(item) {
         this.settingsComp.removeMute(item);
     }
     removeBlack(item) {
@@ -299,13 +299,10 @@ class AdList extends Component {
                     }
 
                     if (item.title) {
-                        const decoded = decodeURIComponent(item.title);
-
-                        if (decoded.length > 20)
-                            item.videoTitle = decoded.substring(0, 20) + "..."
+                        if (item.title.length > 20)
+                            item.videoTitle = item.title.substring(0, 20) + "..."
                         else
-                            item.videoTitle = decoded;
-                        item.title = decoded;
+                            item.videoTitle = item.title;
                     } else {
                         item.videoTitle = "Ad";
                     }

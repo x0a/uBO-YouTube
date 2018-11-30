@@ -278,28 +278,20 @@ import {
         }
 
         parseURL(url: string): ParsedURL {
-            let parser = document.createElement('a');
-            let params = {} as Ad
-            let queries;
-
-            parser.href = url.replace(/\+/g, '%20'); // Let the browser do the work
-            queries = parser.search.replace(/^\?/, '').split('&');
-
-            for (let i = 0; i < queries.length; i++) {
-                // Convert query string to object
-                let split = queries[i].split('=');
-                params[split[0]] = split[1];
+            let pathname;
+            let params = {} as Ad;
+            let queryStart = url.indexOf("?");
+            // read from the last instance of "/" until the "?" query marker
+            pathname = url.substring(url.lastIndexOf("/", queryStart), queryStart)
+            let queries = new URLSearchParams(url.substring(queryStart + 1));
+        
+            for (let [key, value] of queries.entries()) {
+                params[key] = value;
             }
-
+        
             return {
-                protocol: parser.protocol,
-                host: parser.host,
-                hostname: parser.hostname,
-                port: parser.port,
-                pathname: parser.pathname,
-                search: parser.search,
-                params: params as Ad,
-                hash: parser.hash
+                pathname: pathname,
+                params: params
             };
         }
         checkPermissions() {
@@ -415,7 +407,7 @@ import {
                             }
 
                             if (ad.author) {
-                                ad.channelId.display = decodeURIComponent(ad.author);
+                                ad.channelId.display = ad.author;
                                 gotChannelTitle = Promise.resolve();
                             } else {
                                 let prevChannel = ads.findChannelFromPreviousAd(ad.channelId.id);
