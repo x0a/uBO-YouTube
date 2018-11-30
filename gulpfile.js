@@ -13,7 +13,7 @@ let ts = require("gulp-typescript");
 let tsProject = ts.createProject("tsconfig.json");
 let Archiver = require("gulp-archiver2");
 let wsServer = require('websocket').server;
-let build = false, production = false, chrome = new Archiver("zip"), webext = new Archiver("zip"); //gulp-if requires that these be defined somehow
+let build = false, production = false, chrome = new Archiver("zip"), webext = new Archiver("zip"), src = new Archiver("zip"); //gulp-if requires that these be defined somehow
 let codeVersion, packageVersion, ws, wsClients = new Map();
 
 function sendToAll(message) {
@@ -29,6 +29,7 @@ gulp.task("clean", () => {
 
 gulp.task("css", () => {
     return gulp.src("src/*.css")
+        .pipe(gulpif(build, src.add("/src")))
         .pipe(gulpif(production, cleanCSS()))
         .pipe(gulp.dest("dist/chrome/debug"))
         .pipe(gulp.dest("dist/webext/debug"))
@@ -46,9 +47,14 @@ gulp.task("js", () => {
 });
 
 gulp.task("ts", () => {
+    if (build) {
+        gulp.src("src/typings.ts")
+            .pipe(src.add("src/"));
+    }
     return tsProject.src()
+        .pipe(gulpif(build, src.add("src")))
         .pipe(tsProject())
-        //.pipe(gulpif(production, uglify()))
+        .pipe(gulpif(production, uglify()))
         .pipe(gulp.dest("dist/chrome/debug"))
         .pipe(gulp.dest("dist/webext/debug"))
         .pipe(gulpif(build, webext.add()))
@@ -57,6 +63,10 @@ gulp.task("ts", () => {
 
 
 gulp.task("jsx", () => {
+    if (build) {
+        gulp.src("src/pages/*.jsx")
+            .pipe(src.add("src/pages"));
+    }
     return gulp.src("src/pages/Main.jsx")
         .pipe(webpack({
             module: {
@@ -96,6 +106,7 @@ gulp.task("lib", () => {
     return gulp.src(seek)
         .pipe(gulp.dest("dist/chrome/debug/lib"))
         .pipe(gulp.dest("dist/webext/debug/lib"))
+        .pipe(gulpif(build, src.add("lib")))
         .pipe(gulpif(build, webext.add("lib")))
         .pipe(gulpif(build, chrome.add("lib")))
 });
@@ -104,12 +115,14 @@ gulp.task("img", () => {
     return gulp.src("src/img/**")
         .pipe(gulp.dest("dist/chrome/debug/img"))
         .pipe(gulp.dest("dist/webext/debug/img"))
+        .pipe(gulpif(build, src.add("src/img")))
         .pipe(gulpif(build, webext.add("img")))
         .pipe(gulpif(build, chrome.add("img")))
 });
 
 gulp.task("pug", () => {
     return gulp.src("src/pages/*.pug")
+        .pipe(gulpif(build, src.add("src/pages/")))
         .pipe(pug({
             locals: {
                 development: !production
@@ -163,7 +176,7 @@ gulp.task("watch", () => {
     gulp.watch("src/*.css", gulp.series("css"));
     gulp.watch("src/pages/*.pug", gulp.series("pug"))
     gulp.watch("src/pages/*.jsx", gulp.series("jsx")); // this,
-    if(!production){
+    if (!production) {
         gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
     }
     gulp.watch("shared/manifest.json", gulp.series("manifest", "fullreload"));
@@ -186,6 +199,7 @@ gulp.task("manifest", () => {
         .pipe(jeditor(json => { packageVersion = json.version; return json }));
 
     return gulp.src("shared/manifest.json")
+        .pipe(gulpif(build, src.add("shared/")))
         .pipe(gulpif(!build, jeditor(json => {
             json.permissions.push("http://localhost:5030/");
             json.background.persistent = true;
@@ -205,7 +219,7 @@ gulp.task("manifest", () => {
 gulp.task("build-start", cb => {
     build = true;
     production = true;
-    return del(["dist/chrome/dist/latest*.zip", "dist/webext/dist/latest*.zip"]);
+    return del(["dist/chrome/dist/latest*.zip", "dist/webext/dist/latest*.zip", "dist/webext/dist/src.zip"]);
 });
 
 gulp.task("build-end", cb => {
@@ -215,7 +229,18 @@ gulp.task("build-end", cb => {
         console.log("Manifest version appears to have changed, but project version remains the same. Call `gulp build` if this is a new version.");
 
     if (build) {
-        return mergestream(chrome.close("latest-" + codeVersion + ".zip").pipe(gulp.dest("dist/chrome/")), webext.close("latest" + codeVersion + ".zip").pipe(gulp.dest("dist/webext/")))
+        return mergestream(
+            chrome.close("latest-" + codeVersion + ".zip")
+                .pipe(gulp.dest("dist/chrome/")),
+            webext.close("latest" + codeVersion + ".zip")
+                .pipe(gulp.dest("dist/webext/")),
+            gulp.src(["gulpfile.js", "package.json", "tsconfig.json"])
+                .pipe(src.add())
+                .on("end", () =>
+                    src.close("src.zip")
+                        .pipe(gulp.dest("dist/webext")
+                        ))
+        )
     } else
         cb();
 });
