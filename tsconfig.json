@@ -5,6 +5,7 @@
         "src/content.ts"
     ],
     "compilerOptions": {
+        "typeRoots": ["node_modules/@types", "node_modules/web-ext-types"],
         "noImplicitAny": true,
         "target": "es6"
     }
