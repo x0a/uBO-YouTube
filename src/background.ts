@@ -19,10 +19,13 @@ import {
 
         constructor(settings: Settings) {
             if (!settings) settings = {} as Settings;
+            if (!settings.whitelisted) settings.whitelisted = [];
+            if (!settings.blacklisted) settings.blacklisted = [];
+            if (!settings.muted) settings.muted = [];
 
-            this.whitelisted = settings.whitelisted || [];
-            this.blacklisted = settings.blacklisted || [];
-            this.muted = settings.muted || [];
+            this.whitelisted = settings.whitelisted;
+            this.blacklisted = settings.blacklisted;
+            this.muted = settings.muted;
         }
 
         updateAll(originTab: browser.tabs.Tab) {
