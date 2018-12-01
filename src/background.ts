@@ -1,11 +1,10 @@
 "use strict";
 
-declare var browser: any;
 declare var chrome: any;
 
 import {
     Channel, ChannelList, Settings,
-    Tab, Ad, PendingItem, ParsedURL
+    Ad, PendingItem, ParsedURL
 } from "./typings";
 
 (function (window, browser, undefined?: undefined) {
@@ -20,34 +19,28 @@ import {
 
         constructor(settings: Settings) {
             if (!settings) settings = {} as Settings;
-            if (!settings.whitelisted) settings.whitelisted = [];
-            if (!settings.blacklisted) settings.blacklisted = [];
-            if (!settings.muted) settings.muted = [];
 
-            this.whitelisted = settings.whitelisted;
-            this.blacklisted = settings.blacklisted;
-            this.muted = settings.muted;
+            this.whitelisted = settings.whitelisted || [];
+            this.blacklisted = settings.blacklisted || [];
+            this.muted = settings.muted || [];
         }
 
-        updateAll(originTab: Tab) {
-            browser.tabs.query({}, (tabs: any) => {
+        updateAll(originTab: browser.tabs.Tab) {
+            browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
                 for (let tab of tabs) {
                     const origin = (originTab && originTab.id === tab.id) || false;
-                    browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, initiator: origin }, (response?: any) => {
-                        //console.log(response);
-                    });
+                    browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, initiator: origin })
+                        .then((response?: any) => {
+                            //console.log(response);
+                        });
                 }
             });
         }
 
         static injectAll() {
-            browser.tabs.query({}, (tabs: any) => {
+            browser.tabs.query({}).then((tabs: any) => {
                 for (let tab of tabs) {
-                    try {
-                        browser.tabs.executeScript(tab.id, { file: "content.js" }, () => {
-                            void browser.runtime.lastError;
-                        })
-                    } catch (e) { }
+                    browser.tabs.executeScript(tab.id, { file: "content.js" }).then(result => { }).catch(err => { })
                 }
             });
         }
@@ -137,7 +130,8 @@ import {
         }
         save() {
             return new Promise((resolve, reject) => {
-                browser.storage.sync.set(this.get(), resolve)
+                browser.storage.sync.set(this.get())
+                    .then(value => resolve())
                 setTimeout(resolve, 800) // resolve anyway if it takes too long, for Edge
             })
         }
@@ -192,10 +186,11 @@ import {
         }
 
         sendToTab(tabId: number, ad: Ad) {
-            browser.tabs.query({}, (tabs: Array<Tab>) => {
+            browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
                 for (let tab of tabs) {
                     if (tab.id !== tabId) continue;
-                    browser.tabs.sendMessage(tab.id, { action: "ad-update", ad: ad }, (response?: any) => { });
+                    browser.tabs.sendMessage(tab.id, { action: "ad-update", ad: ad })
+                        .then((response?: any) => { });
                     return;
                 }
             });
@@ -284,11 +279,11 @@ import {
             // read from the last instance of "/" until the "?" query marker
             pathname = url.substring(url.lastIndexOf("/", queryStart), queryStart)
             let queries = new URLSearchParams(url.substring(queryStart + 1));
-        
+
             for (let [key, value] of queries.entries()) {
                 params[key] = value;
             }
-        
+
             return {
                 pathname: pathname,
                 params: params
@@ -296,13 +291,13 @@ import {
         }
         checkPermissions() {
             let neededPerms = { origins: ["*://*.content.googleapis.com/"] };
-            gCall(browser.permissions.contains, neededPerms, (granted: boolean) => this.apiAvailable = granted);
+            browser.permissions.contains(neededPerms).then((granted: boolean) => this.apiAvailable = granted);
         }
     }
 
-    browser.storage.sync.get(null, (items: Settings) => {
+    browser.storage.sync.get(null).then((items: browser.storage.StorageObject) => {
 
-        settings = new SettingsManager(items);
+        settings = new SettingsManager(items as Settings);
         ads = new AdManager();
 
         browser.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
@@ -535,15 +530,47 @@ import {
         console.log("[", Date.now(), "]: Development mode");
     }
 
-    function gCall(func: Function, args: any, callback: (response: any) => {}) {
-        let ret = func(args, callback);
-        if (ret instanceof Promise) {
-            ret.then(callback);
-        }
-    }
-
     function cloneObject(obj: any) {
         return JSON.parse(JSON.stringify(obj));
     }
 
-})(window, (() => { let api; try { api = browser; } catch (e) { api = chrome }; return api })())
+})(window, ((): typeof browser => {
+    let api: any;
+    try {
+        api = browser;
+        if (!api) throw "chrome";
+    } catch (e) {
+        api = chrome;
+        let promisify = function (method: Function) {
+            // when called, adds a callback;
+            return function () {
+                return new Promise((resolve, reject) => {
+                    let args = Array.from(arguments);
+
+                    args.push(function () {
+                        const err = chrome.runtime.lastError
+
+                        if (err) {
+                            return reject(err);
+                        }
+
+                        let args = Array.from(arguments);
+
+                        if (args.length > 1) {
+                            resolve(args);
+                        } else {
+                            resolve(args[0])
+                        }
+                    });
+                    method.apply(self, args);
+                });
+            }
+        }
+        api.tabs.query = promisify(api.tabs.query);
+        api.tabs.executeScript = promisify(api.tabs.executeScript);
+        api.tabs.sendMessage = promisify(api.tabs.sendMessage);
+        api.storage.sync.get = promisify(api.storage.sync.get);
+        api.storage.sync.set = promisify(api.storage.sync.set);
+        api.permissions.contains = promisify(api.permissions.contains)
+    }; return api
+})())

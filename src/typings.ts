@@ -1,4 +1,4 @@
-interface Channel {
+type Channel = {
     display: string,
     username: string,
     id: string
@@ -28,7 +28,7 @@ interface AccessURL {
     ICO: string;
 }
 
-interface Action {
+type Action = {
     method: Function;
     lastExecuted: number;
     timeoutId: number;
@@ -71,15 +71,12 @@ interface AgentEvent {
     [eventName: string]: Array<Function>
 }
 
-interface Settings {
+interface Settings extends browser.storage.StorageObject{
     whitelisted: ChannelList;
     blacklisted: ChannelList;
     muted: ChannelList;
 }
 
-interface Tab{
-    id: number;
-}
 
 interface PendingItem {
     promise: Promise<Ad>;
@@ -98,7 +95,7 @@ interface Ad {
     blocked?: boolean;
 }
 
-interface Video{
+interface Video {
     [propertyName: string]: any;
     video_id: string;
 }
@@ -114,5 +111,5 @@ export {
     Design, MenuItem,
     InfoLink, VideoBasic, VideoPoly,
     AgentResolver, AgentEvent,
-    Ad, Tab, PendingItem, ParsedURL
+    Ad, PendingItem, ParsedURL
 }
