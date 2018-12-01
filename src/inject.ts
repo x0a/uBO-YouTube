@@ -95,9 +95,11 @@ import {
             if (mutation.target.id === "watch7-container" && mutation.addedNodes.length) {
                 for (let node of mutation.addedNodes) {
                     if (node.id === "watch7-main-container") {
-                        return node as HTMLElement;
+                        return node.querySelector("#watch7-user-header") as HTMLElement;
                     }
                 }
+            }else if(mutation.target.id === "watch7-user-header"){
+                return mutation.target as HTMLElement;
             }
 
             return null;
@@ -276,7 +278,7 @@ import {
             this.button.innerHTML = "Ads";
         }
         exists() {
-            return !!this.button.parentElement;
+            return document.body.contains(this.button);
         }
         render() {
             return this.button;
@@ -563,6 +565,7 @@ import {
             let whitelisted = pages.updateURL(this.channelId, verify);
 
             whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
+
             if (!this.whitelistButton.exists()) {
                 this.insertButton(this.whitelistButton);
                 // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
@@ -811,17 +814,19 @@ import {
             return this.dataNode = container || this.dataNode || document.querySelector("#watch7-user-header");
         }
         setParentNode(parent?: HTMLElement) {
-            let tParent = parent || this.buttonParent;
-
-            if (!tParent) {
-                if (this.dataNode) {
-                    tParent = this.dataNode.querySelector("#watch7-subscription-container")
-                } else {
-                    tParent = document.querySelector("#watch7-subscription-container");
+            if(parent){
+                return this.buttonParent = parent;
+            }else{
+                if(!this.buttonParent || this.buttonParent && this.dataNode && this.buttonParent.parentElement !== this.dataNode){
+                    if (this.dataNode) {
+                        return this.buttonParent = this.dataNode.querySelector("#watch7-subscription-container")
+                    } else {
+                        return this.buttonParent = document.querySelector("#watch7-subscription-container");
+                    }
+                }else{
+                    return this.buttonParent;
                 }
             }
-
-            return this.buttonParent = tParent;
         }
         insertButton(button: WhitelistButtonInstance) {
             this.setParentNode();
@@ -841,6 +846,7 @@ import {
         }
         getChannelId(container: HTMLElement) {
             this.setDataNode(container);
+
             let links = this.dataNode.querySelectorAll("a") as ArrayLike<any>;
             return ChannelID.validate(ChannelID.extractFromLinks(links as Array<any>));
         }
@@ -1037,7 +1043,7 @@ import {
 
         static extractFromLinks(links: Array<any>): Channel {
             let channelId = ChannelID.createNew();
-
+            
             for (let link of links) {
                 if (!link.href) continue;
                 let matches;
