@@ -537,35 +537,36 @@ import {
         return JSON.parse(JSON.stringify(obj));
     }
 
-})(window, ((): typeof browser => {
+})(window, getWebExtensionsAPI())
+
+function getWebExtensionsAPI(): typeof browser {
     let api: any;
+
     try {
         api = browser;
         if (!api) throw "chrome";
     } catch (e) {
         api = chrome;
-        let promisify = function (method: Function) {
+        let promisify = (method: Function) => {
             // when called, adds a callback;
             return function () {
                 return new Promise((resolve, reject) => {
-                    let args = Array.from(arguments);
+                    let args = [].slice.call(arguments);
 
                     args.push(function () {
-                        const err = chrome.runtime.lastError
-
+                        const err = api.runtime.lastError
                         if (err) {
                             return reject(err);
                         }
 
-                        let args = Array.from(arguments);
-
+                        let args = [].slice.call(arguments);
                         if (args.length > 1) {
                             resolve(args);
                         } else {
                             resolve(args[0])
                         }
                     });
-                    method.apply(self, args);
+                    method.apply(null, args);
                 });
             }
         }
@@ -575,5 +576,6 @@ import {
         api.storage.sync.get = promisify(api.storage.sync.get);
         api.storage.sync.set = promisify(api.storage.sync.set);
         api.permissions.contains = promisify(api.permissions.contains)
-    }; return api
-})())
+    };
+    return api;
+}
