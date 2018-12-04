@@ -633,11 +633,11 @@ import {
         }
         updateAdInformation(ad: any) {
             this.currentAd = ad;
-            this.updateAdButton();
+            this.updateAdButton(true);
         }
 
-        updateAdButton() {
-            if (!this.adConfirmed && this.adPlaying && this.currentAd && this.withinSpec(this.currentDuration, this.currentAd.length_seconds)) {
+        updateAdButton(forceUpdate = false) {
+            if ((forceUpdate || !this.adConfirmed) && this.adPlaying && this.currentAd && this.withinSpec(this.currentDuration, this.currentAd.length_seconds)) {
                 this.adConfirmed = true;
                 this.adOptions.muteOption = true;
                 this.adOptions.blacklistOption = true;
