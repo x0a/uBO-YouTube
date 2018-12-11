@@ -31,3 +31,12 @@ And reduces maintainability. So for now we keep track only keep track of
 .dataContainer and .parentContainer. The element that contains the channelId
 data, and the element that the button will be placed into.
 
+
+### TODO
+* Fix AdOptions on full screen
+* Add Settings menu with toggle-able options
+    * Auto close ad overlays (also sends click events to whitelisted channels so channel earns money)
+
+        Close button can be found with _.querySelector_(`".ad-container [role=button][title=Close]"`)
+
+* Change "delete all button" to Settings button on chrome
