@@ -294,7 +294,8 @@ import {
         }
         checkPermissions() {
             let neededPerms = { origins: ["*://*.content.googleapis.com/"] };
-            browser.permissions.contains(neededPerms).then((granted: boolean) => this.apiAvailable = granted);
+            browser.permissions.contains(neededPerms)
+                .then((granted: boolean) => this.apiAvailable = granted);
         }
     }
 
@@ -451,8 +452,8 @@ import {
 
     class Development {
         developmentServer: string;
-        originalLog = () => { };
-        originalErr = () => { };
+        originalLog = (...args: any) => { };
+        originalErr = (...args: any) => { };
         reconnectInterval: number;
         timeoutInt: number;
         ws: WebSocket;
@@ -528,9 +529,13 @@ import {
     }
 
     if (true && Development.detectedDevMode()) { // set to false in production builds
+        const started = Date.now();
         let devClient = new Development();
+
         devClient.connect();
-        console.log("[", Date.now(), "]: Development mode");
+
+        (window as any).s = (() => devClient.originalLog("Started", (Date.now() - started) / 60000, "minutes ago")) as any;
+        console.log("[", started, "]: Development mode");
     }
 
     function cloneObject(obj: any) {

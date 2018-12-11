@@ -107,7 +107,7 @@ import {
         payloadBeginning: string;
         payloadEnd: string;
 
-        constructor(onReceiveSettings: () => {}) {
+        constructor(onReceiveSettings: (payload: any) => {}) {
             this.onReceiveSettings = onReceiveSettings;
             this.onScript = this.onScript.bind(this);
 
@@ -315,11 +315,13 @@ import {
     }
 
     window.dispatchEvent(new CustomEvent("uBOWLInstance")); // signal to any pre-existing instances that they should unload
+    window.dispatchEvent(new CustomEvent("uBOWL-destroy"));
 
     const agent = new MessageAgent(); // My postMessage wrapper, to communicate with our injected script
     const init = new InitManager(document.documentElement);
     /*const adwatcher = new AdWatcher(payload => {
         console.log("Received args:", payload);
+        console.log(adwatcher.parseVMAP(payload.args.vmap));
         payload.args.cbr = "fuccboi";
         return payload;
     });*/
@@ -345,10 +347,10 @@ import {
 
     let dejector: () => void;
 
-    window.addEventListener("uBOWLInstance", dejector = () => {
+    window.addEventListener("uBOWL-destroy", dejector = () => {
         console.log("Unloading uBOWL..");
 
-        window.removeEventListener("uBOWLInstance", dejector);
+        window.removeEventListener("uBOWL-destroy", dejector);
         agent.send("destroy");
         init.destroy();
         //adwatcher.destroy();
