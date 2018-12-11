@@ -50,22 +50,15 @@ import {
         }
 
         isPlayerUpdate(mutation: MutationElement): HTMLElement {
-            let player;
-
             if (mutation.target.id === "movie_player") {
-                player = mutation.target;
+                return mutation.target;
             } else if (mutation.target.id === "player-container" && mutation.addedNodes.length) {
                 for (let node of mutation.addedNodes) {
                     if (node.id === "movie_player") {
-                        player = node;
-                        break;
+                        return node as HTMLElement;
                     }
                 }
             }
-            if (player)
-                return player as HTMLElement;
-            else
-                return null;
         }
 
         isPlayerDurationUpdate(mutation: MutationElement) {
@@ -98,7 +91,7 @@ import {
                         return node.querySelector("#watch7-user-header") as HTMLElement;
                     }
                 }
-            }else if(mutation.target.id === "watch7-user-header"){
+            } else if (mutation.target.id === "watch7-user-header") {
                 return mutation.target as HTMLElement;
             }
 
@@ -171,10 +164,36 @@ import {
             }
         }
 
+        findInjection(mutation: MutationElement, selector: string): void {
+            if (mutation.type === "attributes") return;
+            if (mutation.target.matches(selector)) {
+                console.log("Target is the subject of mutation", mutation)
+            } else if (mutation.type === "childList") {
+
+                for (let node of mutation.addedNodes) {
+                    if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+                    if (node.matches(selector)) {
+                        console.log("Subject was added under mutation", mutation);
+                    } else if (node.querySelector(selector)) {
+                        console.log("Subject was added under childNode of mutation", node, "with mutation", mutation)
+                    }
+                }
+                for (let node of mutation.removedNodes) {
+                    if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+                    if (node.matches(selector)) {
+                        console.log("Subject was removed", mutation);
+                    }
+                }
+            }
+        }
+
         onMutation(mutations: Array<MutationElement>) {
             let mode = pages.getMode();
 
             for (let mutation of mutations) {
+                // this.findInjection(mutation, ".ad-container");
                 if (mode === VIDEO) {
                     let player, userInfo, skipButton;
 
@@ -232,11 +251,11 @@ import {
             this.toggled = toggled;
 
             this.button = document.createElement("button");
-            this.button.className = "UBO-button";
+            this.button.className = "UBO-wl-btn";
             this.button.addEventListener("click", onClick);
 
             this.buttonContainer = document.createElement("div");
-            this.buttonContainer.className = "UBO-button-container";
+            this.buttonContainer.className = "UBO-wl-container";
         }
 
         off() {
@@ -259,7 +278,7 @@ import {
     class WhitelistButtonPoly extends WhitelistButton {
         constructor(onClick: EventListener, toggled: boolean) {
             super(onClick, toggled);
-            this.button.className += " UBO-poly " + (toggled ? " yt-uix-button-toggled" : "");
+            this.button.className += " UBO-wl-poly " + (toggled ? " yt-uix-button-toggled" : "");
             this.button.innerHTML = "ADS";
             this.buttonContainer.appendChild(this.button);
         }
@@ -347,18 +366,17 @@ import {
 
             this.optionsButton = (() => {
                 let el = document.createElement("button");
-                el.setAttribute("id", "BLK-button");
-                el.setAttribute("class", "ytp-button hidden");
+                el.setAttribute("class", "UBO-ads-btn ytp-button hidden");
 
                 el.appendChild(this.tooltip = (() => {
                     let el = document.createElement("span");
-                    el.setAttribute("class", "BLK-tooltip");
+                    el.setAttribute("class", "UBO-ads-tooltip");
                     return el;
                 })());
 
                 el.appendChild((() => {
                     let el = document.createElement("div");
-                    el.setAttribute("class", "BLK-container");
+                    el.setAttribute("class", "UBO-icon-container");
                     el.appendChild((() => {
                         let el = document.createElement("img");
                         el.setAttribute("src", accessURLs.ICO);
@@ -396,7 +414,7 @@ import {
             el.appendChild(itemText);
             el.appendChild((() => {
                 let el = document.createElement("span");
-                el.setAttribute("class", "BLK-tooltip");
+                el.setAttribute("class", "UBO-ads-tooltip");
                 el.appendChild(tooltipText);
                 return el;
             })())
@@ -814,16 +832,16 @@ import {
             return this.dataNode = container || this.dataNode || document.querySelector("#watch7-user-header");
         }
         setParentNode(parent?: HTMLElement) {
-            if(parent){
+            if (parent) {
                 return this.buttonParent = parent;
-            }else{
-                if(!this.buttonParent || this.buttonParent && this.dataNode && this.buttonParent.parentElement !== this.dataNode){
+            } else {
+                if (!this.buttonParent || this.buttonParent && this.dataNode && this.buttonParent.parentElement !== this.dataNode) {
                     if (this.dataNode) {
                         return this.buttonParent = this.dataNode.querySelector("#watch7-subscription-container")
                     } else {
                         return this.buttonParent = document.querySelector("#watch7-subscription-container");
                     }
-                }else{
+                } else {
                     return this.buttonParent;
                 }
             }
@@ -992,9 +1010,14 @@ import {
         }
         static getUsernameFromURL(url: string): string {
             if (!url) return "";
+
             let matches = url.match(/\/user\/(.+)/);
-            if (matches && matches.length > 1)
+
+            if (matches && matches.length > 1) {
                 return matches[1];
+            } else {
+                return "";
+            }
         }
         static whitelistRemove(channelId: Channel) {
             return agent.send("set-settings", { channelId: channelId, type: "remove-white" });
@@ -1035,7 +1058,7 @@ import {
         }
 
         static validate(channelId: Channel): Channel {
-            if (channelId.id || channelId.username)
+            if (channelId && (channelId.id || channelId.username))
                 return channelId;
             else
                 return null;
@@ -1043,7 +1066,7 @@ import {
 
         static extractFromLinks(links: Array<any>): Channel {
             let channelId = ChannelID.createNew();
-            
+
             for (let link of links) {
                 if (!link.href) continue;
                 let matches;
@@ -1367,18 +1390,18 @@ import {
 
     }
 
-    function oGet(object: any, key: string) {
-        let levels = key.split(/[\[\]\.]+/);
+    function oGet(object: any, keyString: string) {
+        // Access deeply nested objects without throwing errors
+        // For example object obj = { toplevel : { middlelevel: { bottomlevel: "test" } } }
+        // oGet(obj, "toplevel.middlelevel.bottomlevel")
+        // yields "test", or undefined if no such property exists
+        const props = keyString.split(/[\[\]\.]+/);
         let current = object;
 
-        for (let level of levels) {
-            if (level.length === 0) continue;
-            if (current[level] !== undefined) {
-                current = current[level];
-            } else {
-                // console.log("Failed at", level);
-                return;
-            }
+        for (let prop of props) {
+            if (prop.length === 0) continue;
+            if (current[prop] !== undefined) current = current[prop];
+            else return // console.log("Failed at", level);            
         }
 
         return current;
@@ -1386,8 +1409,9 @@ import {
 
     class LoadHastener {
         // This class helps us process the page 82% sooner than waiting for DOMContentLoaded
-        // By watching nodes for design indicators as they are added, we can begin processing
-        // the page after 600 ms, as opposed to the 3500 ms it can take to wait for DOMContentLoaded.
+        // By watching HTML elements as they are first added, we can determine what design was
+        // used sooner and can begin processing the page after 600 ms, as opposed to the
+        // 3500 ms it can take to wait for DOMContentLoaded.
         watcher: MutationObserver;
         designConfirmed: (design: Design) => void;
 
@@ -1419,7 +1443,7 @@ import {
             } else {
                 return new Promise(resolve => {
                     this.designConfirmed = resolve;
-                    this.watcher.observe(document.documentElement, { childList: true });
+                    this.watcher.observe(document.body || document.documentElement, { childList: true });
                     document.addEventListener("DOMContentLoaded", this.contentLoaded);
                 })
             }
@@ -1463,7 +1487,7 @@ import {
         }).send("ready");
 
         function domCleanup() {
-            let nodes = document.querySelectorAll("#BLK-button,.UBO-button,.UBO-button-container,.UBO-menu");
+            let nodes = document.querySelectorAll(".UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu");
 
             for (let node of nodes) {
                 node.remove();

@@ -1,13 +1,16 @@
-.UBO-button.UBO-old {
+/******* Whitelist Button CSS  *******/
+
+.UBO-wl-btn.UBO-old {
     margin-left: 5px;
     padding: 0 5.5px 0px 6px !important;
 }
 
-.UBO-button.hidden, .UBO-menu.hidden {
+.UBO-wl-btn.hidden,
+.UBO-menu.hidden {
     display: none;
 }
 
-.UBO-button.UBO-poly {
+.UBO-wl-btn.UBO-wl-poly {
     margin-top: 7px;
     color: rgba(17, 17, 17, 0.298);
     outline: none;
@@ -24,47 +27,52 @@
     white-space: nowrap
 }
 
-.UBO-button.UBO-poly.yt-uix-button-toggled {
+.UBO-wl-btn.UBO-wl-poly.yt-uix-button-toggled {
     color: rgba(17, 17, 17, 0.6);
     border-bottom: 2px solid darkseagreen;
     padding-bottom: 8px;
 }
 
-html[dark] .UBO-button.UBO-poly {
+html[dark] .UBO-wl-btn.UBO-wl-poly {
     color: rgba(255, 255, 255, 0.26);
 }
 
-html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
+html[dark] .UBO-wl-btn.UBO-wl-poly.yt-uix-button-toggled {
     color: rgba(255, 255, 255, 0.498);
 }
-#BLK-button.hidden{
-    visibility: hidden;
-}
-#BLK-button {
+
+/******** AdOptions button CSS   ******/
+
+.UBO-ads-btn {
     visibility: visible;
     display: none;
     overflow: visible;
     position: relative;
 }
 
-#movie_player.ad-interrupting #BLK-button {
+.UBO-ads-btn.hidden {
+    visibility: hidden;
+}
+
+#movie_player.ad-interrupting .UBO-ads-btn {
     display: inline-block !important;
 }
 
-#BLK-button .BLK-container {
+.UBO-ads-btn .BLK-container {
     height: 100%;
     width: 100%;
     position: relative
 }
 
-#BLK-button .BLK-container img {
+.UBO-ads-btn .UBO-icon-container img {
     position: absolute;
     top: 50%;
     left: 50%;
     margin-top: -8px;
     margin-left: -8px;
 }
-.BLK-tooltip{
+
+.UBO-ads-tooltip {
     background-color: rgba(28, 28, 28, 0.9);
     color: rgb(238, 238, 238);
     text-align: center;
@@ -78,17 +86,20 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     opacity: 0;
     transition: opacity .5s;
 }
-#BLK-button .BLK-tooltip {
+
+.UBO-ads-btn .UBO-ads-tooltip {
     visibility: hidden;
     left: 50%;
     transform: translateX(-50%);
     bottom: 140%;
 }
 
-#BLK-button:hover .BLK-tooltip {
+.UBO-ads-btn:hover .UBO-ads-tooltip {
     visibility: visible;
     opacity: 1;
 }
+
+/****** AdOptions Menu CSS *****/
 
 .UBO-menu {
     position: absolute;
@@ -115,16 +126,25 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
     font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif;
 }
 
-.UBO-menu-item:enabled{
+#movie_player.ytp-big-mode .UBO-menu {
+    width: 294px;
+}
+
+#movie_player.ytp-big-mode .UBO-menu-item {
+    height: 49px;
+}
+
+.UBO-menu-item:enabled {
     color: rgb(238, 238, 238);
     cursor: pointer;
 }
-.UBO-menu-item:disabled{
+
+.UBO-menu-item:disabled {
     color: rgb(126, 123, 123);
     cursor: default;
 }
 
-.UBO-menu-item .BLK-tooltip{
+.UBO-menu-item .UBO-ads-tooltip {
     visibility: hidden;
     right: 105%;
     bottom: auto;
@@ -133,14 +153,15 @@ html[dark] .UBO-button.UBO-poly.yt-uix-button-toggled {
 .UBO-menu-item:hover:enabled {
     background-color: rgba(255, 255, 255, .1);
 }
-.UBO-menu-item:hover .BLK-tooltip{
+
+.UBO-menu-item:hover .UBO-ads-tooltip {
     visibility: visible;
     opacity: 1;
 }
 
-.UBO-icon{
-    display:inline-block;
+.UBO-icon {
+    display: inline-block;
     height: 50%;
-    margin-right:5px;
+    margin-right: 5px;
     vertical-align: -4px;
 }
