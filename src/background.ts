@@ -528,7 +528,7 @@ import {
         }
     }
 
-    if (true && Development.detectedDevMode()) { // set to false in production builds
+    if (false && Development.detectedDevMode()) { // set to false in production builds
         const started = Date.now();
         let devClient = new Development();
 
