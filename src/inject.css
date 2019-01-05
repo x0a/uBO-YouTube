@@ -64,6 +64,11 @@ html[dark] .UBO-wl-btn.UBO-wl-poly.yt-uix-button-toggled {
     position: relative
 }
 
+.UBO-ads-btn .UBO-icon-container{
+    height: 36px;
+    width: 36px;
+}
+
 .UBO-ads-btn .UBO-icon-container img {
     position: absolute;
     top: 50%;
