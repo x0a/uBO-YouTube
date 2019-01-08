@@ -1,5 +1,4 @@
 import { Component, Fragment } from "react";
-import { guaranteeCallback } from "./Common.jsx";
 import Modal from "reactstrap/src/Modal";
 import ModalHeader from "reactstrap/src/ModalHeader";
 import ModalBody from "reactstrap/src/ModalBody";
@@ -18,7 +17,7 @@ class ChannelSearch extends Component {
             searching: 0,
             permission: false
         }
-
+        this.isLinuxFirefoxOrEdge = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1 || window.navigator.platform.indexOf("Edge/") !== -1);
         this.searchTimeout = null;
         this.inputChanged = this.inputChanged.bind(this);
         this.channelSelected = this.channelSelected.bind(this);
@@ -27,11 +26,9 @@ class ChannelSearch extends Component {
     }
 
     componentDidMount() {
-        if (!browser.permissions) return this.setState({ permission: true }); // Edge doesn't have .permissions API
-
-        guaranteeCallback(browser.permissions.contains, {
-            origins: ["*://*.content.googleapis.com/"]
-        }, granted => this.setState({ permission: granted }));
+        browser.permissions.contains({ origins: ["*://*.content.googleapis.com/"] }).then(granted => {
+            this.setState({ permission: granted });
+        })
     }
 
     componentWillReceiveProps(nextProps) {
@@ -51,18 +48,20 @@ class ChannelSearch extends Component {
     }
 
     requestPermissions() {
-        if (!browser.permissions) return;
-
-        guaranteeCallback(
-            browser.permissions.request,
-            { origins: ["*://*.content.googleapis.com/"] },
-            granted => {
-                if (granted) {
-                    browser.runtime.sendMessage({ action: "permission", type: "google-api" }, response => { })
-                }
-                this.setState({ permission: granted }, this.focusSearch)
+        if(!this.full && this.isLinuxFirefoxOrEdge){
+            browser.tabs.create({
+                active: true,
+                url: 'settings.html#searchpermissions'
+            }, null);
+            window.close();
+            return;
+        }
+        browser.permissions.request({ origins: ["*://*.content.googleapis.com/"] }).then(granted => {
+            if (granted) {
+                browser.runtime.sendMessage({ action: "permission", type: "google-api" }, response => { })
             }
-        );
+            this.setState({ permission: granted }, this.focusSearch)
+        }).catch(err => console.error(err));
     }
 
     inputChanged(event) {
