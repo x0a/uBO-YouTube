@@ -10,16 +10,17 @@ interface Settings {
     whitelisted: ChannelList;
     blacklisted: ChannelList;
     muted: ChannelList;
+    muteAll: boolean;
 }
 
-enum Mode {
+declare enum Mode {
     VIDEO,
     CHANNEL,
     SEARCH,
     ALLELSE
 }
 
-enum Design {
+declare enum Design {
     LPOLY,
     LBASIC
 }
@@ -61,15 +62,6 @@ interface VideoPoly extends HTMLDivElement {
     data: any;
 }
 
-interface AgentResolver {
-    id: string;
-    resolver: Function;
-    rejector: Function;
-}
-
-interface AgentEvent {
-    [eventName: string]: Array<Function>
-}
 
 interface Settings extends browser.storage.StorageObject{
     whitelisted: ChannelList;
@@ -110,6 +102,5 @@ export {
     Settings, Action, AccessURL,
     Design, MenuItem,
     InfoLink, VideoBasic, VideoPoly,
-    AgentResolver, AgentEvent,
     Ad, PendingItem, ParsedURL
 }

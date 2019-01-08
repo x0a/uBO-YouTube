@@ -2,7 +2,9 @@
     "files": [
         "src/inject.ts",
         "src/background.ts",
-        "src/content.ts"
+        "src/content.ts",
+        "src/agent.ts",
+        "src/browser.ts"
     ],
     "compilerOptions": {
         "typeRoots": ["node_modules/@types", "node_modules/web-ext-types"],

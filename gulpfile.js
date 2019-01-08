@@ -48,13 +48,35 @@ gulp.task("js", () => {
 
 gulp.task("ts", () => {
     if (build) {
-        gulp.src("src/typings.ts")
+        gulp.src("src/typings.d.ts")
             .pipe(src.add("src/"));
     }
     return tsProject.src()
         .pipe(gulpif(build, src.add("src")))
-        .pipe(tsProject())
-        .pipe(gulpif(production, uglify()))
+        .pipe(webpack({
+            entry: {
+                content: "./src/content",
+                inject: "./src/inject",
+                background: "./src/background"
+            },
+            output: {
+                filename: "[name].js"
+            },
+            externals: {
+                "browser": "browser",
+                "chrome": "chrome"
+            },
+            resolve: {extensions: [".ts"]},
+            module: {
+                rules: [
+                    { test: /\.tsx?$/, use: "ts-loader" }
+                ]
+            },
+            mode: production ? "production" : "development",
+            optimization: {
+                minimize: production,
+            }
+        }))
         .pipe(gulp.dest("dist/chrome/debug"))
         .pipe(gulp.dest("dist/webext/debug"))
         .pipe(gulpif(build, webext.add()))
@@ -89,7 +111,6 @@ gulp.task("jsx", () => {
             mode: production ? "production" : "development",
             optimization: {
                 minimize: production,
-
             }
         }))
         .pipe(gulp.dest("dist/chrome/debug"))
