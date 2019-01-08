@@ -2,7 +2,7 @@ import { Component, Fragment } from "react";
 import Alert from "./Alert.jsx";
 import SettingsTools from "./Settings.jsx";
 import { ChannelSearch } from "./ChannelSearch.jsx";
-import { clickEvents, noop, deepCopy } from "./Common.jsx"
+import { clickEvents, promisify } from "./Common.jsx"
 
 class Main extends Component {
     constructor(props) {
@@ -13,9 +13,10 @@ class Main extends Component {
             settings: {
                 whitelisted: [],
                 blacklisted: [],
-                muted: []
+                muted: [],
+                muteAll: false
             },
-            showSearch: false
+            showSearch: props.showSearch || false
         }
 
         this.full = props.full;
@@ -25,11 +26,12 @@ class Main extends Component {
         this.setSettings = this.setSettings.bind(this);
         this.removeWhite = this.removeWhite.bind(this);
         this.removeBlack = this.removeBlack.bind(this);
-        this.removeMute = this.removeMute.bind(this);
         this.addBlacklist = this.addBlacklist.bind(this);
         this.addWhite = this.addWhite.bind(this);
         this.toggleWhite = this.toggleWhite.bind(this);
         this.refreshAll = this.refreshAll.bind(this);
+        this.toggleMuteAll = this.toggleMuteAll.bind(this);
+        this.removeMute = this.removeMute.bind(this);
     }
 
     showAlert(text, confirm = false, danger = false) {
@@ -69,8 +71,11 @@ class Main extends Component {
     toggleSearch() {
         this.setState({ showSearch: !this.state.showSearch })
     }
+    toggleMuteAll() {
+        this.settingsComp.toggleMuteAll(!this.state.settings.muteAll);
+    }
     removeMute(item) {
-        this.settingsComp.removeMute(item);
+        this.settingsComp.removeMute(item, this.state.settings.muteAll);
     }
     removeBlack(item) {
         this.settingsComp.removeBlack(item);
@@ -122,6 +127,7 @@ class Main extends Component {
         let whitelist = <ChannelList
             full={this.full}
             name="Whitelisted Channels"
+            actionTip="Remove from whitelist"
             list={this.state.settings.whitelisted}
             remove={this.removeWhite}
             whitelist={true}>{!this.full && addBtn}</ChannelList>;
@@ -129,12 +135,50 @@ class Main extends Component {
         let blacklist = <ChannelList
             full={this.full}
             name="Blacklisted Advertisers"
+            actionTip="Remove from blacklist"
             list={this.state.settings.blacklisted}
             remove={this.removeBlack} />;
+        let muteTableName = this.state.settings.muteAll ? "Unmuted Advertisers" : "Muted Advertisers";
+        let muteToggle = <div className="row">
+            <div className="col">
+                {muteTableName}
+            </div>
+            <div className="col">
+                <div className="btn-group btn-group-toggle">
+                    <label
+                        title="Mute ads from these advertisers"
+                        className={"btn btn-sm btn-secondary " + (!this.state.settings.muteAll ? "active" : "")}
+                    >
+                        <input
+                            type="radio"
+                            autocomplete="off"
+                            name="muteAll"
+                            checked={!this.state.settings.muteAll}
+                            onChange={this.toggleMuteAll.bind(this, false)}
+                        />
+                        Include channels
+                </label>
+                    <label
+                        title="Mute all ads except from these advertisers"
+                        class={"btn btn-sm btn-secondary " + (this.state.settings.muteAll ? "active" : "")}
+                    >
+                        <input
+                            type="radio"
+                            autocomplete="off"
+                            name="muteAll"
+                            checked={this.state.settings.muteAll}
+                            onChange={this.toggleMuteAll.bind(this, true)}
+                        />
+                        Exempt channels
+                </label>
+                </div>
+            </div>
+        </div>;
         let muted = <ChannelList
             full={this.full}
-            name="Muted Advertisers"
+            name={this.full ? muteToggle : muteTableName}
             list={this.state.settings.muted}
+            actionTip={this.state.settings.muteAll ? "Remove mute exemption" : "Stop muting ads from this advertiser"}
             remove={this.removeMute} />;
         let adsUi = <AdList full={this.full} blacklist={this.addBlacklist} ref={el => this.adsComp = el} />;
 
@@ -209,10 +253,11 @@ class Main extends Component {
 class ChannelList extends Component {
     constructor(props) {
         super(props);
-        this.name = props.name || "";
         this.remove = props.remove;
         this.state = {
-            list: props.list || []
+            name: props.name || "",
+            list: props.list || [],
+            actionTip: props.actionTip
         };
         this.whitelist = props.whitelist;
         this.full = props.full;
@@ -226,27 +271,28 @@ class ChannelList extends Component {
 
         if (nextProps.list) {
             nextState.list = nextProps.list;
+            nextState.name = nextProps.name;
+            nextState.actionTip = nextProps.actionTip;
         }
 
         this.setState(nextState);
     }
 
     render() {
-        let title = this.full ? <h4>{this.name}</h4> : null;
-        let list = !this.state.list.length ? this.emptyRow : this.state.list.map(item => <ListItem
+        const list = !this.state.list.length ? this.emptyRow : this.state.list.map(item => <ListItem
             key={item.id}
             full={this.full}
             onAction={this.remove}
-            actionName={this.whitelist ? "Remove from whitelist" : "Remove from blacklist"}
+            actionTip={this.state.actionTip}
             whitelist={this.whitelist}
             channelId={item} />)
 
         return <Fragment>
-            {title}
+            {this.full ? <h4>{this.state.name}</h4> : null}
             <table className="table table-striped table-sm">
                 <thead className="thead-dark">
                     <tr>
-                        <th>{this.full ? "Channel" : this.name}</th>
+                        <th>{this.full ? "Channel" : this.state.name}</th>
                         <th>{this.full ? "Remove" : this.props.children}</th>
                     </tr>
                 </thead>
@@ -325,7 +371,7 @@ class AdList extends Component {
                 full={this.full}
                 channelId={item.channelId}
                 onAction={this.blacklist}
-                actionName="Add to blacklist"
+                actionTip="Add to blacklist"
                 actionDOM={<i className="fas fa-ban" />} >
                 <td>
                     <a href={item.videoUrl} title={item.title}>
@@ -362,12 +408,12 @@ class ListItem extends Component {
         this.full = props.full;
         this.callAction = props.onAction;
         this.whitelist = props.whitelist;
-        this.actionName = props.actionName || "Remove from whitelist";
         this.actionDOM = props.actionDOM;
 
         this.state = {
             channelId: props.channelId,
-            url: this.getUrl(props.channelId)
+            url: this.getUrl(props.channelId),
+            actionTip: props.actionTip,
         };
 
         this.action = this.action.bind(this);
@@ -375,10 +421,11 @@ class ListItem extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        if (this.state.channelId.id !== nextProps.channelId.id) {
+        if (this.state.channelId.id !== nextProps.channelId.id || this.state.actionTip !== nextProps.actionTip) {
             this.setState({
                 channelId: nextProps.channelId,
-                url: this.getUrl(this.props.channelId)
+                url: this.getUrl(this.props.channelId),
+                actionTip: nextProps.actionTip
             })
         }
     }
@@ -418,7 +465,7 @@ class ListItem extends Component {
                     <button
                         className="btn btn-link table-action text-danger float-right"
                         onClick={this.action}
-                        title={this.actionName}>
+                        title={this.state.actionTip}>
                         {this.actionDOM || <i className="fas fa-minus-circle" />}
                     </button>
                 </td>
@@ -431,7 +478,7 @@ class ListItem extends Component {
                     </button>
                 </td>
                 <td>
-                    <button className="link remove" onClick={this.action} title={this.actionName}>
+                    <button className="link remove" onClick={this.action} title={this.state.actionTip}>
                         {this.actionDOM || <i className="fas fa-minus-circle" />}
                     </button>
                 </td>
@@ -443,11 +490,16 @@ class ListItem extends Component {
 
 if (!window.browser) {
     window.browser = chrome;
+    window.browser.permissions.contains = promisify(window.browser.permissions.contains);
+    window.browser.permissions.request = promisify(window.browser.permissions.request);
 }
 
 document.addEventListener("DOMContentLoaded", () =>
     ReactDOM.render(
-        <Main full={location.href.indexOf("/settings.html") !== -1} />,
+        <Main
+            showSearch={location.hash === "#searchpermissions"}
+            full={location.href.indexOf("/settings.html") !== -1}
+        />,
         document.getElementById('root')
     )
 )

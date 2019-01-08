@@ -6,7 +6,12 @@ class SettingsTools extends Component {
         super(props);
         this.fileImport = null;
         this.state = {
-            settings: { blacklisted: [], whitelisted: [] }
+            settings: {
+                blacklisted: [],
+                whitelisted: [],
+                muted: [],
+                muteAll: false
+            }
         }
 
         this.isLinuxFirefoxOrEdge = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1 || window.navigator.platform.indexOf("Edge/") !== -1);
@@ -120,7 +125,16 @@ class SettingsTools extends Component {
     }
 
     clearSettings() {
-        this.showAlert("This will delete " + this.state.settings.whitelisted.length + " whitelisted items, and " + this.state.settings.blacklisted.length + " blacklisted items. You can backup your settings if you don't want to lose them. Do you want to continue?", true, true).then(() => {
+        const question = "This will delete "
+            + this.state.settings.whitelisted.length
+            + " whitelisted items, "
+            + this.state.settings.blacklisted.length
+            + " blacklisted items, and "
+            + this.state.settings.muted.length
+            + " muted items."
+            + " You can backup your settings if you don't want to lose them. Do you want to continue?";
+
+        this.showAlert(question, true, true).then(() => {
             let newSettings = deepCopy(this.state.settings);
             newSettings.blacklisted = [];
             newSettings.whitelisted = [];
@@ -149,8 +163,10 @@ class SettingsTools extends Component {
             })
         )
     }
-    removeMute(item) {
-        this.showAlert("Are you sure you want to stop muting ads from '" + item.display + "'?", true, false).then(() =>
+    removeMute(item, allMuted) {
+        const action = allMuted ? "remove mute exemption" : "stop muting ads"
+
+        this.showAlert(`Are you sure you want to ${action} from '${item.display}'?`, true, false).then(() =>
             browser.runtime.sendMessage({ action: "set", changes: { type: "remove-mute", channelId: item } }, response => {
                 this.setSettings(response, true)
             })
@@ -172,7 +188,15 @@ class SettingsTools extends Component {
         });
 
     }
+    toggleMuteAll(on = false) {
+        const alert = on ? this.showAlert("This will mute ads by default, and treat this as a list of exemptions (ads from channels on this list wont be muted).", true) : Promise.resolve();
 
+        alert.then(() => {
+            browser.runtime.sendMessage({ action: "set", changes: { type: "mute-all", value: on } }, response => {
+                this.setSettings(response, true)
+            })
+        })
+    }
     inblacklist(channelId) {
         for (let channel = 0; channel < this.state.settings.blacklisted.length; channel++) {
             if (this.state.settings.blacklisted[channel].id === channelId)
@@ -188,8 +212,8 @@ class SettingsTools extends Component {
         }
         return -1;
     }
-    
-    inmutelist(channelId){
+
+    inmutelist(channelId) {
         for (let channel = 0; channel < this.state.settings.muted.length; channel++) {
             if (this.state.settings.muted[channel].id === channelId)
                 return channel;
