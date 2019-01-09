@@ -9,8 +9,9 @@ function getWebExtensionsAPI(): typeof browser {
     } catch (e) {
         if(chrome.promisified) return chrome;
         api = chrome;
-        let promisify = (method: Function) => {
+        let promisify = (context: any, method: string) => {
             // when called, adds a callback;
+            const original = context[method] as Function;
             return function () {
                 return new Promise((resolve, reject) => {
                     let args = [].slice.call(arguments);
@@ -28,22 +29,23 @@ function getWebExtensionsAPI(): typeof browser {
                             resolve(args[0])
                         }
                     });
-                    method.apply(null, args);
+
+                    original.apply(context, args)
                 });
             }
         }
         if (api.tabs) {
-            api.tabs.query = promisify(api.tabs.query);
-            api.tabs.executeScript = promisify(api.tabs.executeScript);
-            api.tabs.sendMessage = promisify(api.tabs.sendMessage);
+            api.tabs.query = promisify(api.tabs, "query");
+            api.tabs.executeScript = promisify(api.tabs,"executeScript");
+            api.tabs.sendMessage = promisify(api.tabs, "sendMessage");
         }
         if (api.permissions) {
-            api.permissions.contains = promisify(api.permissions.contains);
+            api.permissions.contains = promisify(api.permissions, "contains");
         }
-        api.storage.sync.get = promisify(api.storage.sync.get);
-        api.storage.sync.set = promisify(api.storage.sync.set);
+        api.storage.sync.get = promisify(api.storage.sync, "get");
+        api.storage.sync.set = promisify(api.storage.sync, "set");
 
-        api.runtime.sendMessage = promisify(api.runtime.sendMessage);
+        api.runtime.sendMessage = promisify(api.runtime, "sendMessage");
         api.promisified = true;
     };
     return api;

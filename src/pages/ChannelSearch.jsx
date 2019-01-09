@@ -17,11 +17,12 @@ class ChannelSearch extends Component {
             searching: 0,
             permission: false
         }
-        this.isLinuxFirefoxOrEdge = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1 || window.navigator.platform.indexOf("Edge/") !== -1);
+        this.isFirefoxOrEdge = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Edge/") !== -1);
         this.searchTimeout = null;
         this.inputChanged = this.inputChanged.bind(this);
         this.channelSelected = this.channelSelected.bind(this);
         this.requestPermissions = this.requestPermissions.bind(this);
+        this.openSettings = this.openSettings.bind(this)
         this.focusSearch = this.focusSearch.bind(this);
     }
 
@@ -48,20 +49,20 @@ class ChannelSearch extends Component {
     }
 
     requestPermissions() {
-        if(!this.full && this.isLinuxFirefoxOrEdge){
-            browser.tabs.create({
-                active: true,
-                url: 'settings.html#searchpermissions'
-            }, null);
-            window.close();
-            return;
-        }
         browser.permissions.request({ origins: ["*://*.content.googleapis.com/"] }).then(granted => {
             if (granted) {
                 browser.runtime.sendMessage({ action: "permission", type: "google-api" }, response => { })
             }
             this.setState({ permission: granted }, this.focusSearch)
         }).catch(err => console.error(err));
+    }
+
+    openSettings() {
+        browser.tabs.create({
+            active: true,
+            url: 'settings.html#searchpermissions'
+        }, null);
+        window.close();
     }
 
     inputChanged(event) {
@@ -134,12 +135,20 @@ class ChannelSearch extends Component {
                     items = <span className="text-muted bold">Type to search for a YouTube channel</span>
                 }
             } else {
+
                 items = <Fragment>
                     <h5>One-time permission needed to access public YouTube channel listings: </h5>
-                    <button className="btn btn-lg btn-primary" onClick={this.requestPermissions}>
-                        Grant
+                    {!this.full && this.isFirefoxOrEdge ?
+                        <button className="btn btn-lg btn-primary" onClick={this.openSettings}>
+                            Open options
                         </button>
+                        :
+                        <button className="btn btn-lg btn-primary" onClick={this.requestPermissions}>
+                            Grant
+                        </button>
+                    }
                 </Fragment>
+
             }
         }
         if (this.full) {

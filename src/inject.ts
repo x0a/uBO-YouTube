@@ -682,8 +682,16 @@ class SingleChannelPage {
         }
         this.adOptions.muteTab = true;
         this.awaitingSkip = true;
-        this.currentPlayer.currentTime = this.currentPlayer.duration - 1;
+        this.currentPlayer.currentTime = this.getPlaybackLimit(this.currentPlayer) - 1;
         this.currentPlayer.playbackRate = 5;
+    }
+    getPlaybackLimit(video: HTMLVideoElement): number{
+        // const ranges = video.buffered;
+        // if(ranges.length){
+        //     return ranges.end(ranges.length - 1) || video.duration;
+        // }
+
+        return video.duration;
     }
     skipButtonAvailable(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
