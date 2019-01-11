@@ -1,8 +1,35 @@
+import * as React from "react";
 import { Component, Fragment } from "react";
-import { clickEvents, deepCopy } from "./Common.jsx"
+import { clickEvents, deepCopy } from "./Common"
+import { Settings as _Settings, Channel } from "../typings";
+import { Resolver } from "dns";
 
-class SettingsTools extends Component {
-    constructor(props) {
+interface SettingsToolsState {
+    settings: _Settings;
+    refreshing: boolean;
+}
+interface SettingsToolsProps {
+    receivedSettings: (settings: any | _Settings, response?: boolean) => Promise<void>;
+    full: boolean;
+    askConfirm: (text: string, confirm?: boolean, danger?: boolean) => Promise<void>;
+    requestRefresh: () => Promise<[{}, {}]>;
+}
+interface SettingsResponse {
+    action: string;
+    settings: _Settings;
+    error: boolean;
+}
+class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
+    fileImport?: HTMLInputElement;
+    isLinuxFirefoxOrEdge: boolean;
+    full: boolean;
+    downloadLink?: HTMLAnchorElement;
+    showAlert: SettingsToolsProps["askConfirm"];
+    requestRefresh: SettingsToolsProps["requestRefresh"];
+    pushSettings: SettingsToolsProps["receivedSettings"];
+    refreshing: boolean;
+
+    constructor(props: SettingsToolsProps) {
         super(props);
         this.fileImport = null;
         this.state = {
@@ -11,7 +38,8 @@ class SettingsTools extends Component {
                 whitelisted: [],
                 muted: [],
                 muteAll: false
-            }
+            },
+            refreshing: false
         }
 
         this.isLinuxFirefoxOrEdge = !!(browser.runtime.getBrowserInfo || window.navigator.platform.indexOf("Win") === -1 || window.navigator.platform.indexOf("Edge/") !== -1);
@@ -26,6 +54,7 @@ class SettingsTools extends Component {
         this.fileChange = this.fileChange.bind(this);
         this.getList = this.getList.bind(this);
         this.refreshAll = this.refreshAll.bind(this);
+        this.onResponse = this.onResponse.bind(this);
     }
 
     componentDidMount() {
@@ -34,8 +63,8 @@ class SettingsTools extends Component {
         this.downloadLink.classList.add("hidden");
         document.body.appendChild(this.downloadLink);
 
-        browser.runtime.onMessage.addListener((requestData, sender, sendResponse) => {
-            this.setSettings(requestData, true);
+        browser.runtime.onMessage.addListener((requestData: SettingsResponse, sender: any, sendResponse: any) => {
+            this.onResponse(requestData);
         });
         this.getList();
     }
@@ -46,7 +75,7 @@ class SettingsTools extends Component {
 
     getList() {
         return new Promise((resolve, reject) => {
-            browser.runtime.sendMessage({ action: "get-lists" }, response => {
+            browser.runtime.sendMessage({ action: "get-lists" } as any).then((response: _Settings) => {
                 this.setSettings(response)
                     .then(resolve);
             })
@@ -65,33 +94,30 @@ class SettingsTools extends Component {
         browser.tabs.create({
             active: true,
             url: 'settings.html'
-        }, null);
+        });
         window.close();
     }
 
-    setSettings(settings, response = false) {
+    setSettings(settings: _Settings) {
         return new Promise((resolve, reject) => {
-            if (response) {
-                if (settings && settings.action === "update") {
-                    settings = settings.settings;
-                } else {
-                    resolve();
-                    return;
-                }
-            }
             console.log("Settings:", settings);
             this.setState({ settings: settings });
-            this.pushSettings(settings)
-                .then(resolve)
-                .catch(reject);
+            return this.pushSettings(settings)
         });
-
     }
 
-    setBulkSettings(settings) {
-        browser.runtime.sendMessage({ action: "set", changes: { type: "bulk", settings: settings } }, response => {
-            this.setSettings(response, true);
-        })
+    onResponse(response: SettingsResponse) {
+        if(response && response.action === "update")
+            return this.setSettings(response.settings);
+        else
+            return Promise.reject();
+    }
+
+    setBulkSettings(settings: _Settings) {
+        browser.runtime.sendMessage({ action: "set", changes: { type: "bulk", settings: settings } } as any)
+            .then((response: SettingsResponse) => {
+                this.onResponse(response);
+            })
     }
 
     export() {
@@ -106,7 +132,7 @@ class SettingsTools extends Component {
         }
     }
 
-    importSettings(settings) {
+    importSettings(settings: _Settings) {
         this.showAlert(["Add", settings.whitelisted.length, "items to whitelist,", settings.blacklisted.length, "to blacklist, and ", settings.muted.length, " items to mutelist?"].join(" "), true).then(() => {
             let newSettings = deepCopy(this.state.settings);
 
@@ -116,11 +142,12 @@ class SettingsTools extends Component {
                 newSettings.blacklisted.push(channel);
             for (let channel of settings.muted)
                 newSettings.muted.push(channel);
+            newSettings.muteAll = settings.muteAll || false;
             this.setBulkSettings(newSettings);
         });
     }
 
-    error(text) {
+    error(text: string) {
         this.showAlert(text, false, false);
     }
 
@@ -143,11 +170,11 @@ class SettingsTools extends Component {
         });
     }
 
-    removeWhite(item) {
+    removeWhite(item: Channel) {
         return new Promise((resolve, reject) => {
             this.showAlert("Are you sure you want to remove '" + item.display + "' from whitelist?", true, false).then(() =>
-                browser.runtime.sendMessage({ action: "set", changes: { type: "remove-white", channelId: item } }, response => {
-                    this.setSettings(response, true)
+                browser.runtime.sendMessage({ action: "set", changes: { type: "remove-white", channelId: item } } as any).then((response: SettingsResponse) => {
+                    this.onResponse(response)
                         .then(resolve)
                         .catch(reject)
                 })
@@ -156,32 +183,32 @@ class SettingsTools extends Component {
 
     }
 
-    removeBlack(item) {
+    removeBlack(item: Channel) {
         this.showAlert("Are you sure you want to remove '" + item.display + "' from blacklist?", true, false).then(() =>
-            browser.runtime.sendMessage({ action: "set", changes: { type: "remove-black", channelId: item } }, response => {
-                this.setSettings(response, true)
+            browser.runtime.sendMessage({ action: "set", changes: { type: "remove-black", channelId: item } } as any).then((response: SettingsResponse) => {
+                this.onResponse(response)
             })
         )
     }
-    removeMute(item, allMuted) {
+    removeMute(item: Channel, allMuted: boolean) {
         const action = allMuted ? "remove mute exemption" : "stop muting ads"
 
         this.showAlert(`Are you sure you want to ${action} from '${item.display}'?`, true, false).then(() =>
-            browser.runtime.sendMessage({ action: "set", changes: { type: "remove-mute", channelId: item } }, response => {
-                this.setSettings(response, true)
+            browser.runtime.sendMessage({ action: "set", changes: { type: "remove-mute", channelId: item } } as any).then((response: SettingsResponse) => {
+                this.onResponse(response)
             })
         )
     }
-    addBlacklist(item) {
-        browser.runtime.sendMessage({ action: "set", changes: { type: "add-black", channelId: item } }, response => {
-            this.setSettings(response, true)
+    addBlacklist(item: Channel) {
+        browser.runtime.sendMessage({ action: "set", changes: { type: "add-black", channelId: item } } as any).then((response: SettingsResponse) => {
+            this.onResponse(response)
         })
     }
 
-    addWhite(item) {
+    addWhite(item: Channel) {
         return new Promise((resolve, reject) => {
-            browser.runtime.sendMessage({ action: "set", changes: { type: "add-white", channelId: item } }, response => {
-                this.setSettings(response, true)
+            browser.runtime.sendMessage({ action: "set", changes: { type: "add-white", channelId: item } } as any).then((response: SettingsResponse) => {
+                this.onResponse(response)
                     .then(resolve)
                     .catch(reject);
             })
@@ -192,12 +219,12 @@ class SettingsTools extends Component {
         const alert = on ? this.showAlert("This will mute ads by default, and treat this as a list of exemptions (ads from channels on this list wont be muted).", true) : Promise.resolve();
 
         alert.then(() => {
-            browser.runtime.sendMessage({ action: "set", changes: { type: "mute-all", value: on } }, response => {
-                this.setSettings(response, true)
+            browser.runtime.sendMessage({ action: "set", changes: { type: "mute-all", value: on } } as any).then((response: SettingsResponse) => {
+                this.onResponse(response)
             })
         })
     }
-    inblacklist(channelId) {
+    inblacklist(channelId: string) {
         for (let channel = 0; channel < this.state.settings.blacklisted.length; channel++) {
             if (this.state.settings.blacklisted[channel].id === channelId)
                 return channel;
@@ -205,7 +232,7 @@ class SettingsTools extends Component {
         return -1;
     }
 
-    inwhitelist(channelId) {
+    inwhitelist(channelId: string) {
         for (let channel = 0; channel < this.state.settings.whitelisted.length; channel++) {
             if (this.state.settings.whitelisted[channel].id === channelId)
                 return channel;
@@ -213,7 +240,7 @@ class SettingsTools extends Component {
         return -1;
     }
 
-    inmutelist(channelId) {
+    inmutelist(channelId: string) {
         for (let channel = 0; channel < this.state.settings.muted.length; channel++) {
             if (this.state.settings.muted[channel].id === channelId)
                 return channel;
@@ -221,17 +248,17 @@ class SettingsTools extends Component {
         return -1;
     }
 
-    fileChange(event) {
-        if (!event.target.files.length) return;
+    fileChange(event: React.FormEvent<HTMLInputElement>) {
+        if (!event.currentTarget.files.length) return;
 
-        const file = event.target.files[0];
+        const file = event.currentTarget.files[0];
 
         if (file.type === "application/json" || file.type === "") {
             let reader = new FileReader();
             reader.onload = () => {
                 let results;
 
-                if ((results = JSON.parse(reader.result)) && typeof results === "object" && results.blacklisted && results.whitelisted) {
+                if ((results = JSON.parse(reader.result as string)) && typeof results === "object" && results.blacklisted && results.whitelisted) {
                     for (let i = 0; i < results.blacklisted.length; i++)
                         if (this.inblacklist(results.blacklisted[i].id) !== -1) {
                             results.blacklisted.splice(i, 1);

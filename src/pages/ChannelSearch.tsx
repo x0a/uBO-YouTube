@@ -1,10 +1,36 @@
+import * as React from "react";
 import { Component, Fragment } from "react";
+
 import Modal from "reactstrap/src/Modal";
 import ModalHeader from "reactstrap/src/ModalHeader";
 import ModalBody from "reactstrap/src/ModalBody";
 
-class ChannelSearch extends Component {
-    constructor(props) {
+import { Channel as _Channel, ChannelList } from "../typings";
+interface ChannelSearchState {
+    whitelist: ChannelList;
+    channels: Array<any>
+    text: string;
+    show: boolean;
+    searching: number;
+    permission: boolean;
+}
+interface ChannelSearchProps {
+    dismiss: () => void;
+    onSelected: (channel: _Channel) => Promise<void>;
+    whitelist: ChannelList;
+    full: boolean;
+    show: boolean;
+}
+class ChannelSearch extends Component<ChannelSearchProps, ChannelSearchState> {
+    selectChannel: ChannelSearchProps["onSelected"];
+    full: boolean;
+    dismiss: () => void;
+    isFirefoxOrEdge: boolean;
+    searchTimeout: number;
+    searchInput?: HTMLInputElement;
+    response?: any;
+
+    constructor(props: ChannelSearchProps) {
         super(props);
         this.selectChannel = props.onSelected;
         this.full = props.full;
@@ -32,8 +58,8 @@ class ChannelSearch extends Component {
         })
     }
 
-    componentWillReceiveProps(nextProps) {
-        let nextState = {}
+    componentWillReceiveProps(nextProps: ChannelSearchProps) {
+        let nextState = {} as any;
 
         nextState.show = nextProps.show;
         nextState.whitelist = nextProps.whitelist;
@@ -51,7 +77,7 @@ class ChannelSearch extends Component {
     requestPermissions() {
         browser.permissions.request({ origins: ["*://*.content.googleapis.com/"] }).then(granted => {
             if (granted) {
-                browser.runtime.sendMessage({ action: "permission", type: "google-api" }, response => { })
+                browser.runtime.sendMessage({ action: "permission", type: "google-api" } as any).then((response: any) => { })
             }
             this.setState({ permission: granted }, this.focusSearch)
         }).catch(err => console.error(err));
@@ -61,32 +87,32 @@ class ChannelSearch extends Component {
         browser.tabs.create({
             active: true,
             url: 'settings.html#searchpermissions'
-        }, null);
+        });
         window.close();
     }
 
-    inputChanged(event) {
-        let nextState = {};
-        if (event.target.id === "search") {
-            nextState.text = event.target.value;
+    inputChanged(event: React.FormEvent<HTMLInputElement>) {
+        let nextState = {} as ChannelSearchState;
+        if (event.currentTarget.id === "search") {
+            nextState.text = event.currentTarget.value;
             nextState.searching = 1;
 
             if (this.searchTimeout) {
                 clearTimeout(this.searchTimeout);
             }
 
-            this.searchTimeout = setTimeout(() => {
+            this.searchTimeout = window.setTimeout(() => {
                 fetch("https://content.googleapis.com/youtube/v3/search?type=channel&q=" + nextState.text + "&maxResults=10&part=snippet&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo")
                     .then(resp => resp.json())
                     .then(json => this.response = json)
                     .then(json => this.setState({ channels: json.items, searching: 0 }))
                     .catch(err => this.setState({ searching: 2 }))
-            }, 500)
+            }, 500);
         }
 
         this.setState(nextState);
     }
-    channelSelected(channel) {
+    channelSelected(channel: _Channel) {
         this.selectChannel(channel)
             .then(() => this.searchInput.select());
     }
@@ -179,9 +205,25 @@ class ChannelSearch extends Component {
         return channelSearch;
     }
 }
-
-class Channel extends Component {
-    constructor(props) {
+interface ChannelState {
+    title: string;
+    thumbnail: string;
+    description: string;
+    hovering: boolean;
+    added: boolean;
+    url: string;
+}
+interface ChannelProps {
+    item: any;
+    added: boolean;
+    full: boolean;
+    onClick: (channel: _Channel) => void;
+}
+class Channel extends Component<ChannelProps, ChannelState>{
+    item: any;
+    full: boolean;
+    onClick: ChannelProps["onClick"];
+    constructor(props: ChannelProps) {
         //gets data, renders html with profile picture, display name, link to channel, and add button;
         super(props);
         this.item = props.item;
@@ -198,7 +240,7 @@ class Channel extends Component {
         this.click = this.click.bind(this);
     }
 
-    componentWillReceiveProps(nextProps) {
+    componentWillReceiveProps(nextProps: ChannelProps) {
         if (this.item.etag !== nextProps.item.etag) {
             console.log("changed");
         }
@@ -210,11 +252,11 @@ class Channel extends Component {
         }
     }
 
-    getUrl(added) {
+    getUrl(added: boolean) {
         return "https://youtube.com/channel/" + this.item.id.channelId + (added ? "?igno=re&disableadblock=1" : "");
     }
 
-    toggleHovering(hoveringState) {
+    toggleHovering(hoveringState: boolean) {
         this.setState({ hovering: hoveringState });
     }
 

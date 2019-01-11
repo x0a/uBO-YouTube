@@ -1,7 +1,24 @@
+import * as React from "react";
 import { Component, Fragment } from "react"
 
-class Alert extends Component {
-    constructor(props) {
+const noop = () => { };
+
+interface AlertProps {
+    onConfirm: () => void;
+    onCancel: () => void;
+    dismiss: () => void;
+    danger: boolean;
+    text: string;
+}
+
+class Alert extends Component<AlertProps> {
+    accepted: () => void;
+    rejected: () => void;
+    dismiss: () => void;
+    text: string;
+    danger: boolean;
+
+    constructor(props: AlertProps) {
         super(props);
         this.text = props.text || "";
         this.accepted = props.onConfirm || noop;
@@ -12,7 +29,9 @@ class Alert extends Component {
         this.accept = this.accept.bind(this);
         this.cancel = this.cancel.bind(this);
     }
-
+    static defaultProps(): any {
+        return { show: false, confirm: false, danger: false, onConfirm: null, onCancel: null, text: "" };
+    }
     cancel() {
         this.rejected();
         this.dismiss();

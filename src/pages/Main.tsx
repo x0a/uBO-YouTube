@@ -1,15 +1,47 @@
+import * as ReactDOM from "react-dom";
+import * as React from "react";
 import { Component, Fragment } from "react";
-import Alert from "./Alert.jsx";
-import SettingsTools from "./Settings.jsx";
-import { ChannelSearch } from "./ChannelSearch.jsx";
-import { clickEvents, promisify } from "./Common.jsx"
+import Alert from "./Alert";
+import SettingsTools from "./Settings";
+import { ChannelSearch } from "./ChannelSearch";
+import { clickEvents } from "./Common"
+import browser from "../browser"
+import { Settings as _Settings, ChannelList as _ChannelList, Channel, Ad } from "../typings"
 
-class Main extends Component {
-    constructor(props) {
+interface AlertState {
+    show: boolean;
+    confirm: boolean;
+    danger: boolean;
+    text: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+}
+interface Settings {
+    whitelisted: _ChannelList,
+    blacklisted: _ChannelList;
+    muted: Array<any>;
+    muteAll: boolean;
+}
+interface MainState {
+    alert: AlertState,
+    settings: Settings;
+    showSearch: boolean;
+}
+
+interface MainProps {
+    showSearch: boolean;
+    full: boolean;
+
+}
+class Main extends Component<MainProps, MainState> {
+    full: boolean;
+    settingsComp: SettingsTools;
+    adsComp: AdList;
+    constructor(props: MainProps) {
         super(props);
 
         this.state = {
-            alert: { show: false, confirm: false, danger: false, onConfirm: null, onCancel: null },
+            alert: Alert.defaultProps(),
             settings: {
                 whitelisted: [],
                 blacklisted: [],
@@ -34,7 +66,7 @@ class Main extends Component {
         this.removeMute = this.removeMute.bind(this);
     }
 
-    showAlert(text, confirm = false, danger = false) {
+    showAlert(text: string, confirm = false, danger = false): Promise<void> {
         return new Promise((resolve, reject) => {
             this.setState({
                 alert: {
@@ -42,18 +74,18 @@ class Main extends Component {
                     confirm: confirm,
                     danger: danger,
                     onConfirm: resolve,
-                    onReject: reject,
+                    onCancel: reject,
                     text: text
-                }
+                } as AlertState
             });
         })
     }
 
     dismissAlert() {
-        this.setState({ alert: { show: false } })
+        this.setState({ alert: Alert.defaultProps() })
     }
 
-    setSettings(settings, response = false) {
+    setSettings(settings: any | _Settings, response = false): Promise<void> {
         return new Promise((resolve, reject) => {
             if (response) {
                 if (settings && settings.action === "update") {
@@ -74,35 +106,31 @@ class Main extends Component {
     toggleMuteAll() {
         this.settingsComp.toggleMuteAll(!this.state.settings.muteAll);
     }
-    removeMute(item) {
+    removeMute(item: Channel) {
         this.settingsComp.removeMute(item, this.state.settings.muteAll);
     }
-    removeBlack(item) {
+    removeBlack(item: Channel) {
         this.settingsComp.removeBlack(item);
     }
 
-    removeWhite(item) {
+    removeWhite(item: Channel) {
         return this.settingsComp.removeWhite(item);
     }
 
-    addBlacklist(item) {
+    addBlacklist(item: Channel) {
         this.settingsComp.addBlacklist(item);
     }
 
-    addWhite(item) {
+    addWhite(item: Channel) {
         return this.settingsComp.addWhite(item);
     }
 
-    toggleWhite(item) {
+    toggleWhite(item: Channel): Promise<void> {
         return new Promise((resolve, reject) => {
             if (this.state.settings.whitelisted.findIndex(i => i.id === item.id) !== -1) {
-                this.removeWhite(item)
-                    .then(resolve)
-                    .catch(reject);
+                return this.removeWhite(item)
             } else {
-                this.addWhite(item)
-                    .then(resolve)
-                    .catch(reject);
+                return this.addWhite(item)
             }
         })
 
@@ -151,7 +179,7 @@ class Main extends Component {
                     >
                         <input
                             type="radio"
-                            autocomplete="off"
+                            autoComplete="off"
                             name="muteAll"
                             checked={!this.state.settings.muteAll}
                             onChange={this.toggleMuteAll.bind(this, false)}
@@ -160,11 +188,11 @@ class Main extends Component {
                 </label>
                     <label
                         title="Mute all ads except from these advertisers"
-                        class={"btn btn-sm btn-secondary " + (this.state.settings.muteAll ? "active" : "")}
+                        className={"btn btn-sm btn-secondary " + (this.state.settings.muteAll ? "active" : "")}
                     >
                         <input
                             type="radio"
-                            autocomplete="off"
+                            autoComplete="off"
                             name="muteAll"
                             checked={this.state.settings.muteAll}
                             onChange={this.toggleMuteAll.bind(this, true)}
@@ -198,7 +226,7 @@ class Main extends Component {
 
         let alert = this.state.alert.show && <Alert
             onConfirm={this.state.alert.onConfirm}
-            onCancel={this.state.alert.confirm ? this.state.alert.onReject : null}
+            onCancel={this.state.alert.confirm ? this.state.alert.onCancel : null}
             danger={this.state.alert.danger}
             dismiss={this.dismissAlert}
             text={this.state.alert.text} />;
@@ -249,9 +277,26 @@ class Main extends Component {
     }
 }
 
+interface ChannelListState {
+    name: any;
+    list: _ChannelList
+    actionTip: string;
+}
+interface ChannelListProps {
+    full: boolean;
+    remove: (channel: Channel) => void;
+    name: any;
+    list: _ChannelList;
+    actionTip: string;
+    whitelist?: boolean;
+}
+class ChannelList extends Component<ChannelListProps, ChannelListState> {
+    remove: (channel: Channel) => void;
+    whitelist: boolean;
+    full: boolean;
+    emptyRow: any;
 
-class ChannelList extends Component {
-    constructor(props) {
+    constructor(props: ChannelListProps) {
         super(props);
         this.remove = props.remove;
         this.state = {
@@ -266,13 +311,15 @@ class ChannelList extends Component {
             <td />
         </tr>;
     }
-    componentWillReceiveProps(nextProps) {
+    componentWillReceiveProps(nextProps: ChannelListProps) {
         let nextState = {};
 
         if (nextProps.list) {
-            nextState.list = nextProps.list;
-            nextState.name = nextProps.name;
-            nextState.actionTip = nextProps.actionTip;
+            nextState = {
+                list: nextProps.list,
+                name: nextProps.name,
+                actionTip: nextProps.actionTip
+            }
         }
 
         this.setState(nextState);
@@ -304,8 +351,16 @@ class ChannelList extends Component {
     }
 }
 
-class AdList extends Component {
-    constructor(props) {
+interface AdListProps {
+    full: boolean;
+    blacklist: (channel: Channel) => void;
+}
+
+class AdList extends Component<AdListProps, { list: Array<Ad> }>{
+    full: boolean;
+    emptyRow: any;
+
+    constructor(props: AdListProps) {
         super(props);
         this.state = {
             list: []
@@ -326,7 +381,7 @@ class AdList extends Component {
 
     getList() {
         return new Promise((resolve, reject) => {
-            browser.runtime.sendMessage({ action: "get-ads", type: "all" }, response => {
+            browser.runtime.sendMessage({ action: "get-ads", type: "all" } as any).then((response: Array<Ad>) => {
                 console.log("Ads:", response);
                 response = response.reverse();
 
@@ -359,7 +414,7 @@ class AdList extends Component {
         })
     }
 
-    blacklist(item) {
+    blacklist(item: Channel) {
         this.props.blacklist(item);
     }
 
@@ -402,8 +457,26 @@ class AdList extends Component {
     }
 }
 
-class ListItem extends Component {
-    constructor(props) {
+interface ListItemState {
+    channelId: Channel;
+    url: string,
+    actionTip: string;
+}
+interface ListItemProps {
+    full: boolean;
+    onAction: (channel: Channel) => void;
+    actionTip: string;
+    whitelist?: boolean;
+    actionDOM?: any;
+    channelId: Channel;
+}
+class ListItem extends Component<ListItemProps, ListItemState> {
+    full: boolean;
+    callAction: ListItemProps["onAction"];
+    whitelist: boolean;
+    actionDOM: any;
+
+    constructor(props: ListItemProps) {
         super(props);
         this.full = props.full;
         this.callAction = props.onAction;
@@ -420,7 +493,7 @@ class ListItem extends Component {
         this.open = this.open.bind(this);
     }
 
-    componentWillReceiveProps(nextProps) {
+    componentWillReceiveProps(nextProps: ListItemProps) {
         if (this.state.channelId.id !== nextProps.channelId.id || this.state.actionTip !== nextProps.actionTip) {
             this.setState({
                 channelId: nextProps.channelId,
@@ -429,7 +502,7 @@ class ListItem extends Component {
             })
         }
     }
-    getUrl(item) {
+    getUrl(item: Channel) {
         return "https://youtube.com/channel/" + item.id + (this.whitelist ? "?igno=re&disableadblock=1" : "");
     }
 
@@ -437,7 +510,7 @@ class ListItem extends Component {
         this.callAction(this.state.channelId);
     }
 
-    open(event) {
+    open(event: MouseEvent) {
         if (event.button === 0 || event.button === 1) {
             event.preventDefault();
             browser.tabs.create({
@@ -446,7 +519,7 @@ class ListItem extends Component {
         }
     }
 
-    mousedown(event) {
+    mousedown(event: MouseEvent) {
         if (event.button === 1) {
             event.preventDefault();
         }
@@ -473,7 +546,7 @@ class ListItem extends Component {
         } else {
             return <tr>
                 <td>
-                    <button className="bold link" onMouseUp={this.open} onMouseDown={this.mousedown}>
+                    <button className="bold link" onMouseUp={this.open as any} onMouseDown={this.mousedown as any}>
                         {this.state.channelId.display}
                     </button>
                 </td>
@@ -486,14 +559,7 @@ class ListItem extends Component {
         }
     }
 }
-
-
-if (!window.browser) {
-    window.browser = chrome;
-    window.browser.permissions.contains = promisify(window.browser.permissions.contains);
-    window.browser.permissions.request = promisify(window.browser.permissions.request);
-}
-
+(window as any).browser = browser;
 document.addEventListener("DOMContentLoaded", () =>
     ReactDOM.render(
         <Main
