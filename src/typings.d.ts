@@ -62,14 +62,6 @@ interface VideoPoly extends HTMLDivElement {
     data: any;
 }
 
-
-interface Settings extends browser.storage.StorageObject{
-    whitelisted: ChannelList;
-    blacklisted: ChannelList;
-    muted: ChannelList;
-}
-
-
 interface PendingItem {
     promise: Promise<Ad>;
     details: any;
