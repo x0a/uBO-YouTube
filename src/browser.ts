@@ -41,6 +41,7 @@ function getWebExtensionsAPI(): typeof browser {
         }
         if (api.permissions) {
             api.permissions.contains = promisify(api.permissions, "contains");
+            api.permissions.request = promisify(api.permissions, "request");
         }
         api.storage.sync.get = promisify(api.storage.sync, "get");
         api.storage.sync.set = promisify(api.storage.sync, "set");
