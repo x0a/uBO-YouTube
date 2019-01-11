@@ -4,11 +4,22 @@
         "src/background.ts",
         "src/content.ts",
         "src/agent.ts",
-        "src/browser.ts"
+        "src/browser.ts",
+        "src/pages/Main.tsx"
     ],
+
     "compilerOptions": {
-        "typeRoots": ["node_modules/@types", "node_modules/web-ext-types"],
+        "typeRoots": [
+            "node_modules/@types",
+            "node_modules/web-ext-types"
+        ],
+        "baseUrl": "./",
+        "paths": {
+            "reactstrap/src/*": ["node_modules/@types/reactstrap/lib/*"]
+        },
         "noImplicitAny": true,
-        "target": "es6"
+        "target": "es6",
+        "jsx": "react",
+        "moduleResolution": "node"
     }
 }
