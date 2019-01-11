@@ -1,5 +1,3 @@
-
-console.log("Development client included");
 import browser from "./browser";
 
 class Development {
