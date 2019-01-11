@@ -9,8 +9,6 @@ let del = require("del");
 let gulpif = require("gulp-if");
 let mergestream = require("merge-stream");
 let webpack = require("webpack-stream");
-let ts = require("gulp-typescript");
-let tsProject = ts.createProject("tsconfig.json");
 let Archiver = require("gulp-archiver2");
 let wsServer = require('websocket').server;
 let build = false, production = false, chrome = new Archiver("zip"), webext = new Archiver("zip"), src = new Archiver("zip"); //gulp-if requires that these be defined somehow
@@ -50,26 +48,36 @@ gulp.task("ts", () => {
     if (build) {
         gulp.src("src/typings.d.ts")
             .pipe(src.add("src/"));
+        gulp.src("src/pages/*.[tj]sx")
+            .pipe(src.add("src/pages"));
     }
-    return tsProject.src()
+    return gulp.src(["src/*.ts", "src/pages/*.[tj]sx"])
         .pipe(gulpif(build, src.add("src")))
         .pipe(webpack({
             entry: {
                 content: "./src/content",
                 inject: "./src/inject",
-                background: "./src/background"
+                background: "./src/background",
+                popup: "./src/pages/Main.tsx"
             },
             output: {
                 filename: "[name].js"
             },
             externals: {
                 "browser": "browser",
-                "chrome": "chrome"
+                "chrome": "chrome",
+                "react": "React",
+                "react-dom": "ReactDOM"
             },
-            resolve: {extensions: [".ts"]},
+            resolve: {
+                extensions: [".js", ".ts", ".tsx", ".jsx"],
+                alias: {
+                    "./dev-client": build && production ? "empty-module" : "./dev-client"
+                }
+            },
             module: {
                 rules: [
-                    { test: /\.tsx?$/, use: "ts-loader" }
+                    { test: /\.[tj]sx?$/, loader: "ts-loader", options: { transpileOnly: true } }
                 ]
             },
             mode: production ? "production" : "development",
@@ -83,41 +91,6 @@ gulp.task("ts", () => {
         .pipe(gulpif(build, chrome.add()))
 });
 
-
-gulp.task("jsx", () => {
-    if (build) {
-        gulp.src("src/pages/*.jsx")
-            .pipe(src.add("src/pages"));
-    }
-    return gulp.src("src/pages/Main.jsx")
-        .pipe(webpack({
-            module: {
-                rules: [{
-                    loader: "babel-loader",
-                    options: {
-                        plugins: [],
-                        presets: ["@babel/env", "@babel/react"]
-                    }
-
-                }]
-            },
-            output: {
-                filename: "popup.js"
-            },
-            externals: {
-                "react": "React",
-                "react-dom": "ReactDOM"
-            },
-            mode: production ? "production" : "development",
-            optimization: {
-                minimize: production,
-            }
-        }))
-        .pipe(gulp.dest("dist/chrome/debug"))
-        .pipe(gulp.dest("dist/webext/debug"))
-        .pipe(gulpif(build, webext.add()))
-        .pipe(gulpif(build, chrome.add()))
-})
 
 gulp.task("lib", () => {
     let seek = ["lib/**"];
@@ -196,7 +169,7 @@ gulp.task("watch", () => {
 
     gulp.watch("src/*.css", gulp.series("css"));
     gulp.watch("src/pages/*.pug", gulp.series("pug"))
-    gulp.watch("src/pages/*.jsx", gulp.series("jsx")); // this,
+    gulp.watch("src/pages/*.[tj]sx", gulp.series("ts")); // this,
     if (!production) {
         gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
     }
@@ -275,7 +248,7 @@ gulp.task("done", cb => {
     cb();
 });
 
-gulp.task("default", gulp.series("clean", gulp.parallel("css", "ts", "jsx", "lib", "pug", "img"), "manifest", "build-end", "done"))
+gulp.task("default", gulp.series("clean", gulp.parallel("css", "ts", "lib", "pug", "img"), "manifest", "build-end", "done"))
 
 gulp.task("build", gulp.series("build-start", "default"));
 
