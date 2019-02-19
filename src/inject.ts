@@ -127,7 +127,7 @@ class MutationWatcher {
 
     isAdSkipButton(mutation: MutationElement) {
         return mutation.type === "attributes"
-            && mutation.target.classList.contains("videoAdUiSkipContainer")
+            && mutation.target.classList.contains("ytp-ad-skip-button-container")
             && mutation.target.style.display !== "none"
             && mutation.target.querySelector("button");
     }
@@ -191,7 +191,6 @@ class MutationWatcher {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
-            // this.findInjection(mutation, ".ad-container");
             if (mode === VIDEO) {
                 let player, userInfo, skipButton;
 
@@ -695,7 +694,7 @@ class SingleChannelPage {
     }
     skipButtonAvailable(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
-
+        
         if (this.awaitingSkip) {
             this.skipButton.click();
         }
