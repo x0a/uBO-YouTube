@@ -46,13 +46,12 @@ gulp.task("js", () => {
 
 gulp.task("ts", () => {
     if (build) {
-        gulp.src("src/typings.d.ts")
+        gulp.src("src/*.ts")
             .pipe(src.add("src/"));
         gulp.src("src/pages/*.[tj]sx")
             .pipe(src.add("src/pages"));
     }
-    return gulp.src(["src/*.ts", "src/pages/*.[tj]sx"])
-        .pipe(gulpif(build, src.add("src")))
+    return gulp.src(["src/pages/Main.[tj]sx"])
         .pipe(webpack({
             entry: {
                 content: "./src/content",
