@@ -127,56 +127,6 @@ gulp.task("pug", () => {
         .pipe(gulpif(build, chrome.add()))
 });
 
-gulp.task("watch", () => {
-    let server = require("http").createServer(() => { })
-    server.listen(3050, () => { })
-    ws = new wsServer({ httpServer: server });
-
-    ws.on("request", req => {
-        let con = req.accept(null, req.origin);
-        let ref = { agent: "", nick: "" };
-
-        wsClients.set(con, ref);
-
-        con.on("message", event => {
-            const msg = JSON.parse(event.utf8Data);
-
-            if (msg.userAgent) {
-                console.log("Browser connected: ", msg.userAgent);
-                ref.userAgent = msg.userAgent;
-                ref.nick = (agent => {
-                    if (agent.indexOf("Firefox") !== -1)
-                        return "Firefox"
-                    else if (agent.indexOf("Chrome") !== -1)
-                        return "Chrome";
-                    else
-                        return "Unknown";
-                })(msg.userAgent)
-            } else if (msg.log) {
-                console.log("Log from", ref.nick, ":", JSON.stringify(msg.log));
-            } else if (msg.error) {
-                console.error("Log from", ref.nick, ":", JSON.stringify(msg.error));
-            }
-
-        })
-
-        con.on("close", () => {
-            console.log("Disconnected:", ref.userAgent);
-            wsClients.delete(con)
-        })
-    });
-
-    gulp.watch("src/*.css", gulp.series("css"));
-    gulp.watch("src/pages/*.pug", gulp.series("pug"))
-    gulp.watch("src/pages/*.[tj]sx", gulp.series("ts")); // this,
-    if (!production) {
-        gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
-    }
-    gulp.watch("shared/manifest.json", gulp.series("manifest", "fullreload"));
-    gulp.watch("src/background.ts", gulp.series("ts", "fullreload")); // core js changes (background.js) require reload
-    gulp.watch(["!src/background.ts", "src/*.ts"], gulp.series("ts", "partialreload")); // content.js doesnt require full reload, only script reloading
-})
-
 gulp.task("fullreload", cb => {
     sendToAll("reload")
     cb();
@@ -255,3 +205,53 @@ gulp.task("prod", cb => {
     production = true;
     cb();
 })
+
+gulp.task("watch", gulp.series("default", () => {
+    let server = require("http").createServer(() => { })
+    server.listen(3050, () => { })
+    ws = new wsServer({ httpServer: server });
+
+    ws.on("request", req => {
+        let con = req.accept(null, req.origin);
+        let ref = { agent: "", nick: "" };
+
+        wsClients.set(con, ref);
+
+        con.on("message", event => {
+            const msg = JSON.parse(event.utf8Data);
+
+            if (msg.userAgent) {
+                console.log("Browser connected: ", msg.userAgent);
+                ref.userAgent = msg.userAgent;
+                ref.nick = (agent => {
+                    if (agent.indexOf("Firefox") !== -1)
+                        return "Firefox"
+                    else if (agent.indexOf("Chrome") !== -1)
+                        return "Chrome";
+                    else
+                        return "Unknown";
+                })(msg.userAgent)
+            } else if (msg.log) {
+                console.log("Log from", ref.nick, ":", JSON.stringify(msg.log));
+            } else if (msg.error) {
+                console.error("Log from", ref.nick, ":", JSON.stringify(msg.error));
+            }
+
+        })
+
+        con.on("close", () => {
+            console.log("Disconnected:", ref.userAgent);
+            wsClients.delete(con)
+        })
+    });
+
+    gulp.watch("src/*.css", gulp.series("css"));
+    gulp.watch("src/pages/*.pug", gulp.series("pug"))
+    gulp.watch("src/pages/*.[tj]sx", gulp.series("ts")); // this,
+    if (!production) {
+        gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
+    }
+    gulp.watch("shared/manifest.json", gulp.series("manifest", "fullreload"));
+    gulp.watch("src/background.ts", gulp.series("ts", "fullreload")); // core js changes (background.js) require reload
+    gulp.watch(["!src/background.ts", "src/*.ts"], gulp.series("ts", "partialreload")); // content.js doesnt require full reload, only script reloading
+}))
