@@ -125,11 +125,22 @@ class MutationWatcher {
         return false;
     }
 
-    isAdSkipButton(mutation: MutationElement) {
-        return mutation.type === "attributes"
-            && mutation.target.classList.contains("ytp-ad-skip-button-container")
-            && mutation.target.style.display !== "none"
-            && mutation.target.querySelector("button");
+    isAdSkipContainer(mutation: MutationElement): HTMLElement {
+        return (
+            mutation.target.classList.contains("ytp-ad-skip-button-container")
+            && mutation.target
+        ) || (
+                mutation.type === "childList"
+                && mutation.target.classList.contains("video-ads")
+                && mutation.addedNodes.length
+                && mutation.target.querySelector(".ytp-ad-skip-button-container")
+            );
+    }
+
+    adSkipButton(container: HTMLElement): HTMLElement {
+        return container.style.display !== "none"
+            && container.querySelector("button")
+            || null;
     }
 
     pollUpdate(method: Function) {
@@ -191,8 +202,9 @@ class MutationWatcher {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
+            //this.findInjection(mutation, ".ytp-ad-skip-button-container");
             if (mode === VIDEO) {
-                let player, userInfo, skipButton;
+                let player, userInfo, skipContainer;
 
                 if (userInfo = this.isPolyUserInfo(mutation)) {
                     pages.video.setDataNode(userInfo)
@@ -205,19 +217,19 @@ class MutationWatcher {
                 } else if (player = this.isPlayerUpdate(mutation)) {
                     pages.video.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
                 } else if (this.isPlayerDurationUpdate(mutation)) {
-                    pages.video.updateDuration(mutation.target.textContent);
-                } else if (skipButton = this.isAdSkipButton(mutation)) {
-                    pages.video.skipButtonAvailable(skipButton);
+                    pages.video.durationUpdate(mutation.target.textContent);
+                } else if (skipContainer = this.isAdSkipContainer(mutation)) {
+                    pages.video.skipButtonUpdate(this.adSkipButton(skipContainer));
                 }
             } else if (mode === CHANNEL || mode === SEARCH || mode === ALLELSE) {
                 if (mode === CHANNEL) {
-                    let player, skipButton;
+                    let player, skipContainer;
                     if (player = this.isPlayerUpdate(mutation)) {
                         pages.channel.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
                     } else if (this.isPlayerDurationUpdate(mutation)) {
-                        pages.channel.updateDuration(mutation.target.textContent);
-                    } else if (skipButton = this.isAdSkipButton(mutation)) {
-                        pages.channel.skipButtonAvailable(skipButton);
+                        pages.channel.durationUpdate(mutation.target.textContent);
+                    } else if (skipContainer = this.isAdSkipContainer(mutation)) {
+                        pages.channel.skipButtonUpdate(this.adSkipButton(skipContainer));
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
@@ -249,6 +261,7 @@ class WhitelistButton {
 
         this.button = document.createElement("button");
         this.button.className = "UBO-wl-btn";
+        this.button.title = "Enable ads for this channel";
         this.button.addEventListener("click", onClick);
 
         this.buttonContainer = document.createElement("div");
@@ -259,6 +272,7 @@ class WhitelistButton {
         if (!this.toggled) return;
 
         this.toggled = false;
+        this.button.title = "Enable ads for this channel";
         this.button.classList.remove("yt-uix-button-toggled");
     }
 
@@ -266,6 +280,7 @@ class WhitelistButton {
         if (this.toggled) return;
 
         this.toggled = true;
+        this.button.title = "Ads enabled for this channel";
         this.button.classList.add("yt-uix-button-toggled");
     }
 
@@ -646,13 +661,16 @@ class SingleChannelPage {
             this.updateAdButton();
         }
     }
-    updateAdInformation(ad: any) {
+    updateAdInformation(ad: Ad) {
+        if (this.currentAd) {
+            this.adConfirmed = false;
+        }
         this.currentAd = ad;
-        this.updateAdButton(true);
+        this.updateAdButton();
     }
 
-    updateAdButton(forceUpdate = false) {
-        if ((forceUpdate || !this.adConfirmed) && this.adPlaying && this.currentAd && this.withinSpec(this.currentDuration, this.currentAd.length_seconds)) {
+    updateAdButton() {
+        if (!this.adConfirmed && this.adPlaying && this.currentAd && this.withinSpec(this.currentDuration, this.currentAd.length_seconds)) {
             this.adConfirmed = true;
             this.adOptions.muteOption = true;
             this.adOptions.blacklistOption = true;
@@ -679,12 +697,13 @@ class SingleChannelPage {
         if (this.skipButton) {
             return this.skipButton.click();
         }
-        this.adOptions.muteTab = true;
+
         this.awaitingSkip = true;
+        this.adOptions.muteTab = true;
         this.currentPlayer.currentTime = this.getPlaybackLimit(this.currentPlayer) - 1;
         this.currentPlayer.playbackRate = 5;
     }
-    getPlaybackLimit(video: HTMLVideoElement): number{
+    getPlaybackLimit(video: HTMLVideoElement): number {
         // const ranges = video.buffered;
         // if(ranges.length){
         //     return ranges.end(ranges.length - 1) || video.duration;
@@ -692,14 +711,14 @@ class SingleChannelPage {
 
         return video.duration;
     }
-    skipButtonAvailable(skipButton: HTMLElement) {
+    skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
-        
-        if (this.awaitingSkip) {
+
+        if (this.skipButton && this.awaitingSkip) {
             this.skipButton.click();
         }
     }
-    updateDuration(duration: string) {
+    durationUpdate(duration: string) {
         this.currentDuration = duration;
         this.updateAdButton()
     }
@@ -1393,21 +1412,25 @@ function init(design: Design) {
     pages.update(true);
     watcher.start();
 
-    agent.on("settings-update", (updated: any) => {
-        settings = updated.settings;
-        pages.update(true, updated.initiator)
-    }).on("ad-update", (ad: any) => {
-        pages.updateAd(ad);
-    }).on("destroy", () => {
-        console.log("Detaching inject script..");
+    agent
+        .on("settings-update", (updated: any) => {
+            settings = updated.settings;
+            pages.update(true, updated.initiator)
+        })
+        .on("ad-update", (ad: any) => {
+            pages.updateAd(ad);
+        })
+        .on("destroy", () => {
+            console.log("Detaching inject script..");
 
-        agent.destroy();
-        watcher.destroy();
-        domCleanup();
-        agent = null;
-        watcher = null;
-        pages = null;
-    }).send("ready");
+            agent.destroy();
+            watcher.destroy();
+            domCleanup();
+            agent = null;
+            watcher = null;
+            pages = null;
+        })
+        .send("ready");
 
     function domCleanup() {
         let nodes = document.querySelectorAll(".UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu");
