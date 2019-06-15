@@ -1,0 +1,84 @@
+{
+  "whitelisted": [
+    {
+      "display": "LiveOverflow",
+      "id": "UClcE-kVhqyiHCcjYwcpfj9w",
+      "username": ""
+    },
+    {
+      "display": "Practical Engineering",
+      "id": "UCMOqf8ab-42UUQIdVoKwjlQ",
+      "username": "gradyhillhouse"
+    },
+    {
+      "display": "Applied Science",
+      "id": "UCivA7_KLKWo43tFcCkFvydw",
+      "username": "bkraz333"
+    },
+    {
+      "display": "Beyond the press",
+      "id": "UCveB47lgzZJ1WOf4XYVJNBw",
+      "username": ""
+    },
+    {
+      "display": "Kurzgesagt – In a Nutshell",
+      "id": "UCsXVk37bltHxD1rDPwtNM8Q",
+      "username": "Kurzgesagt"
+    },
+    {
+      "display": "ChrisFix",
+      "id": "UCes1EvRjcKU4sY_UEavndBw",
+      "username": "PaintballOO7"
+    },
+    {
+      "display": "HumbleMechanic",
+      "id": "UC2gRQKQgI3CsrcnMuHPyYsQ",
+      "username": "HumbleMechanic"
+    },
+    {
+      "display": "SciShow",
+      "id": "UCZYTClx2T1of7BRZ86-8fow",
+      "username": "scishow"
+    },
+    {
+      "display": "OverSimplified",
+      "id": "UCNIuvl7V8zACPpTmmNIqP2A",
+      "username": "Webzwithaz"
+    },
+    {
+      "display": "SciShow Space",
+      "id": "UCrMePiHCWG4Vwqv3t7W9EFg",
+      "username": "scishowspace"
+    },
+    {
+      "id": "UCXuqSBlHAE6Xw-yeJA0Tunw",
+      "username": "LinusTechTips",
+      "display": "Linus Tech Tips"
+    },
+    {
+      "id": "UC_q-UNDJeEBSHqKzAP_8x_A",
+      "username": "EricTheCarGuy",
+      "display": "EricTheCarGuy"
+    },
+    {
+      "id": "UCHnyfMqiRRG1u-2MsSQLbXA",
+      "username": "1veritasium",
+      "display": "Veritasium"
+    },
+    {
+      "id": "UC6107grRI4m0o2-emgoDnAA",
+      "username": "destinws2",
+      "display": "SmarterEveryDay"
+    }
+  ],
+  "blacklisted": [
+    {
+      "id": "UCgUAU2Cuf4l_33cQxyeIt1A",
+      "display": "Honey",
+      "username": ""
+    }
+  ],
+  "muted": [],
+  "muteAll": false,
+  "skipOverlays": true
+}
