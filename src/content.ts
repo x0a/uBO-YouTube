@@ -228,25 +228,29 @@ const init = new InitManager(document.documentElement);
     return payload;
 });*/
 
-agent.on("ready", () => {
-    init.ready = true;
-    init.pushPending();
-}).on("get-settings", init.getSettings).on("set-settings", (changes: any) => {
-    return new Promise((resolve) => {
-        browser.runtime.sendMessage({ action: "set", changes: changes })
-            .then((response: any) => resolve(response));
+agent
+    .on("ready", () => {
+        init.ready = true;
+        init.pushPending();
     })
-}).on("recent-ad", () => {
-    return new Promise((resolve) => {
-        browser.runtime.sendMessage({ action: "get-ads", type: "current-tab" })
-            .then((response: any) => resolve(response))
+    .on("get-settings", init.getSettings).on("set-settings", (changes: any) => {
+        return new Promise((resolve) => {
+            browser.runtime.sendMessage({ action: "set", changes: changes })
+                .then((response: any) => resolve(response));
+        })
     })
-}).on("mute", (change: any) => {
-    return new Promise((resolve) => {
-        browser.runtime.sendMessage({ action: "mute", mute: change.mute || false })
-            .then((response: any) => resolve(response));
+    .on("recent-ad", () => {
+        return new Promise((resolve) => {
+            browser.runtime.sendMessage({ action: "get-ads", type: "current-tab" })
+                .then((response: any) => resolve(response))
+        })
+    })
+    .on("mute", (change: any) => {
+        return new Promise((resolve) => {
+            browser.runtime.sendMessage({ action: "mute", mute: change.mute || false })
+                .then((response: any) => resolve(response));
+        });
     });
-})
 
 init.inject();
 
