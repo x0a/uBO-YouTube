@@ -15,17 +15,21 @@ class SettingsManager {
     blacklisted: ChannelList;
     muted: ChannelList;
     muteAll: boolean;
+    skipOverlays: boolean;
+
     constructor(settings: Settings) {
         if (!settings) settings = {} as Settings;
         if (!settings.whitelisted) settings.whitelisted = [];
         if (!settings.blacklisted) settings.blacklisted = [];
         if (!settings.muted) settings.muted = [];
         if (!settings.muteAll) settings.muteAll = false;
+        if (!settings.skipOverlays) settings.skipOverlays = true;
 
         this.whitelisted = settings.whitelisted;
         this.blacklisted = settings.blacklisted;
         this.muted = settings.muted;
         this.muteAll = settings.muteAll
+        this.skipOverlays = settings.skipOverlays;
     }
 
     updateAll(originTab: browser.tabs.Tab) {
@@ -126,12 +130,16 @@ class SettingsManager {
     toggleMuteAll(on: boolean) {
         this.muteAll = !!on;
     }
+    toggleSkipOverlays(on: boolean) {
+        this.skipOverlays = !!on;
+    }
     get(): Settings {
         return {
             whitelisted: this.whitelisted,
             blacklisted: this.blacklisted,
             muted: this.muted,
-            muteAll: this.muteAll
+            muteAll: this.muteAll,
+            skipOverlays: this.skipOverlays
         };
     }
     save() {
@@ -335,6 +343,8 @@ browser.storage.sync.get(null).then((items: any) => {
                 settings = new SettingsManager(message.changes.settings);
             } else if (message.changes.type === "mute-all") {
                 settings.toggleMuteAll(message.changes.value);
+            } else if (message.changes.type === "skip-overlays") {
+                settings.toggleSkipOverlays(message.changes.skipOverlays);
             }
 
             settings.save();

@@ -21,6 +21,7 @@ interface Settings {
     blacklisted: _ChannelList;
     muted: Array<any>;
     muteAll: boolean;
+    skipOverlays: boolean;
 }
 interface MainState {
     alert: AlertState,
@@ -46,7 +47,8 @@ class Main extends Component<MainProps, MainState> {
                 whitelisted: [],
                 blacklisted: [],
                 muted: [],
-                muteAll: false
+                muteAll: false,
+                skipOverlays: true
             },
             showSearch: props.showSearch || false
         }
@@ -63,6 +65,7 @@ class Main extends Component<MainProps, MainState> {
         this.toggleWhite = this.toggleWhite.bind(this);
         this.refreshAll = this.refreshAll.bind(this);
         this.toggleMuteAll = this.toggleMuteAll.bind(this);
+        this.toggleOverlays = this.toggleOverlays.bind(this);
         this.removeMute = this.removeMute.bind(this);
     }
 
@@ -105,6 +108,9 @@ class Main extends Component<MainProps, MainState> {
     }
     toggleMuteAll() {
         this.settingsComp.toggleMuteAll(!this.state.settings.muteAll);
+    }
+    toggleOverlays() {
+        this.settingsComp.toggleOverlays(!this.state.settings.skipOverlays);
     }
     removeMute(item: Channel) {
         this.settingsComp.removeMute(item, this.state.settings.muteAll);

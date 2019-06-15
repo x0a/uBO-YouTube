@@ -11,6 +11,7 @@ interface Settings {
     blacklisted: ChannelList;
     muted: ChannelList;
     muteAll: boolean;
+    skipOverlays: boolean;
 }
 
 declare enum Mode {

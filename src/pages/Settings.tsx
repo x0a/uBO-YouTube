@@ -37,7 +37,8 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
                 blacklisted: [],
                 whitelisted: [],
                 muted: [],
-                muteAll: false
+                muteAll: false,
+                skipOverlays: true,
             },
             refreshing: false
         }
@@ -85,7 +86,9 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
     refreshAll() {
         this.setState({ refreshing: true });
         // wait til refresh is done, wait an additional 150 ms otherwise animation is too fast.
+        console.log("refreshing");
         this.requestRefresh().then(() => {
+            console.log("refreshed");
             setTimeout(() => this.setState({ refreshing: false }), 150);
         });
     }
@@ -102,12 +105,12 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
         return new Promise((resolve, reject) => {
             console.log("Settings:", settings);
             this.setState({ settings: settings });
-            return this.pushSettings(settings)
+            return this.pushSettings(settings).then(resolve);
         });
     }
 
     onResponse(response: SettingsResponse) {
-        if(response && response.action === "update")
+        if (response && response.action === "update")
             return this.setSettings(response.settings);
         else
             return Promise.reject();
@@ -121,7 +124,7 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
     }
 
     export() {
-        let fileBlob = new Blob([JSON.stringify(this.state.settings)], { type: 'application/json' });
+        let fileBlob = new Blob([JSON.stringify(this.state.settings, null, 2)], { type: 'application/json' });
         this.downloadLink.href = URL.createObjectURL(fileBlob);
         this.downloadLink.click();
     }
@@ -143,6 +146,7 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
             for (let channel of settings.muted)
                 newSettings.muted.push(channel);
             newSettings.muteAll = settings.muteAll || false;
+            newSettings.skipOverlays = settings.skipOverlays;
             this.setBulkSettings(newSettings);
         });
     }
@@ -220,6 +224,15 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
 
         alert.then(() => {
             browser.runtime.sendMessage({ action: "set", changes: { type: "mute-all", value: on } } as any).then((response: SettingsResponse) => {
+                this.onResponse(response)
+            })
+        })
+    }
+    toggleOverlays(on = false) {
+        const alert = on ? this.showAlert("Auto-close all ad overlays?", true) : Promise.resolve();
+
+        alert.then(() => {
+            browser.runtime.sendMessage({ action: "set", changes: { type: "skip-overlays", value: on } } as any).then((response: SettingsResponse) => {
                 this.onResponse(response)
             })
         })
