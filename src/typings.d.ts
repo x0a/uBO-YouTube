@@ -1,3 +1,5 @@
+import { string } from "prop-types";
+
 type Channel = {
     display: string,
     username: string,
@@ -12,18 +14,6 @@ interface Settings {
     muted: ChannelList;
     muteAll: boolean;
     skipOverlays: boolean;
-}
-
-declare enum Mode {
-    VIDEO,
-    CHANNEL,
-    SEARCH,
-    ALLELSE
-}
-
-declare enum Design {
-    LPOLY,
-    LBASIC
 }
 
 interface AccessURL {
@@ -84,6 +74,51 @@ interface Video {
     [propertyName: string]: any;
     video_id: string;
 }
+interface PolyThumb {
+    url: string;
+    width: number;
+    height: number
+}
+interface PolyNavigationEndpoint {
+    clickTrackingParams: string
+    commandMetadata: {
+        webCommandMetadata: {
+            url: string;
+            webPageType: string
+        }
+    }
+    browseEndpoint: {
+        browseId: string
+    }
+}
+interface PolyRun {
+    text: string;
+    navigationEndpoint: PolyNavigationEndpoint;
+}
+interface PolyBadge {
+    metadataBadgeRenderer: {
+        icon: {
+            iconType: string;
+        }
+        style: string;
+        tooltip: string;
+        trackingParams: string;
+    }
+}
+interface PolyData {
+    thumbnail: {
+        thumbnails: Array<PolyThumb>
+    }
+
+    title: {
+        runs: Array<PolyRun>;
+    }
+    navigationEndpoint: PolyNavigationEndpoint;
+    subscriberCountText: {
+        simpleText: string;
+    }
+    badges: Array<PolyBadge>;
+}
 
 interface ParsedURL {
     pathname: string;
@@ -91,9 +126,8 @@ interface ParsedURL {
 }
 
 export {
-    Channel, ChannelList, Mode, MutationElement,
+    Channel, ChannelList, MutationElement,
     Settings, Action, AccessURL,
-    Design, MenuItem,
-    InfoLink, VideoBasic, VideoPoly,
+    MenuItem, InfoLink, VideoBasic, VideoPoly,
     Ad, PendingItem, ParsedURL
 }
