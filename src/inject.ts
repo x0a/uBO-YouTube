@@ -5,24 +5,28 @@ import icons from "./icons";
 import {
     Channel, Settings, AccessURL,
     Action, MutationElement, ChannelList,
-    Design, Mode, MenuItem,
-    InfoLink, VideoPoly, VideoBasic, Ad
+    MenuItem, InfoLink, VideoPoly, VideoBasic, Ad
 } from "./typings";
 
-const VIDEO = 1;
-const CHANNEL = 2;
-const SEARCH = 3;
-const ALLELSE = -1;
-const LPOLY = 2; // new polymer layout
-const LBASIC = 1; // old basic layout, less and less supported as time goes on
+const enum Layout {
+    Polymer,
+    Basic
+}
+const enum PageType {
+    Video,
+    Channel,
+    Search,
+    Any
+}
 
-/* ---------------------------- */
 type WhitelistButtonInstance = WhitelistButtonBasic | WhitelistButtonPoly;
 type WhitelistButtonFactory = typeof WhitelistButtonBasic | typeof WhitelistButtonPoly;
 
 interface ChannelElement extends HTMLDivElement {
     whitelistButton: WhitelistButtonPoly;
 }
+
+/* ---------------------------- */
 
 let settings: Settings;
 let accessURLs: AccessURL;
@@ -59,7 +63,15 @@ class MutationWatcher {
             }
         }
     }
-
+    isPlayerErrorChange(mutation: MutationElement): null | boolean {
+        for (const node of mutation.addedNodes)
+            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("ytp-error"))
+                return true;
+        for (const node of mutation.removedNodes)
+            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("ytp-error"))
+                return false;
+        return null;
+    }
     isPlayerDurationUpdate(mutation: MutationElement) {
         return mutation.target.className === "ytp-time-duration"
             && mutation.addedNodes.length;
@@ -224,7 +236,8 @@ class MutationWatcher {
                 if (node.matches(selector)) {
                     console.log(
                         `<${this.getSelector(target)}>.removedNodes = [..., <%c${selector}%c>, ...]`,
-                        'color: red'
+                        'color: red',
+                        ''
                     );
                 }
                 else if (node.querySelector(selector)) {
@@ -247,8 +260,8 @@ class MutationWatcher {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
-            this.findInjection(mutation, "canvas.ytp-tv-static");
-            if (mode === VIDEO) {
+            //this.findInjection(mutation, ".ytp-error");
+            if (mode === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
 
                 if (userInfo = this.isPolyUserInfo(mutation)) {
@@ -261,6 +274,10 @@ class MutationWatcher {
                     this.pollUpdate(pages.video.updateVideos);
                 } else if (player = this.isPlayerUpdate(mutation)) {
                     pages.video.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
+                    let errorState = this.isPlayerErrorChange(mutation);
+                    if (errorState !== null) {
+                        pages.video.onVideoError(errorState);
+                    }
                 } else if (this.isPlayerDurationUpdate(mutation)) {
                     pages.video.durationUpdate(mutation.target.textContent);
                 } else if (skipContainer = this.isAdSkipContainer(mutation)) {
@@ -269,10 +286,14 @@ class MutationWatcher {
                     overlaySkipButton.click();
                 }
             } else {
-                if (mode === CHANNEL) {
+                if (mode === PageType.Channel) {
                     let player, skipContainer;
                     if (player = this.isPlayerUpdate(mutation)) {
                         pages.channel.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
+                        let errorState = this.isPlayerErrorChange(mutation);
+                        if (errorState !== null) {
+                            pages.channel.onVideoError(errorState);
+                        }
                     } else if (this.isPlayerDurationUpdate(mutation)) {
                         pages.channel.durationUpdate(mutation.target.textContent);
                     } else if (skipContainer = this.isAdSkipContainer(mutation)) {
@@ -280,11 +301,11 @@ class MutationWatcher {
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
-                    if (mode === CHANNEL) {
+                    if (mode === PageType.Channel) {
                         this.pollUpdate(pages.channel.updatePage);
-                    } else if (mode === SEARCH) {
+                    } else if (mode === PageType.Search) {
                         this.pollUpdate(pages.search.updatePage);
-                    } else if (mode === ALLELSE) {
+                    } else if (mode === PageType.Any) {
                         pages.updateAllVideos();
                     }
                 }
@@ -381,7 +402,6 @@ class AdOptions {
     constructor(onBlacklist: EventListener, onMute: EventListener, onSkip: () => {}) {
         this.toggleMenu = this.toggleMenu.bind(this);
         this.lostFocus = this.lostFocus.bind(this);
-
         this.unMuteIcon = this.generateIcon(icons.unMute);
         this.muteIcon = this.generateIcon(icons.mute)
         this.muteButton = this.generateMenuItem(
@@ -512,20 +532,24 @@ class AdOptions {
         })()
     }
 
-    set muteTab(state: boolean) {
-        state = !!state;
-        if (state === this.muted) return;
+    set muteTab(shouldMute: boolean) {
+        if (shouldMute) {
 
-        this.muted = state;
+            agent.send("mute", { mute: true }).then(resp => {
+                this.muted = true;
+                this.muteButton.setIcon(this.unMuteIcon);
+                this.muteButton.setText("Unmute advertiser");
+                this.muteButton.setDescription("Remove advertiser from mutelist");
+            }).catch(error => {
+                console.error("Error muting:", error);
+            });
 
-        if (state) {
-            agent.send("mute", { mute: true });
-            this.muteButton.setIcon(this.unMuteIcon);
-            this.muteButton.setText("Unmute advertiser");
-            this.muteButton.setDescription("Remove advertiser from mutelist");
         } else {
-            agent.send("mute", { mute: false });
-            this.muteButton.setDefaults();
+            const done = () => {
+                this.muted = false;
+                this.muteButton.setDefaults();
+            }
+            agent.send("mute", { mute: false }).then(done).catch(done); // replicate .finally
         }
     }
 
@@ -613,6 +637,7 @@ class SingleChannelPage {
     adPlaying: boolean;
     adConfirmed: boolean;
     awaitingSkip: boolean;
+    videoError: boolean;
     skipButton: HTMLButtonElement;
     currentPlayer: HTMLVideoElement;
 
@@ -628,8 +653,10 @@ class SingleChannelPage {
         this.adPlaying = false;
         this.adConfirmed = false;
         this.awaitingSkip = false;
+        this.videoError = false;
         this.skipButton = null;
         this.currentPlayer = null;
+        this.adOptions.muteTab = false;
         console.log(this);
     }
 
@@ -679,13 +706,11 @@ class SingleChannelPage {
                 this.adOptions.skipOption = true;
                 this.adOptions.show();
             }
-
             if (firstRun) {
                 let duration = player.querySelector(".ytp-time-duration");
                 this.currentDuration = (duration && duration.textContent) || "";
 
                 agent.send("recent-ad").then(message => {
-                    if (message.error) return;
                     this.currentAd = message.ad as Ad;
                     this.updateAdButton();
                 })
@@ -707,6 +732,12 @@ class SingleChannelPage {
         if (this.adPlaying) {
             this.updateAdButton();
         }
+    }
+    onVideoError(error: boolean) {
+        this.videoError = error;
+
+        if (this.videoError && this.adPlaying && this.skipButton)
+            this.attemptSkip();
     }
     updateAdInformation(ad: Ad) {
         if (this.currentAd) {
@@ -736,11 +767,12 @@ class SingleChannelPage {
             // All of these conditions are met with muteAll !== inmute
 
             this.adOptions.muteTab = muteAll !== inMutelist;
+        } else if (this.adPlaying && this.currentPlayer && settings.muteAll) {
+            this.adOptions.muteTab = true;
         }
     }
     attemptSkip() {
-        if (!this.currentPlayer) return;
-
+        if (!this.currentPlayer || !this.adPlaying) return;
         if (this.skipButton) {
             return this.skipButton.click();
         }
@@ -761,7 +793,7 @@ class SingleChannelPage {
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
 
-        if (this.skipButton && this.awaitingSkip) {
+        if (this.skipButton && (this.awaitingSkip || this.videoError)) {
             this.skipButton.click();
         }
     }
@@ -795,12 +827,9 @@ class SingleChannelPage {
 
     addBlacklist() {
         if (!this.currentAd.channelId) throw ("Channel ID not available for blacklisting");
-        agent.send("set-settings", { channelId: this.currentAd.channelId, type: "add-black" }).then(response => {
-            if (!response.error)
-                location.reload();
-            else
-                console.error(response.err);
-        })
+        agent.send("set-settings", { channelId: this.currentAd.channelId, type: "add-black" })
+            .then(() => this.attemptSkip())
+            .catch(error => console.error("Error blacklisting:", error))
     }
 
     toggleMute() {
@@ -808,12 +837,9 @@ class SingleChannelPage {
         let shouldMute = ChannelID.inmutelist(this.currentAd.channelId) === -1;
         let action = shouldMute ? "add-mute" : "remove-mute";
 
-        agent.send("set-settings", { channelId: this.currentAd.channelId, type: action }).then(response => {
-            if (!response.error)
-                agent.send("mute", { mute: shouldMute });
-            else
-                console.error(response.err);
-        })
+        agent.send("set-settings", { channelId: this.currentAd.channelId, type: action })
+            .then(() => agent.send("mute", { mute: shouldMute }))
+            .catch(error => console.error("Error setting settings", error));
     }
 
     toggleWhitelist() {
@@ -1175,12 +1201,12 @@ class Page {
     currentURL: string;
     mode: number;
 
-    constructor(design: Design) {
-        if (design === LPOLY) {
+    constructor(design: Layout) {
+        if (design === Layout.Polymer) {
             this.video = new VideoPagePoly();
             this.channel = new ChannelPagePoly();
             this.search = new SearchPagePoly();
-        } else if (design === LBASIC) {
+        } else if (design === Layout.Basic) {
             this.video = new VideoPageBasic();
             this.channel = new ChannelPageBasic();
             this.search = new SearchPageBasic();
@@ -1191,12 +1217,12 @@ class Page {
     }
     static getDesign() {
         if ((window as any).Polymer || document.querySelector("ytd-app")) {
-            return LPOLY;
+            return Layout.Polymer;
         } else {
-            return LBASIC;
+            return Layout.Basic;
         }
     }
-    getMode(): Mode {
+    getMode(): PageType {
         let newURL = location.href;
 
         if (newURL !== this.currentURL) {
@@ -1206,36 +1232,36 @@ class Page {
             return this.mode;
         }
     }
-    determineMode(url = location.href): Mode {
+    determineMode(url = location.href): PageType {
         if (url.indexOf("youtube.com/watch?") !== -1) {
-            return VIDEO;
+            return PageType.Video;
         } else if (url.indexOf("youtube.com/channel/") !== -1 || url.indexOf("youtube.com/user/") !== -1) {
-            return CHANNEL;
+            return PageType.Channel;
         } else if (url.indexOf("youtube.com/results?") !== -1) {
-            return SEARCH;
+            return PageType.Search;
         } else {
-            return ALLELSE;
+            return PageType.Any;
         }
     }
 
     update(forceUpdate?: boolean, verify?: boolean) {
         let mode = this.getMode();
 
-        if (mode === VIDEO) {
+        if (mode === PageType.Video) {
             this.video.updatePage(forceUpdate, verify);
-        } else if (mode === CHANNEL) {
+        } else if (mode === PageType.Channel) {
             this.channel.updatePage(forceUpdate, verify);
-        } else if (mode === SEARCH) {
+        } else if (mode === PageType.Search) {
             this.search.updatePage(forceUpdate);
-        } else if (mode === ALLELSE) {
+        } else if (mode === PageType.Any) {
             this.updateAllVideos(forceUpdate)
         }
     }
 
     updateAd(ad: any, mode = this.getMode()) {
-        if (mode === VIDEO) {
+        if (mode === PageType.Video) {
             this.video.updateAdInformation(ad);
-        } else if (mode === CHANNEL) {
+        } else if (mode === PageType.Channel) {
             this.channel.updateAdInformation(ad);
         }
     }
@@ -1383,12 +1409,12 @@ class Page {
 }
 
 
-
+/**
+ * Access deeply nested objects without throwing errors
+ * @param object Reference to object literal
+ * @param keyString Location to key item
+ */
 function oGet(object: any, keyString: string) {
-    // Access deeply nested objects without throwing errors
-    // For example object obj = { toplevel : { middlelevel: { bottomlevel: "test" } } }
-    // oGet(obj, "toplevel.middlelevel.bottomlevel")
-    // yields "test", or undefined if no such property exists
     const props = keyString.split(/[\[\]\.]+/);
     let current = object;
 
@@ -1407,7 +1433,7 @@ class LoadHastener {
     // used sooner and can begin processing the page after 600 ms, as opposed to the
     // 3500 ms it can take to wait for DOMContentLoaded.
     watcher: MutationObserver;
-    designConfirmed: (design: Design) => void;
+    designConfirmed: (design: Layout) => void;
 
     constructor() {
         this.watcher = new MutationObserver(mutations => {
@@ -1418,10 +1444,10 @@ class LoadHastener {
                             return this.switchToBody();
                         } else if (node.nodeName === "SCRIPT") {
                             if ((node as HTMLScriptElement).src.indexOf("polymer.js") !== -1) {
-                                return this.confirmDesign(LPOLY);
+                                return this.confirmDesign(Layout.Polymer);
                             }
                         } else if ((node as Element).localName === "ytd-app") {
-                            return this.confirmDesign(LPOLY);
+                            return this.confirmDesign(Layout.Polymer);
                         }
                     }
                 }
@@ -1431,7 +1457,7 @@ class LoadHastener {
         this.contentLoaded = this.contentLoaded.bind(this)
     }
 
-    getDesign(): Promise<Design> {
+    getDesign(): Promise<Layout> {
         if (document.readyState === "complete" || document.readyState === "interactive") {
             return Promise.resolve(Page.getDesign());
         } else {
@@ -1442,7 +1468,7 @@ class LoadHastener {
             })
         }
     }
-    confirmDesign(design: Design): void {
+    confirmDesign(design: Layout): void {
         this.watcher.disconnect();
         document.removeEventListener("DOMContentLoaded", this.contentLoaded)
         this.designConfirmed(design);
@@ -1458,7 +1484,7 @@ class LoadHastener {
 
 }
 
-function init(design: Design) {
+function init(design: Layout) {
     pages = new Page(design || Page.getDesign());
     watcher = new MutationWatcher();
     pages.update(true);
