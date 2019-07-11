@@ -7,7 +7,7 @@ function getWebExtensionsAPI(): typeof browser {
         api = browser;
         if (!api) throw "chrome";
     } catch (e) {
-        if(chrome.promisified) return chrome;
+        if (chrome.promisified) return chrome;
         api = chrome;
         let promisify = (context: any, method: string) => {
             // when called, adds a callback;
@@ -36,8 +36,9 @@ function getWebExtensionsAPI(): typeof browser {
         }
         if (api.tabs) {
             api.tabs.query = promisify(api.tabs, "query");
-            api.tabs.executeScript = promisify(api.tabs,"executeScript");
+            api.tabs.executeScript = promisify(api.tabs, "executeScript");
             api.tabs.sendMessage = promisify(api.tabs, "sendMessage");
+            api.tabs.update = promisify(api.tabs, "update");
         }
         if (api.permissions) {
             api.permissions.contains = promisify(api.permissions, "contains");

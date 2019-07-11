@@ -255,7 +255,7 @@ class AdManager {
                     }
                 })
                 .catch(err => {
-                    console.log(err);
+                    console.error(err);
                     return id;
                 })
         } else {
@@ -304,7 +304,7 @@ class AdManager {
         };
     }
     checkPermissions() {
-        let neededPerms = { origins: ["*://*.content.googleapis.com/"] };
+        const neededPerms = { origins: ["*://*.content.googleapis.com/"] };
         browser.permissions.contains(neededPerms)
             .then((granted: boolean) => this.apiAvailable = granted);
     }
@@ -370,10 +370,10 @@ browser.storage.sync.get(null).then((items: any) => {
                 return true;
             }
         } else if (message.action === "mute") {
-            browser.tabs.update(sender.tab.id, {
-                muted: message.mute
-            });
-            sendResponse({ error: "" });
+            browser.tabs.update(sender.tab.id, { muted: message.mute })
+                .then(tab => sendResponse({ error: tab.mutedInfo.muted === message.mute ? "" : "Could not mute" }))
+                .catch(error => sendResponse({ error }));
+            return true;
         } else if (message.action = "permission") {
             if (message.type = "google-api") {
                 ads.checkPermissions();
