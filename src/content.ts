@@ -227,29 +227,24 @@ const init = new InitManager(document.documentElement);
     payload.args.cbr = "fuccboi";
     return payload;
 });*/
-
+const intermediary = (message: any) => browser.runtime.sendMessage(message).then((response: any) => {
+    if (response.error) throw response.error;
+    delete response.error;
+    return response;
+})
 agent
     .on("ready", () => {
         init.ready = true;
         init.pushPending();
     })
     .on("get-settings", init.getSettings).on("set-settings", (changes: any) => {
-        return new Promise((resolve) => {
-            browser.runtime.sendMessage({ action: "set", changes: changes })
-                .then((response: any) => resolve(response));
-        })
+        return intermediary({ action: "set", changes: changes });
     })
     .on("recent-ad", () => {
-        return new Promise((resolve) => {
-            browser.runtime.sendMessage({ action: "get-ads", type: "current-tab" })
-                .then((response: any) => resolve(response))
-        })
+        return intermediary({ action: "get-ads", type: "current-tab" })
     })
     .on("mute", (change: any) => {
-        return new Promise((resolve) => {
-            browser.runtime.sendMessage({ action: "mute", mute: change.mute || false })
-                .then((response: any) => resolve(response));
-        });
+        return intermediary({ action: "mute", mute: change.mute || false })
     });
 
 init.inject();
