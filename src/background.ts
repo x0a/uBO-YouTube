@@ -2,6 +2,7 @@
 
 import browser from "./browser";
 import Development from "./dev-client"
+import { compressToBase64, decompressFromBase64 } from "lz-string";
 import {
     Channel, ChannelList, Settings,
     Ad, PendingItem, ParsedURL
@@ -31,7 +32,31 @@ class SettingsManager {
         this.muteAll = settings.muteAll
         this.skipOverlays = settings.skipOverlays;
     }
+    // The reason for this complexity is that chrome.storage.sync
+    // has a storage limit of about 8k bytes per item
+    // And an overall storage limit of 100k bytes.
+    // The solution is to both compress JSON-serialized settings, and to split it into multiple items
+    static getSettings(): Promise<Settings> {
+        return browser.storage.sync.get(null).then(store => {
+            if (store.algorithm === "lz" && store.totalKeys) {
+                let compressedStr = "";
+                for (let i = 0; i < store.totalKeys; i++) {
+                    compressedStr += store["lz_" + i];
+                }
 
+                try {
+                    const decompressed = decompressFromBase64(compressedStr)
+                    const parsed = JSON.parse(decompressed) as Settings;
+                    return parsed;
+                } catch (e) {
+                    return {} as Settings;
+                }
+            } else {
+                return (store || {}) as any as Settings; // not encrypted
+            }
+
+        })
+    }
     updateAll(originTab: browser.tabs.Tab) {
         browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
             for (let tab of tabs) {
@@ -142,12 +167,32 @@ class SettingsManager {
             skipOverlays: this.skipOverlays
         };
     }
-    save() {
-        return new Promise((resolve, reject) => {
-            browser.storage.sync.set(this.get() as any)
-                .then(value => resolve())
-            setTimeout(resolve, 800) // resolve anyway if it takes too long, for Edge
-        })
+    getCompressed(): any {
+        const compressed = compressToBase64(JSON.stringify(this.get()));
+        const max = 8192 / 2;
+        const times = Math.ceil(compressed.length / max);
+        const store = {} as any;
+
+        for (let i = 0; i < times; i++) {
+            store["lz_" + i] = compressed.substring(i * max, (i + 1) * max);
+
+        }
+        store.algorithm = "lz";
+        store.totalKeys = times;
+
+        return store;
+    }
+    async save() {
+        const compressed = this.getCompressed();
+        const keys = Object.keys(compressed);
+
+        await browser.storage.sync.clear();
+
+        for (let key of keys) {
+            const t = {} as any;
+            t[key] = compressed[key];
+            await browser.storage.sync.set(t);
+        }
     }
 }
 
@@ -310,9 +355,8 @@ class AdManager {
     }
 }
 
-browser.storage.sync.get(null).then((items: any) => {
-
-    settings = new SettingsManager(items as Settings);
+SettingsManager.getSettings().then((_settings: Settings) => {
+    settings = new SettingsManager(_settings);
     ads = new AdManager();
 
     browser.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
