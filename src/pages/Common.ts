@@ -1,4 +1,3 @@
-
 const clickEvents = (full: boolean, el: HTMLElement) => {
     if (!el || full) return;
 
@@ -6,5 +5,6 @@ const clickEvents = (full: boolean, el: HTMLElement) => {
     el.addEventListener("mouseup", () => el.classList.remove("btn-pressed"))
 }
 const noop = () => { };
-const deepCopy = (object: any) => JSON.parse(JSON.stringify(object));
+const deepCopy = <T>(object: T): T => JSON.parse(JSON.stringify(object));
+
 export { clickEvents, noop, deepCopy}
