@@ -6,6 +6,8 @@ import { Resolver } from "dns";
 
 interface SettingsToolsState {
     settings: _Settings;
+    showImport: boolean;
+    importPending: boolean;
     refreshing: boolean;
 }
 interface SettingsToolsProps {
@@ -28,7 +30,7 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
     requestRefresh: SettingsToolsProps["requestRefresh"];
     pushSettings: SettingsToolsProps["receivedSettings"];
     refreshing: boolean;
-
+    
     constructor(props: SettingsToolsProps) {
         super(props);
         this.fileImport = null;
@@ -40,6 +42,8 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
                 muteAll: false,
                 skipOverlays: true,
             },
+            importPending: false,
+            showImport: false,
             refreshing: false
         }
 
@@ -56,6 +60,7 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
         this.getList = this.getList.bind(this);
         this.refreshAll = this.refreshAll.bind(this);
         this.onResponse = this.onResponse.bind(this);
+        this.importSubscriptions = this.importSubscriptions.bind(this);
     }
 
     componentDidMount() {
@@ -134,7 +139,38 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
             this.fileImport.click();
         }
     }
+    async fetchSubscriptions(): Promise<Array<Channel>> {
+        const resp = await fetch("https://www.youtube.com/subscription_manager?action_takeout=1");
+        const text = await resp.text();
+        const xml = new DOMParser().parseFromString(text, "text/xml");
+        const channels = Array.from(xml.querySelectorAll("outline"))
+            .map(channel => {
+                const display = channel.getAttribute("title");
+                const username = "";
+                const xmlUrl = channel.getAttribute("xmlUrl");
+                const id = xmlUrl ? xmlUrl.match(/\=(.+)$/)[1] : "";
+                return { display, username, id };
+            })
+            .filter(channel => !!channel.id)
 
+        return channels;
+    }
+    importSubscriptions() {
+        this.setState({ importPending: true });
+        this.fetchSubscriptions()
+            .then(whitelisted => {
+                let newSettings: _Settings = {
+                    whitelisted,
+                    blacklisted: [],
+                    muted: [],
+                    muteAll: this.state.settings.muteAll,
+                    skipOverlays: this.state.settings.muteAll,
+                }
+                this.importSettings(this.diffSettings(newSettings));
+            })
+            .catch(error => this.showAlert("Failed to retrieve list of subscribed channels. Make sure you're logged into YouTube", false, true))
+            .then(() => this.setState({ importPending: false }));
+    }
     importSettings(settings: _Settings) {
         this.showAlert(["Add", settings.whitelisted.length, "items to whitelist,", settings.blacklisted.length, "to blacklist, and ", settings.muted.length, " items to mutelist?"].join(" "), true).then(() => {
             let newSettings = deepCopy(this.state.settings);
@@ -260,7 +296,25 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
         }
         return -1;
     }
-
+    diffSettings(newSettings: _Settings) {
+        let results = deepCopy(newSettings);
+        for (let i = 0; i < results.blacklisted.length; i++)
+            if (this.inblacklist(results.blacklisted[i].id) !== -1) {
+                results.blacklisted.splice(i, 1);
+                i--;
+            }
+        for (let i = 0; i < results.whitelisted.length; i++)
+            if (this.inwhitelist(results.whitelisted[i].id) !== -1) {
+                results.whitelisted.splice(i, 1);
+                i--;
+            }
+        for (let i = 0; i < results.muted.length; i++)
+            if (this.inmutelist(results.muted[i].id) !== -1) {
+                results.muted.splice(i, 1);
+                i--;
+            }
+        return results;
+    }
     fileChange(event: React.FormEvent<HTMLInputElement>) {
         if (!event.currentTarget.files.length) return;
 
@@ -272,21 +326,7 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
                 let results;
 
                 if ((results = JSON.parse(reader.result as string)) && typeof results === "object" && results.blacklisted && results.whitelisted) {
-                    for (let i = 0; i < results.blacklisted.length; i++)
-                        if (this.inblacklist(results.blacklisted[i].id) !== -1) {
-                            results.blacklisted.splice(i, 1);
-                            i--;
-                        }
-                    for (let i = 0; i < results.whitelisted.length; i++)
-                        if (this.inwhitelist(results.whitelisted[i].id) !== -1) {
-                            results.whitelisted.splice(i, 1);
-                            i--;
-                        }
-                    for (let i = 0; i < results.muted.length; i++)
-                        if (this.inmutelist(results.muted[i].id) !== -1) {
-                            results.muted.splice(i, 1);
-                            i--;
-                        }
+                    results = this.diffSettings(results);
                     if (!results.whitelisted.length && !results.blacklisted.length && !results.muted.length)
                         this.error("No new items to add");
                     else
@@ -343,14 +383,31 @@ class SettingsTools extends Component<SettingsToolsProps, SettingsToolsState> {
                             <i className="fas fa-download space" />
                             {this.full ? " Export lists" : " Export"}
                         </button>
-                        <button
-                            className={"btn btn-primary" + size}
-                            type="button"
-                            onClick={this.import}
-                            title="Import settings from file">
-                            <i className="fas fa-upload" />
-                            {this.full ? " Import lists" : " Import"}
-                        </button>
+                        {this.full ?
+                            <div
+                                className={"dropdown d-inline-block " + (this.state.showImport ? "show" : "")}
+                                onBlurCapture={() => this.setState({ showImport: false })}
+                            >
+                                <button
+                                    className={"btn btn-primary dropdown-toggle " + size}
+                                    type="button"
+                                    disabled={this.state.importPending}
+                                    onClick={() => { this.setState({ showImport: !this.state.showImport }) }}>
+                                    {this.state.importPending
+                                        ? <i className="fas fa-sync fa-spin space" />
+                                        : <i className="fas fa-upload space" />}
+                                    Import
+                            </button>
+                                <div
+                                    className={"dropdown-menu " + (this.state.showImport ? "show" : "")}>
+                                    <button className="dropdown-item" onMouseDown={this.import}>From file</button>
+                                    <button className="dropdown-item" onMouseDown={this.importSubscriptions}>From subscriptions</button>
+                                </div>
+                            </div> : <button className={"btn btn-primary dropdown-toggle " + size} type="button" onClick={this.import}>
+                                <i className="fas fa-upload space" />
+                                Import
+                            </button>}
+
                         <button
                             className={"btn btn-danger" + size + (this.full ? "" : " align-right")}
                             type="button"
