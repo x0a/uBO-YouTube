@@ -535,21 +535,23 @@ class AdOptions {
     set muteTab(shouldMute: boolean) {
         if (shouldMute) {
 
-            agent.send("mute", { mute: true }).then(resp => {
-                this.muted = true;
-                this.muteButton.setIcon(this.unMuteIcon);
-                this.muteButton.setText("Unmute advertiser");
-                this.muteButton.setDescription("Remove advertiser from mutelist");
-            }).catch(error => {
-                console.error("Error muting:", error);
-            });
+            agent.send("mute", true)
+                .then(resp => {
+                    this.muted = true;
+                    this.muteButton.setIcon(this.unMuteIcon);
+                    this.muteButton.setText("Unmute advertiser");
+                    this.muteButton.setDescription("Remove advertiser from mutelist");
+                })
+                .catch(error => {
+                    console.error("Error muting:", error);
+                });
 
         } else {
             const done = () => {
                 this.muted = false;
                 this.muteButton.setDefaults();
             }
-            agent.send("mute", { mute: false }).then(done).catch(done); // replicate .finally
+            agent.send("mute", false).then(done).catch(done); // replicate .finally
         }
     }
 
@@ -827,7 +829,7 @@ class SingleChannelPage {
 
     addBlacklist() {
         if (!this.currentAd.channelId) throw ("Channel ID not available for blacklisting");
-        agent.send("set-settings", { channelId: this.currentAd.channelId, type: "add-black" })
+        agent.send("set-settings", { param: this.currentAd.channelId, type: "add-black" })
             .then(() => this.attemptSkip())
             .catch(error => console.error("Error blacklisting:", error))
     }
@@ -837,8 +839,8 @@ class SingleChannelPage {
         let shouldMute = ChannelID.inmutelist(this.currentAd.channelId) === -1;
         let action = shouldMute ? "add-mute" : "remove-mute";
 
-        agent.send("set-settings", { channelId: this.currentAd.channelId, type: action })
-            .then(() => agent.send("mute", { mute: shouldMute }))
+        agent.send("set-settings", { param: this.currentAd.channelId, type: action })
+            .then(() => agent.send("mute", shouldMute))
             .catch(error => console.error("Error setting settings", error));
     }
 
@@ -847,10 +849,10 @@ class SingleChannelPage {
         if (!this.channelId) throw "Channel ID not available";
 
         if (ChannelID.inwhitelist(this.channelId) !== -1) {
-            agent.send("set-settings", { channelId: this.channelId, type: "remove-white" });
+            agent.send("set-settings", { param: this.channelId, type: "remove-white" });
             this.whitelistButton.off();
         } else {
-            agent.send("set-settings", { channelId: this.channelId, type: "add-white" });
+            agent.send("set-settings", { param: this.channelId, type: "add-white" });
             this.whitelistButton.on();
         }
 
@@ -1127,10 +1129,10 @@ class ChannelID {
         }
     }
     static whitelistRemove(channelId: Channel) {
-        return agent.send("set-settings", { channelId: channelId, type: "remove-white" });
+        return agent.send("set-settings", { param: channelId, type: "remove-white" });
     }
     static whitelistAdd(channelId: Channel) {
-        return agent.send("set-settings", { channelId: channelId, type: "add-white" });
+        return agent.send("set-settings", { param: channelId, type: "add-white" });
     }
     static inmutelist(search: Channel | string, idOnly = false) {
         return ChannelID.searchlist(settings.muted, search, idOnly);
