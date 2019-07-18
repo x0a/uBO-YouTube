@@ -2,6 +2,7 @@
 
 import browser from "./browser";
 import Development from "./dev-client"
+import MessageListener from "./ext-agent";
 import { compressToBase64, decompressFromBase64 } from "lz-string";
 import {
     Channel, ChannelList, Settings,
@@ -12,9 +13,9 @@ let settings: SettingsManager;
 let ads: AdManager;
 
 class SettingsManager {
-    whitelisted: ChannelList;
-    blacklisted: ChannelList;
-    muted: ChannelList;
+    whitelist: Channels;
+    blacklist: Channels;
+    mutelist: Channels;
     muteAll: boolean;
     skipOverlays: boolean;
 
@@ -24,17 +25,18 @@ class SettingsManager {
         if (!settings.blacklisted) settings.blacklisted = [];
         if (!settings.muted) settings.muted = [];
         if (!settings.muteAll) settings.muteAll = false;
-        if (!settings.skipOverlays) settings.skipOverlays = true;
+        if (settings.skipOverlays === undefined) settings.skipOverlays = true;
 
-        this.whitelisted = settings.whitelisted;
-        this.blacklisted = settings.blacklisted;
-        this.muted = settings.muted;
+        this.whitelist = new Channels(settings.whitelisted);
+        this.blacklist = new Channels(settings.blacklisted);
+        this.mutelist = new Channels(settings.muted);
         this.muteAll = settings.muteAll
         this.skipOverlays = settings.skipOverlays;
     }
     // The reason for this complexity is that chrome.storage.sync
     // has a storage limit of about 8k bytes per item
     // And an overall storage limit of 100k bytes.
+    // With raw JSON, you quickly start running into problems if you try to import subscriptions
     // The solution is to both compress JSON-serialized settings, and to split it into multiple items
     static getSettings(): Promise<Settings> {
         return browser.storage.sync.get(null).then(store => {
@@ -61,10 +63,11 @@ class SettingsManager {
         browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
             for (let tab of tabs) {
                 const origin = (originTab && originTab.id === tab.id) || false;
-                browser.tabs.sendMessage(tab.id, { action: "update", settings: settings, initiator: origin })
+                browser.tabs.sendMessage(tab.id, { action: "update", settings: settings.get(), initiator: origin })
                     .then((response?: any) => {
                         //console.log(response);
-                    });
+                    })
+                    .catch(() => { });
             }
         });
     }
@@ -77,81 +80,6 @@ class SettingsManager {
         });
     }
 
-    addToWhitelist(channelId: Channel) {
-        if (this.inWhitelist(channelId.id) === -1) {
-            this.whitelisted.push(channelId);
-            return true;
-        }
-        return false;
-    }
-
-    addToBlacklist(channelId: Channel) {
-        if (this.inBlacklist(channelId.id) === -1) {
-            this.blacklisted.push(channelId);
-            return true;
-        }
-        return false;
-    }
-
-    addToMutelist(channelId: Channel) {
-        if (this.inMutelist(channelId.id) === -1) {
-            this.muted.push(channelId);
-            return true;
-        }
-        return false;
-    }
-
-    removeFromWhitelist(id: string) {
-        let i = -1;
-        let removeCount = 0;
-
-        while ((i = this.inWhitelist(id)) !== -1) {
-            this.whitelisted.splice(i, 1);
-            removeCount++;
-        }
-        return removeCount;
-    }
-    removeFromBlacklist(id: string) {
-        let i = -1;
-        let removeCount = 0;
-
-        while ((i = this.inBlacklist(id)) !== -1) {
-            this.blacklisted.splice(i, 1);
-            removeCount++;
-        }
-        return removeCount;
-    }
-    removeFromMutelist(id: string) {
-        let i = -1;
-        let removeCount = 0;
-
-        while ((i = this.inMutelist(id)) !== -1) {
-            this.muted.splice(i, 1);
-            removeCount++;
-        }
-        return removeCount;
-    }
-    inWhitelist(id: string) {
-        for (let index in this.whitelisted) {
-            if (this.whitelisted[index].id === id)
-                return ~~index;
-        }
-        return -1;
-    }
-    inBlacklist(id: string) {
-        for (let index in this.blacklisted) {
-            if (this.blacklisted[index].id === id)
-                return ~~index;
-        }
-        return -1;
-    }
-    inMutelist(id: string) {
-        for (let index in this.muted) {
-            if (this.muted[index].id === id)
-                return ~~index;
-        }
-        return -1;
-    }
     toggleMuteAll(on: boolean) {
         this.muteAll = !!on;
     }
@@ -160,9 +88,9 @@ class SettingsManager {
     }
     get(): Settings {
         return {
-            whitelisted: this.whitelisted,
-            blacklisted: this.blacklisted,
-            muted: this.muted,
+            whitelisted: this.whitelist.get(),
+            blacklisted: this.blacklist.get(),
+            muted: this.mutelist.get(),
             muteAll: this.muteAll,
             skipOverlays: this.skipOverlays
         };
@@ -193,6 +121,40 @@ class SettingsManager {
             t[key] = compressed[key];
             await browser.storage.sync.set(t);
         }
+    }
+}
+
+class Channels {
+    list: ChannelList;
+    constructor(list: ChannelList) {
+        this.list = list;
+    }
+    has(id: string): number {
+        for (let index in this.list) {
+            if (this.list[index].id === id)
+                return ~~index;
+        }
+        return -1;
+    }
+    remove(id: string): number {
+        let i = -1;
+        let removeCount = 0;
+
+        while ((i = this.has(id)) !== -1) {
+            this.list.splice(i, 1);
+            removeCount++;
+        }
+        return removeCount;
+    }
+    add(channelId: Channel): boolean {
+        if (this.has(channelId.id) === -1) {
+            this.list.push(channelId);
+            return true;
+        }
+        return false;
+    }
+    get(): ChannelList {
+        return this.list;
     }
 }
 
@@ -350,7 +312,7 @@ class AdManager {
     }
     checkPermissions() {
         const neededPerms = { origins: ["*://*.content.googleapis.com/"] };
-        browser.permissions.contains(neededPerms)
+        return browser.permissions.contains(neededPerms)
             .then((granted: boolean) => this.apiAvailable = granted);
     }
 }
@@ -358,75 +320,39 @@ class AdManager {
 SettingsManager.getSettings().then((_settings: Settings) => {
     settings = new SettingsManager(_settings);
     ads = new AdManager();
-
-    browser.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
-        let sendError = null;
-
-        if (message.action === "get-lists") {
-            sendResponse(settings.get());
-        } else if (message.action === "set") {
-            if (message.changes.type === "add-white") {
-                settings.addToWhitelist(message.changes.channelId);
-            } else if (message.changes.type === "add-mute") {
-                settings.addToMutelist(message.changes.channelId)
-                sendError = "";
-            } else if (message.changes.type === "add-black") {
-                if (settings.addToBlacklist(message.changes.channelId)) {
-                    sendError = "";
-                } else {
-                    sendError = "Already in blacklist";
-                }
-            } else if (message.changes.type === "remove-mute") {
-                settings.removeFromMutelist(message.changes.channelId.id);
-                sendError = "";
-            } else if (message.changes.type === "remove-white") {
-                settings.removeFromWhitelist(message.changes.channelId.id)
-            } else if (message.changes.type === "remove-black") {
-                settings.removeFromBlacklist(message.changes.channelId.id);
-            } else if (message.changes.type === "bulk") {
-                settings = new SettingsManager(message.changes.settings);
-            } else if (message.changes.type === "mute-all") {
-                settings.toggleMuteAll(message.changes.value);
-            } else if (message.changes.type === "skip-overlays") {
-                settings.toggleSkipOverlays(message.changes.skipOverlays);
-            }
-
+    const listener = new MessageListener();
+    
+    listener.onAction("set")
+        .on("add-white", (_, channelId: Channel) => settings.whitelist.add(channelId))
+        .on("add-black", (_, channelId: Channel) => settings.blacklist.add(channelId))
+        .on("add-mute", (_, channelId: Channel) => settings.mutelist.add(channelId))
+        .on("remove-mute", (_, channelId: Channel) => settings.mutelist.remove(channelId.id))
+        .on("remove-white", (_, channelId: Channel) => settings.whitelist.remove(channelId.id))
+        .on("remove-black", (_, channelId: Channel) => settings.blacklist.remove(channelId.id))
+        .on("bulk", (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
+        .on("reset", (_, __) => settings = new SettingsManager({} as Settings))
+        .on("mute-all", (_, shouldMute) => settings.toggleMuteAll(shouldMute))
+        .on("skip-overlays", (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
+        .onAll((sender, _) => {
             settings.save();
-
-            if (!sender.tab || sender.tab.id === -1 || sendError !== null) {
-                sendResponse({ action: "update", settings: settings, error: sendError });
-            }
-
             settings.updateAll(sender.tab);
+            return settings.get();
+        });
 
-        } else if (message.action === "get-ads") {
-            if (message.type === "all") {
-                ads.get().then(adList => sendResponse(adList));
-                return true;
-            } else if (message.type === "current-tab") {
-                ads.getLastAdFromTab(sender.tab.id)
-                    .then(ad => {
-                        sendResponse({ ad: ad })
-                    })
-                    .catch(() => {
-                        sendResponse({ error: "Ad not found" });
-                    })
-                return true;
-            }
-        } else if (message.action === "mute") {
-            browser.tabs.update(sender.tab.id, { muted: message.mute })
-                .then(tab => sendResponse({ error: tab.mutedInfo.muted === message.mute ? "" : "Could not mute" }))
-                .catch(error => sendResponse({ error }));
-            return true;
-        } else if (message.action = "permission") {
-            if (message.type = "google-api") {
-                ads.checkPermissions();
-            }
-            sendResponse({ error: "" });
-        }
-    });
+    listener.onAction("get")
+        .on("settings", (_, __) => settings.get())
+        .on("ads", (_, __) => ads.get());
 
-    browser.webRequest.onBeforeSendHeaders.addListener((details: any) => {
+    listener.onAction("tab")
+        .on("mute", (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
+        .on("last-ad", (sender, _) => ads.getLastAdFromTab(sender.tab.id));
+
+    listener.onAction("permission")
+        .on("google-api", () => ads.checkPermissions());
+
+    listener.start();
+
+    browser.webRequest.onBeforeSendHeaders.addListener(details => {
         if (details.tabId === -1) return; //probably came from an extension, which we don't want to process
 
         let request = new XMLHttpRequest();
@@ -440,11 +366,12 @@ SettingsManager.getSettings().then((_settings: Settings) => {
             let prevAd = ads.findPrevAdByVideoId(url.params.video_id);
 
             if (prevAd) { // at this point, all we have is the vID, no channel information, unless we've seen this specific vid before
-                if (settings.inBlacklist(prevAd.channelId.id) !== -1) {
+                if (settings.blacklist.has(prevAd.channelId.id) !== -1) {
                     shouldCancel = true;
                 }
 
                 ad = cloneObject(prevAd);
+                ad.timestamp = Date.now() + "";
                 gotChannelTitle = Promise.resolve();
             } else { //get more information by accessing the url ourselves
                 request.open('GET', details.url, false);  // `false` makes the request synchronous
@@ -460,7 +387,7 @@ SettingsManager.getSettings().then((_settings: Settings) => {
                     };
 
                     if (ad.channelId.id) {
-                        if (settings.inBlacklist(ad.channelId.id) !== -1) {
+                        if (settings.blacklist.has(ad.channelId.id) !== -1) {
                             shouldCancel = true;
                         }
 
@@ -524,7 +451,7 @@ if (Development && Development.detectedDevMode()) { // set to false in productio
         })
     client.connect();
 
-    (window as any).s = (() => client.originalLog("Started", (Date.now() - started) / 60000, "minutes ago")) as any;
+    (window as any).dev = (() => client.originalLog("Started", (Date.now() - started) / 60000, "minutes ago")) as any;
     console.log("[", started, "]: Development mode");
 }
 
