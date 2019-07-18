@@ -8,6 +8,16 @@ type Channel = {
 
 type ChannelList = Array<Channel>;
 
+interface HostMessage {
+    action: string,
+    subaction?: string,
+    param?: any
+}
+interface ClientMessage {
+    error: string;
+    response: any;
+}
+
 interface Settings {
     whitelisted: ChannelList;
     blacklisted: ChannelList;
@@ -68,6 +78,8 @@ interface Ad {
     ucid?: string;
     author?: string;
     blocked?: boolean;
+    title?: string;
+    timestamp?: string;
 }
 
 interface Video {
@@ -129,5 +141,5 @@ export {
     Channel, ChannelList, MutationElement,
     Settings, Action, AccessURL,
     MenuItem, InfoLink, VideoBasic, VideoPoly,
-    Ad, PendingItem, ParsedURL
+    Ad, PendingItem, ParsedURL, HostMessage, ClientMessage
 }
