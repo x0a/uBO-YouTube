@@ -63,13 +63,15 @@ class InitManager {
         }
     }
     retrieveSettings() {
-        return new Promise(resolve => {
-            browser.runtime.sendMessage({ action: "get-lists" }).then((response: any) => resolve({
-                settings: response,
+        return browser.runtime.sendMessage({ action: "get", subaction: "settings" }).then((message: any) => {
+            if(message.error) throw message.error;
+
+            return {
+                settings: message.response,
                 accessURLs: {
                     ICO: browser.runtime.getURL("img/icon_16.png")
                 }
-            }));
+            }
         })
     }
     getSettings() {
@@ -237,14 +239,15 @@ agent
         init.ready = true;
         init.pushPending();
     })
-    .on("get-settings", init.getSettings).on("set-settings", (changes: any) => {
-        return intermediary({ action: "set", changes: changes });
+    .on("get-settings", init.getSettings)
+    .on("set-settings", (changes: any) => {
+        return intermediary({ action: "set", subaction: changes.type, param: changes.param });
     })
     .on("recent-ad", () => {
-        return intermediary({ action: "get-ads", type: "current-tab" })
+        return intermediary({ action: "tab", subaction: "last-ad" })
     })
-    .on("mute", (change: any) => {
-        return intermediary({ action: "mute", mute: change.mute || false })
+    .on("mute", (shouldMute: boolean) => {
+        return intermediary({ action: "tab", subaction: "mute", param: shouldMute || false })
     });
 
 init.inject();
