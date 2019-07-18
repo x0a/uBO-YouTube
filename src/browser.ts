@@ -39,6 +39,7 @@ function getWebExtensionsAPI(): typeof browser {
             api.tabs.executeScript = promisify(api.tabs, "executeScript");
             api.tabs.sendMessage = promisify(api.tabs, "sendMessage");
             api.tabs.update = promisify(api.tabs, "update");
+            api.tabs.getCurrent = promisify(api.tabs, "getCurrent");
         }
         if (api.permissions) {
             api.permissions.contains = promisify(api.permissions, "contains");
@@ -54,4 +55,4 @@ function getWebExtensionsAPI(): typeof browser {
     return api;
 }
 
-export default getWebExtensionsAPI();
+export default getWebExtensionsAPI() as typeof browser;
