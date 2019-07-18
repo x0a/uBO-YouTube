@@ -69,10 +69,8 @@
     border-color: #007bff;
 }
 
-.btn-link {
-    font-weight: 400;
-    color: #007bff;
-    background-color: transparent;
+.font-weight-bold-sm {
+    font-weight: 700;
 }
 
 /*  disable coz it doesn't fit neatly in the popup and icbf to fix
@@ -182,13 +180,17 @@ table {
     color: grey !important;
 }
 
-a.link {
+a {
     color: #007bff;
     text-decoration: none;
-    cursor: pointer;
+    background-color: transparent;
 }
 
-button.link {
+/* .text-danger {
+    color: #dc3545 !important
+}*/
+
+button.btn-link {
     background: none !important;
     color: inherit;
     border: none;
@@ -200,21 +202,25 @@ button.link {
     cursor: pointer;
 }
 
-.link:hover {
+.btn-link:hover {
     text-decoration: underline;
 }
 
-.remove {
+.text-danger {
     color: red !important;
     float: right;
 }
 
-.hidden {
+.d-none {
     display: none;
 }
 
-.space {
-    margin-right: 2px;
+.m-0 {
+    margin: 0 !important;
+}
+
+.p-0 {
+    padding: 0 !important;
 }
 
 #search::-ms-clear {
@@ -262,10 +268,7 @@ button.link {
     font-size: 108%;
 }
 
-th {
-    padding-top: 10px;
-    padding-bottom: 10px;
-    font-weight: 700;
+.font-size-6 {
     font-size: 1.06em;
 }
 
@@ -292,10 +295,34 @@ hr {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.bold {
+.font-weight-bold {
     font-weight: bold !important;
 }
 
-.align-right {
-    float: right;
+.float-right-sm {
+    float: right !important;
+}
+
+.justify-content-flex-end {
+    justify-content: flex-end !important;
+}
+
+.d-sm-none {
+    display: none;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.d-flex {
+    display: flex !important;
+}
+
+.align-items-center {
+    align-items: center !important;
+}
+
+.mr-1 {
+    margin-right: .25rem !important;
 }
