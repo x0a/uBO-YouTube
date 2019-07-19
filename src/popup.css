@@ -201,6 +201,9 @@ button.btn-link {
     text-decoration: none;
     cursor: pointer;
 }
+button:disabled{
+    color: gray !important;
+}
 
 .btn-link:hover {
     text-decoration: underline;
