@@ -1,13 +1,15 @@
 import * as React from "react";
 import { FunctionComponent, useEffect, useState } from "react";
 import { bMessage, popupHeader, fullHeader } from "./common";
-import { Ad } from "../typings";
+import { Ad, Settings, Channel } from "../typings";
 import Link from "./link";
 
 const AdItem: FunctionComponent<{
-    ad: Ad
+    ad: Ad;
+    muted: boolean;
+    blocked: boolean;
     full: boolean;
-}> = ({ ad, full }) => {
+}> = ({ ad, muted, blocked, full }) => {
     let url = "";
     const matches = ad.details.url.match(/\&video_id=([A-Za-z_\-0-9]+)\&/);
     if (matches && matches.length > 1) {
@@ -37,10 +39,18 @@ const AdItem: FunctionComponent<{
         </td>}
         <td>
             <div className="d-flex justify-content-flex-end">
-                <button className="btn btn-outline-secondary d-sm-none d-md-inline-block" onClick={onMute} title="Add to mute list">
+                <button
+                    className="btn btn-outline-secondary d-sm-none d-md-inline-block"
+                    onClick={onMute}
+                    disabled={muted}
+                    title="Add to mute list">
                     <i className="fas fa-volume-mute" />
                 </button>
-                <button className={"btn " + (full ? "btn-outline-danger" : "btn-link text-danger float-right")} onClick={onBlock} title="Add to blacklist">
+                <button
+                    className={"btn " + (full ? "btn-outline-danger" : "btn-link text-danger float-right")}
+                    onClick={onBlock}
+                    disabled={blocked}
+                    title="Add to blacklist">
                     <i className="fas fa-ban" />
                 </button>
             </div>
@@ -49,8 +59,9 @@ const AdItem: FunctionComponent<{
 }
 
 const RecentAds: FunctionComponent<{
-    full: boolean
-}> = ({ full }) => {
+    full: boolean;
+    settings: Settings;
+}> = ({ full, settings }) => {
     const [ads, setAds] = useState([] as Array<Ad>);
     useEffect(() => {
         bMessage("get", "ads").then((ads: Array<Ad>) => {
@@ -58,6 +69,8 @@ const RecentAds: FunctionComponent<{
             setAds(ads);
         })
     }, [])
+    const isBlocked = (channel: Channel) => settings.blacklisted.findIndex(({ id }) => id === channel.id) !== -1
+    const isMuted = (channel: Channel) => settings.muted.findIndex(({ id }) => id === channel.id) !== -1
     return <>
         {full
             ? fullHeader("Recent ads")
@@ -78,7 +91,12 @@ const RecentAds: FunctionComponent<{
                     <td></td>
                     {full && <td></td>}
                 </tr>}
-                {ads.map(ad => <AdItem key={ad.timestamp} ad={ad} full={full} />)}
+                {ads.map(ad => <AdItem
+                    muted={isMuted(ad.channelId)}
+                    blocked={isBlocked(ad.channelId)}
+                    key={ad.timestamp}
+                    ad={ad}
+                    full={full} />)}
             </tbody>
         </table>
     </>
