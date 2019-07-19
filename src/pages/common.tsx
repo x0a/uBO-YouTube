@@ -22,7 +22,6 @@ const bMessage = (action: string, subaction: string, param?: any) => {
             return message.response;
         })
         .then(async (response) => {
-            console.log("is popup:", await isPopup)
             if (await isPopup && action === "set") { // if this message was sent via popup, we will never receive it as a message because only tabs receive messages
                 settingsListener(response as Settings);
             }
@@ -72,7 +71,7 @@ const cleanSettings = (prospect: Settings): Settings => {
         blacklisted: cleanChannelList(prospect.blacklisted),
         muted: cleanChannelList(prospect.muted),
         muteAll: prospect.muteAll === undefined ? false : prospect.muteAll,
-        skipOverlays: prospect.skipOverlays === undefined ? true : prospect.muteAll
+        skipOverlays: prospect.skipOverlays === undefined ? true : prospect.skipOverlays
     }
 }
 
