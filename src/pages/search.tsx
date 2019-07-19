@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FunctionComponent, useEffect, useState } from "react";
 import { ChannelList, Channel, Settings } from "../typings";
-import { bMessage, Confirm } from "./common";
+import { bMessage, requestGooglePermission, Confirm } from "./common";
 
 const ChannelSearch: FunctionComponent<{
     full: boolean;
@@ -13,12 +13,19 @@ const ChannelSearch: FunctionComponent<{
     const [error, setError] = useState(false);
     const [searching, setSearching] = useState(false);
     const [channels, setChannels] = useState([] as any);
+    const [permission, setPermission] = useState(false);
     const onChange = (event: React.FormEvent<HTMLInputElement>) => {
         const text = event.currentTarget.value;
         setSearch(text);
         setSearching(true);
     }
-
+    const requestPermission = () => requestGooglePermission()
+        .then(granted => setPermission(granted));
+        
+    useEffect(() => {
+        bMessage("permission", "google-api")
+            .then(granted => setPermission(granted));
+    }, [])
     useEffect(() => {
         let int: number;
         setChannels([]);
@@ -65,14 +72,24 @@ const ChannelSearch: FunctionComponent<{
                 onChange={onChange}
                 value={search}
                 placeholder="Channel name.."
-                className="form-control form-control-sm" />
+                className="form-control form-control-sm"
+                disabled={!permission} />
             <i className={"fas search-feedback " + searchIcon} />
         </div>
         <hr />
-        {!error
+        {!permission && <div>
+            <p className="text-muted list-group-option">
+                A one-time permission needed to search for YouTube channels
+            </p>
+            <button
+                className="btn btn-primary btn-block btn-sm mt-2"
+                onClick={requestPermission}>Grant permission</button>
+        </div>}
+        {permission
+            && !error
             && !searching
             && !channels.length
-            && <span className="text-muted list-group-option">
+            && <span className={"text-muted list-group-option" + (!permission ? "text-muted" : "")}>
                 Type to search for a YouTube channel or
                 {children}
             </span>}
