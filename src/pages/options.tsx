@@ -26,6 +26,7 @@ const Import: FunctionComponent<{
 
         readJSONFile(file)
             .then(json => {
+                inputEl.value = "";
                 if (!isSettings(json))
                     throw "Invalid settings";
                 const nextSettings = diffSettings(settings, cleanSettings(json));
@@ -43,12 +44,15 @@ const Import: FunctionComponent<{
                             .catch(error => alert("Could not set settings" + error, false, true));
                     })
             })
-            .catch(error => alert(error, false, true));
+            .catch(error => {
+                inputEl.value = "";
+                alert(error, false, true);
+            });
     }
     return <>
         <input type="file" ref={inputRef} onChange={onFile} className="d-none" />
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => inputEl.click()}>
-            <i className="fas fa-upload" /> Import<span className="d-sm-none d-md-inline"> from file</span>
+        <button type="button" className="btn btn-primary" onClick={() => inputEl.click()}>
+            <i className="fas fa-file-import" /> Select file..
         </button>
     </>
 }
@@ -68,8 +72,8 @@ const Export: FunctionComponent<{
 
     return <>
         <a download="ublock-youtube.json" href={blobURL} ref={linkRef} className="d-none" />
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => linkEl.click()}>
-            <i className="fas fa-download" /> Export<span className="d-sm-none d-md-inline"> to file</span>
+        <button type="button" className="btn btn-primary" onClick={() => linkEl.click()}>
+            <i className="fas fa-download" /> Download
         </button>
     </>
 }
@@ -84,10 +88,10 @@ const Reset: FunctionComponent<{
         .then(() => bMessage("set", "reset"));
     return <button
         type="button"
-        className={"btn btn-danger btn-sm " + className}
+        className={"btn btn-danger " + className}
         title="Erase all settings"
         onClick={reset}>
-        <i className="fas fa-trash" /><span className="d-sm-none d-md-inline ml-1">Reset all</span>
+        <i className="fas fa-trash" /> Reset
     </button>
 }
 
@@ -104,11 +108,28 @@ const Options: FunctionComponent<{
     settings: Settings,
     alert: Confirm,
 }> = ({ settings, alert }) => {
-    return <div>
-        <div className="d-sm-none d-md-block">
-            <Export settings={settings} />
-            <Import alert={alert} settings={settings} />
-            <Reset alert={alert} className="" />
+    return <div className="row">
+        <div className="d-sm-none d-md-block col-md-6">
+            <div className="list-group list-group-flush">
+                <div className="list-group-item">
+                    <div className="d-flex w-100 justify-content-between">
+                        Import settings from file
+                        <Import alert={alert} settings={settings} />
+                    </div>
+                </div>
+                <div className="list-group-item">
+                <div className="d-flex w-100 justify-content-between">
+                        Export settings to file
+                        <Export settings={settings} />
+                    </div>
+                </div>
+                <div className="list-group-item">
+                <div className="d-flex w-100 justify-content-between">
+                        Reset to default settings
+                        <Reset alert={alert} className="" />
+                    </div>
+                </div>
+            </div>
         </div>
         <div className="d-md-none float-right-sm">
             <SettingsPage />
