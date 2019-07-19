@@ -1,9 +1,9 @@
 import * as React from "react";
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useEffect, useState, useLayoutEffect, useRef} from "react";
 import { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable } from "./list";
 import { bMessage, onSettings } from "./common";
 import { Settings } from "../typings";
-import {TabContainer, TabPane} from "./tabs";
+import { TabContainer, TabPane } from "./tabs";
 import Options from "./options";
 import ChannelSearch from "./search";
 import ImportSubscriptions from "./subscriptions";
@@ -131,10 +131,19 @@ const Main: FunctionComponent<{
     </div >
 }
 
-const Alert: (props: AlertProps) => JSX.Element = ({ text, danger, confirm, onConfirm, onCancel }) => {
-    return <>
+const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm, onCancel, show }) => {
+    const alertRef = useRef(null as HTMLDivElement);
+    useLayoutEffect(() => {
+        if(show){
+            const height = alertRef.current.offsetHeight;
+            const width = alertRef.current.offsetWidth;
+            alertRef.current.style.left = (window.innerWidth / 2 - width / 2) + "px";
+            alertRef.current.style.top = (window.innerHeight / 2 - height / 2) + "px";
+        }
+    }, [show])
+    return <div className={show ? "" : "d-none"}>
         <div className="overlay" />
-        <div className="alert">
+        <div ref={alertRef} className="alert">
             <p className="font-weight-bold-sm">{text}</p>
             <div className="float-right-sm">
                 <button type="button"
@@ -150,7 +159,7 @@ const Alert: (props: AlertProps) => JSX.Element = ({ text, danger, confirm, onCo
                     </button>}
             </div>
         </div>
-    </>
+    </div>
 }
 
 export default Main;
