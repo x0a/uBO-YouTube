@@ -28,6 +28,10 @@ const bMessage = (action: string, subaction: string, param?: any) => {
             return response;
         })
 }
+const requestGooglePermission = () => {
+    return browser.permissions.request({ origins: ["*://*.content.googleapis.com/"] })
+        .then(granted => bMessage("permission", "google-api"))
+}
 
 const readJSONFile = (file: File): Promise<any> => {
     return new Promise((resolve, reject) => {
@@ -103,5 +107,6 @@ type Confirm = (text: string, confirm?: boolean, danger?: boolean) => Promise<vo
 export {
     bMessage, Confirm, isSettings, cleanSettings,
     diffSettings, diffList, readJSONFile, mergeSettings,
-    fullHeader, popupHeader, onSettings, openTab, getExtURL
+    fullHeader, popupHeader, onSettings, openTab, getExtURL,
+    requestGooglePermission
 }
