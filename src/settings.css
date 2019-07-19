@@ -2,7 +2,9 @@ body {
     background-color: #f8f9fa !important;
     margin-top: 10px;
 }
-
+.cursor-pointer{
+    cursor: pointer !important;
+}
 .alert {
     position: fixed;
     left: 50%;
@@ -70,7 +72,7 @@ body {
     z-index: 1500;
 }
 
-table {
+table.table {
     width: 100%;
 }
 
@@ -157,11 +159,11 @@ button {
 }
 
 input:checked+.slider {
-    background-color: #2196F3;
+    background-color: var(--blue);
 }
 
 input:focus+.slider {
-    box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 1px var(--blue);
 }
 
 input:checked+.slider:before {
