@@ -3,7 +3,6 @@
 let gulp = require("gulp");
 let cleanCSS = require("gulp-clean-css");
 let uglify = require('gulp-uglify-es').default
-let pug = require("gulp-pug");
 let jeditor = require("gulp-json-editor");
 let del = require("del");
 let gulpif = require("gulp-if");
@@ -51,22 +50,21 @@ gulp.task("ts", () => {
         gulp.src("src/pages/*.[tj]sx")
             .pipe(src.add("src/pages"));
     }
-    return gulp.src(["src/pages/Main.[tj]sx"])
+    return gulp.src(["src/pages/app.[tj]sx"])
         .pipe(webpack({
             entry: {
                 content: "./src/content",
                 inject: "./src/inject",
                 background: "./src/background",
-                popup: "./src/pages/Main.tsx"
+                popup: "./src/pages/app.tsx"
             },
             output: {
                 filename: "[name].js"
             },
+            devtool: 'cheap-module-source-map',
             externals: {
                 "browser": "browser",
-                "chrome": "chrome",
-                "react": "React",
-                "react-dom": "ReactDOM"
+                "chrome": "chrome"
             },
             resolve: {
                 extensions: [".js", ".ts", ".tsx", ".jsx"],
@@ -92,11 +90,7 @@ gulp.task("ts", () => {
 
 
 gulp.task("lib", () => {
-    let seek = ["lib/**"];
-    if (production) {
-        seek.push("!lib/*development*.js");
-    }
-    return gulp.src(seek)
+    return gulp.src("lib/**")
         .pipe(gulp.dest("dist/chrome/debug/lib"))
         .pipe(gulp.dest("dist/webext/debug/lib"))
         .pipe(gulpif(build, src.add("lib")))
@@ -113,14 +107,9 @@ gulp.task("img", () => {
         .pipe(gulpif(build, chrome.add("img")))
 });
 
-gulp.task("pug", () => {
-    return gulp.src("src/pages/*.pug")
+gulp.task("html", () => {
+    return gulp.src("src/pages/*.html")
         .pipe(gulpif(build, src.add("src/pages/")))
-        .pipe(pug({
-            locals: {
-                development: !production
-            }
-        }))
         .pipe(gulp.dest("dist/chrome/debug"))
         .pipe(gulp.dest("dist/webext/debug"))
         .pipe(gulpif(build, webext.add()))
@@ -197,7 +186,7 @@ gulp.task("done", cb => {
     cb();
 });
 
-gulp.task("default", gulp.series("clean", gulp.parallel("css", "ts", "lib", "pug", "img"), "manifest", "build-end", "done"))
+gulp.task("default", gulp.series("clean", gulp.parallel("css", "ts", "lib", "html", "img"), "manifest", "build-end", "done"))
 
 gulp.task("build", gulp.series("build-start", "default"));
 
@@ -246,11 +235,8 @@ gulp.task("watch", gulp.series("default", () => {
     });
 
     gulp.watch("src/*.css", gulp.series("css"));
-    gulp.watch("src/pages/*.pug", gulp.series("pug"))
-    gulp.watch("src/pages/*.[tj]sx", gulp.series("ts")); // this,
-    if (!production) {
-        gulp.watch("src/pages/*.js", gulp.series("js"));   // and this both compile to popup.js
-    }
+    gulp.watch("src/pages/*.html", gulp.series("html"))
+    gulp.watch("src/pages/*.[tj]sx", gulp.series("ts"));
     gulp.watch("shared/manifest.json", gulp.series("manifest", "fullreload"));
     gulp.watch("src/background.ts", gulp.series("ts", "fullreload")); // core js changes (background.js) require reload
     gulp.watch(["!src/background.ts", "src/*.ts"], gulp.series("ts", "partialreload")); // content.js doesnt require full reload, only script reloading
