@@ -136,7 +136,16 @@ class Channels {
         }
         return -1;
     }
-    remove(id: string): number {
+    remove(channels: Array<string> | string): number {
+        if (channels instanceof Array) {
+            let i = -1;
+            channels.forEach(id => i = i + this._remove(id));
+            return i
+        } else {
+            return this._remove(channels);
+        }
+    }
+    private _remove(id: string): number {
         let i = -1;
         let removeCount = 0;
 
@@ -146,6 +155,7 @@ class Channels {
         }
         return removeCount;
     }
+
     add(channelId: Channel): boolean {
         if (this.has(channelId.id) === -1) {
             this.list.push(channelId);
@@ -199,10 +209,7 @@ class AdManager {
     }
 
     get(): Promise<Array<Ad>> {
-        let promises = []
-        for (let i = this.pending.length - 1; i > -1; i--) {
-            promises.push(this.pending[i].promise)
-        }
+        const promises = this.pending.map(ad => ad.promise);
         return Promise.all(promises).then(() => this.ads);
     }
 
@@ -321,14 +328,17 @@ SettingsManager.getSettings().then((_settings: Settings) => {
     settings = new SettingsManager(_settings);
     ads = new AdManager();
     const listener = new MessageListener();
-    
+
     listener.onAction("set")
         .on("add-white", (_, channelId: Channel) => settings.whitelist.add(channelId))
         .on("add-black", (_, channelId: Channel) => settings.blacklist.add(channelId))
         .on("add-mute", (_, channelId: Channel) => settings.mutelist.add(channelId))
-        .on("remove-mute", (_, channelId: Channel) => settings.mutelist.remove(channelId.id))
-        .on("remove-white", (_, channelId: Channel) => settings.whitelist.remove(channelId.id))
-        .on("remove-black", (_, channelId: Channel) => settings.blacklist.remove(channelId.id))
+        .on("remove-mute", (_, channel: Channel | Array<string>) =>
+            settings.mutelist.remove(channel instanceof Array ? channel : channel.id))
+        .on("remove-white", (_, channel: Channel | Array<string>) =>
+            settings.whitelist.remove(channel instanceof Array ? channel : channel.id))
+        .on("remove-black", (_, channel: Channel | Array<string>) =>
+            settings.blacklist.remove(channel instanceof Array ? channel : channel.id))
         .on("bulk", (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
         .on("reset", (_, __) => settings = new SettingsManager({} as Settings))
         .on("mute-all", (_, shouldMute) => settings.toggleMuteAll(shouldMute))
