@@ -1,9 +1,9 @@
 import * as React from "react";
-import browser from "../browser";
 import { FunctionComponent, useEffect, useState } from "react";
 import { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable } from "./list";
 import { bMessage, onSettings } from "./common";
 import { Settings } from "../typings";
+import {TabContainer, TabPane} from "./tabs";
 import Options from "./options";
 import ChannelSearch from "./search";
 import ImportSubscriptions from "./subscriptions";
@@ -18,15 +18,11 @@ interface AlertProps {
     onConfirm: () => any,
     onCancel: () => any
 }
-const enum TabType {
-    WhitelistTab,
-    AdsTab,
-    OptionsTab
-}
+
 const Main: FunctionComponent<{
     full: boolean,
-    search: boolean,
-}> = ({ full }) => {
+    defaultTab?: string
+}> = ({ full, defaultTab }) => {
     const defaultAlert = Object.freeze({
         show: false,
         text: "",
@@ -44,7 +40,6 @@ const Main: FunctionComponent<{
         skipOverlays: true,
     } as Settings);
     const [alert, setAlert] = useState(defaultAlert)
-    const [nav, setNav] = useState(TabType.WhitelistTab);
 
     const showAlert = (text: string, confirm = false, danger = false) => new Promise((resolve, reject) => {
         setAlert({
@@ -79,21 +74,8 @@ const Main: FunctionComponent<{
         {alert.show && <Alert {...alert} />}
         {!(alert.show && !full) &&
             <div className="container-fluid">
-                <Nav tabs={[{
-                    id: TabType.WhitelistTab,
-                    title: "Whitelist"
-                }, {
-                    id: TabType.AdsTab,
-                    title: "Ads"
-                }, {
-                    id: TabType.OptionsTab,
-                    title: "Options"
-                }]}
-                    nav={nav}
-                    onNav={setNav} />
-
-                <div className="tab-content mt-2">
-                    <TabPane active={nav === TabType.WhitelistTab}>
+                <TabContainer defaultTab={defaultTab || ""}>
+                    <TabPane title="Whitelist">
                         <div className="row">
                             <div className="col-md">
                                 <WhitelistTable list={settings.whitelisted} alert={showAlert} full={full} />
@@ -106,7 +88,7 @@ const Main: FunctionComponent<{
                             </div>
                         </div>
                     </TabPane>
-                    <TabPane active={nav === TabType.AdsTab}>
+                    <TabPane title="Ads">
                         <div className="row">
 
                             {full && <div className="col-md-3 d-sm-none d-md-block">
@@ -138,11 +120,11 @@ const Main: FunctionComponent<{
                             </div>
                         </div>
                     </TabPane>
-                    <TabPane active={nav === TabType.OptionsTab}>
+                    <TabPane title="Misc">
                         <hr className="d-md-none" />
                         <Options alert={showAlert} settings={settings} />
                     </TabPane>
-                </div>
+                </TabContainer>
             </div>
         }
 
@@ -169,49 +151,6 @@ const Alert: (props: AlertProps) => JSX.Element = ({ text, danger, confirm, onCo
             </div>
         </div>
     </>
-}
-interface NavItem {
-    id: TabType,
-    title: string,
-}
-const Nav: FunctionComponent<{
-    tabs: Array<NavItem>,
-    nav: TabType,
-    onNav: (id: TabType) => any,
-
-}> = ({ tabs, nav, onNav }) => {
-    return <ul className="nav nav-tabs d-sm-none d-md-flex">
-        <li className="nav-item">
-            <a className="nav-link">
-                <img src="/img/icon_16.png" />
-            </a>
-        </li>
-
-        {tabs.map(tab =>
-            <li className="nav-item">
-                <a
-                    className={"nav-link " + (nav === tab.id && "active")}
-                    onClick={() => onNav(tab.id)}
-                    href={"#" + tab.title.toLowerCase()}>
-                    {tab.title}
-                </a>
-            </li>)}
-    </ul>
-}
-
-const TabContainer: FunctionComponent<{
-    children: JSX.Element[]
-}> = ({ children }) => {
-
-}
-
-const TabPane: FunctionComponent<{
-    active: boolean,
-    children: JSX.Element[] | JSX.Element | string
-}> = ({ active, children }) => {
-    return <div className={"tab-pane fade " + (active ? "active show" : "")}>
-        {children}
-    </div>
 }
 
 export default Main;

@@ -5,7 +5,7 @@ import Main from "./main";
 document.addEventListener("DOMContentLoaded", () =>
     ReactDOM.render(
         <Main
-            search={location.hash === "#searchpermissions"}
+            defaultTab={location.hash.substring(1)}
             full={location.href.indexOf("/settings.html") !== -1}
         />,
         document.getElementById('root')
