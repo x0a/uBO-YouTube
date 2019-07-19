@@ -34,18 +34,22 @@ const ImportSubscriptions: FunctionComponent<{
                 if (!nextWhitelist.length)
                     return alert("No new channels found");
 
-                alert(`Found ${channels.length} subscriptions, of which ${nextWhitelist.length} are not in the list. Add ${nextWhitelist.length} items?`, true).then(() => {
-                    const nextSettings = mergeSettings(settings, {
-                        whitelisted: nextWhitelist,
-                        blacklisted: [],
-                        muted: [],
-                        muteAll: settings.muteAll,
-                        skipOverlays: settings.skipOverlays
+                alert(`Found ${channels.length} subscriptions, of which ${nextWhitelist.length} are not in the list. Add ${nextWhitelist.length} items to whitelist?`, true)
+                    .then(() => {
+                        const nextSettings = mergeSettings(settings, {
+                            whitelisted: nextWhitelist,
+                            blacklisted: [],
+                            muted: [],
+                            muteAll: settings.muteAll,
+                            skipOverlays: settings.skipOverlays
+                        })
+                        bMessage("set", "bulk", nextSettings);
                     })
-                    bMessage("set", "bulk", nextSettings);
-                })
             })
-            .catch(error => { setImporting(false); alert("Could not fetch subscriptions. Make sure you're logged in to YouTube.", false, true) });
+            .catch(error => {
+                setImporting(false);
+                alert("Could not fetch subscriptions. Make sure you're logged in to YouTube.", false, true)
+            });
     }
     return <button className={"btn btn-sm btn-primary " + className} disabled={importing} onClick={importSubscriptions}>
         Import from subscriptions
