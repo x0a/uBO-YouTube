@@ -7,8 +7,25 @@
 
 [**Firefox Addons**](https://addons.mozilla.org/en-US/firefox/addon/youtube-channel-whitelist/)
 
+## Usage
+For **uBlock Origin**, add the following line to your whitelist:
 
+    *youtube.com/*&disableadblock=1
 
+Although this extension was designed for uBlock Origin, you can also use it with **Adblock Plus**, **AdBlock** and other adblockers compatible with ADP filters if you use the following filter:
+
+    @@||youtube.com/*&disableadblock=1$document
+
+For convenience, I've created this filter list which can be imported to **Opera's Native Adblocker**
+
+    https://raw.githubusercontent.com/x0a/uBO-YouTube/master/shared/whitelist.txt
+
+## Features
+TODO
+<br />
+<br />
+
+# Development
 
 ## Packaging instructions
 Start by installing gulp and other build dependencies by running:
