@@ -36,7 +36,6 @@
     "@babel/preset-react": "^7.0.0",
     "@types/lz-string": "^1.3.33",
     "@types/react-dom": "^16.8.4",
-    "@types/reactstrap": "^6.4.4",
     "archiver": "^2.1.1",
     "del": "^3.0.0",
     "empty-module": "0.0.2",

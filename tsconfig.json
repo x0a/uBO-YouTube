@@ -5,7 +5,7 @@
         "src/content.ts",
         "src/agent.ts",
         "src/browser.ts",
-        "src/pages/Main.tsx"
+        "src/pages/main.tsx"
     ],
 
     "compilerOptions": {
@@ -14,9 +14,6 @@
             "node_modules/web-ext-types"
         ],
         "baseUrl": "./",
-        "paths": {
-            "reactstrap/src/*": ["node_modules/@types/reactstrap/lib/*"]
-        },
         "noImplicitAny": true,
         "target": "es6",
         "jsx": "react",
