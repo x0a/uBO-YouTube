@@ -10,9 +10,11 @@ const Link: FunctionComponent<{
     const onClick = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
         const event = e.nativeEvent as MouseEvent;
         const el = event.target as HTMLAnchorElement;
+        
+        e.stopPropagation();
+        
         if (event.button === 0) {
             event.preventDefault();
-            event.stopPropagation();
             openTab(el.href);
         }
     }
