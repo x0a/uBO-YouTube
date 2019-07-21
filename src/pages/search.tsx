@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FunctionComponent, useEffect, useState } from "react";
-import { ChannelList, Channel, Settings } from "../typings";
-import { bMessage, requestGooglePermission, Confirm } from "./common";
+import { ChannelList, Channel } from "../typings";
+import { bMessage, requestGooglePermission, Confirm, i18n } from "./common";
 
 const ChannelSearch: FunctionComponent<{
     full: boolean;
@@ -21,7 +21,7 @@ const ChannelSearch: FunctionComponent<{
     }
     const requestPermission = () => requestGooglePermission()
         .then(granted => setPermission(granted));
-        
+
     useEffect(() => {
         bMessage("permission", "google-api")
             .then(granted => setPermission(granted));
@@ -79,22 +79,28 @@ const ChannelSearch: FunctionComponent<{
         <hr />
         {!permission && <div>
             <p className="text-muted list-group-option">
-                A one-time permission needed to search for YouTube channels
+                {i18n("permissionDesc")}
             </p>
             <button
                 className="btn btn-primary btn-block btn-sm mt-2"
-                onClick={requestPermission}>Grant permission</button>
+                onClick={requestPermission}>
+                {i18n("permissionBtn")}
+            </button>
         </div>}
         {permission
             && !error
             && !searching
             && !channels.length
             && <span className={"text-muted list-group-option" + (!permission ? "text-muted" : "")}>
-                Type to search for a YouTube channel or
+                {i18n("searchDesc")}
                 {children}
             </span>}
-        {searching && <span className="bold">Searching...</span>}
-        {error && <span className="bold">Could not load results. Offline?</span>}
+        {searching && <span className="bold">
+            {i18n("searching")}
+        </span>}
+        {error && <span className="bold">
+            {i18n("searchFailed")}
+        </span>}
         {channels.map((item: any) => <ChannelItem
             onClick={toggleWhitelist}
             full={full}
@@ -140,9 +146,13 @@ const ChannelItem: FunctionComponent<{
                 disabled={added && !hovering}
                 onClick={toggle}>
 
-                {!added && <><i className="fas fa-plus" /><span> Add</span></>}
+                {!added && <><i className="fas fa-plus mr-1" /><span>
+                    {i18n("addBtn")}
+                </span></>}
                 {added && !hovering && "Added"}
-                {added && hovering && <><i className="fas fas-minus" /><span> Remove</span> </>}
+                {added && hovering && <><i className="fas fas-minus mr-1" /><span>
+                    {i18n("removeBtn")}
+                </span> </>}
             </button>
         </div>
     </div>

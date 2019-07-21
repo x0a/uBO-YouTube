@@ -30,26 +30,24 @@ const bMessage = (action: string, subaction: string, param?: any) => {
 }
 const requestGooglePermission = () => {
     return browser.permissions.request({ origins: ["*://*.content.googleapis.com/"] })
-        .then(granted => bMessage("permission", "google-api"))
+        .then(() => bMessage("permission", "google-api"))
 }
 
-const readJSONFile = (file: File): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", event => {
-            try {
-                const json = JSON.parse(reader.result as string);
-                resolve(json);
-            } catch (e) {
-                reject("Failed to parse as JSON. File is likely not JSON or corrupted.");
-            }
-        });
-        reader.addEventListener("error", event => {
-            reject(reader.error);
-        })
-        reader.readAsText(file.slice())
+const readJSONFile = (file: File): Promise<any> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", event => {
+        try {
+            const json = JSON.parse(reader.result as string);
+            resolve(json);
+        } catch (e) {
+            reject(browser.i18n.getMessage("parseFailed"));
+        }
+    });
+    reader.addEventListener("error", event => {
+        reject(reader.error);
     })
-}
+    reader.readAsText(file.slice())
+})
 
 const isSettings = (prospect: any): prospect is Settings => {
     return typeof prospect === "object"
@@ -102,11 +100,13 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
 }
 const fullHeader = (text: string) => <h4>{text}</h4>;
 const popupHeader = (text: string) => <p className="font-weight-bold-sm font-size-6 text-center">{text}</p>;
+const i18n = (messageName: string, substitutions?: any | Array<any>) =>
+    browser.i18n.getMessage(messageName, substitutions instanceof Array ? substitutions.map(i => i + "") : substitutions + "");
 
 type Confirm = (text: string, confirm?: boolean, danger?: boolean) => Promise<void>
 export {
     bMessage, Confirm, isSettings, cleanSettings,
     diffSettings, diffList, readJSONFile, mergeSettings,
     fullHeader, popupHeader, onSettings, openTab, getExtURL,
-    requestGooglePermission
+    requestGooglePermission, i18n
 }

@@ -9,6 +9,7 @@
         "default_title": "YouTube Channel Whitelist",
         "default_popup": "popup.html"
     },
+    "default_locale": "en",
     "icons": {
         "128": "./img/icon_128.png"
     },

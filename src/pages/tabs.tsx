@@ -1,22 +1,19 @@
 
 import * as React from "react";
 import { FunctionComponent, useState, cloneElement } from "react";
-import slugify_ from "slugify";
-
-const slugify = (str: string) => slugify_(str, { lower: true });
 
 const TabContainer: FunctionComponent<{
     children: React.ReactElement<TabPaneProps>[],
     defaultTab?: string;
 }> = ({ children, defaultTab }) => {
-    const navTitles = children.map(child => [child.props.title, slugify(child.props.title)]);
-    const firstTab = navTitles.findIndex(([_, id]) => id === defaultTab) !== -1 ? defaultTab : navTitles[0][1];
+    const navTitles = children.map(child => [child.props.id, child.props.title]);
+    const firstTab = navTitles.findIndex(([id, _]) => id === defaultTab) !== -1 ? defaultTab : navTitles[0][0];
     const [currentTab, setCurrentTab] = useState(firstTab);
     const tabs = children.map(child => cloneElement(child, {
-        key: child.props.title,
-        active: slugify(child.props.title) === currentTab
+        key: child.props.id,
+        active: child.props.id === currentTab
     }));
-    
+
     return <>
         <ul className="nav nav-tabs d-sm-none d-md-flex">
             <li className="nav-item">
@@ -25,13 +22,13 @@ const TabContainer: FunctionComponent<{
                 </a>
             </li>
 
-            {navTitles.map(([tabTitle, slug]) =>
-                <li key={tabTitle} className="nav-item">
+            {navTitles.map(([id, title]) =>
+                <li key={title} className="nav-item">
                     <a
-                        className={"nav-link " + (currentTab === slug ? "active" : "")}
-                        onClick={() => setCurrentTab(slug)}
-                        href={"#" + slug}>
-                        {tabTitle}
+                        className={"nav-link " + (currentTab === id ? "active" : "")}
+                        onClick={() => setCurrentTab(id)}
+                        href={"#" + id}>
+                        {title}
                     </a>
                 </li>)}
         </ul>
@@ -44,6 +41,7 @@ const TabContainer: FunctionComponent<{
 interface TabPaneProps {
     active?: boolean,
     title: string;
+    id: string;
     children: JSX.Element[] | JSX.Element | string
 }
 const TabPane: FunctionComponent<TabPaneProps> = ({ active, children }) => {

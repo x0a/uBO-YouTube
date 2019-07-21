@@ -1,7 +1,7 @@
 import * as React from "react";
-import { FunctionComponent, useEffect, useState, useLayoutEffect, useRef} from "react";
+import { FunctionComponent, useEffect, useState, useLayoutEffect, useRef } from "react";
 import { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable } from "./list";
-import { bMessage, onSettings } from "./common";
+import { bMessage, onSettings, i18n } from "./common";
 import { Settings } from "../typings";
 import { TabContainer, TabPane } from "./tabs";
 import Options from "./options";
@@ -75,36 +75,42 @@ const Main: FunctionComponent<{
         {!(alert.show && !full) &&
             <div className="container-fluid">
                 <TabContainer defaultTab={defaultTab || ""}>
-                    <TabPane title="Whitelist">
+                    <TabPane id="whitelist" title={i18n("whitelistTabTitle")}>
                         <div className="row">
                             <div className="col-md">
                                 <WhitelistTable list={settings.whitelisted} alert={showAlert} full={full} />
                             </div>
                             <div className="col-md d-sm-none d-md-block">
-                                <h4 className="invisible">Find channels</h4>
+                                <h4 className="invisible">
+                                    {i18n("channelSearchHeader")}
+                                </h4>
                                 <ChannelSearch alert={showAlert} whitelisted={settings.whitelisted} full={full}>
                                     <ImportSubscriptions settings={settings} alert={showAlert} className="ml-2" />
                                 </ChannelSearch>
                             </div>
                         </div>
                     </TabPane>
-                    <TabPane title="Ads">
+                    <TabPane id="ads" title={i18n("adsTabTitle")}>
                         <div className="row">
 
                             {full && <div className="col-md-3 d-sm-none d-md-block">
-                                <h4>Ad Options</h4>
+                                <h4>{i18n("adOptionsHeader")}</h4>
                                 <ul className="list-group">
                                     <li className="list-group-item list-group-option">
                                         <Switch
                                             checked={settings.muteAll}
                                             onChange={(e) => bMessage("set", "mute-all", e.currentTarget.checked)} />
-                                        <span className="ml-2">Mute ads by default</span>
+                                        <span className="ml-2">
+                                            {i18n("muteOption")}
+                                        </span>
                                     </li>
                                     <li className="list-group-item list-group-option">
                                         <Switch
                                             checked={settings.skipOverlays}
                                             onChange={(e) => bMessage("set", "skip-overlays", e.currentTarget.checked)} />
-                                        <span className="ml-2">Hide overlay ads</span>
+                                        <span className="ml-2">
+                                            {i18n("overlaysOption")}
+                                        </span>
                                     </li>
                                 </ul>
                             </div>}
@@ -120,7 +126,7 @@ const Main: FunctionComponent<{
                             </div>
                         </div>
                     </TabPane>
-                    <TabPane title="Misc">
+                    <TabPane id="misc" title={i18n("miscTabTitle")}>
                         <hr className="d-md-none" />
                         <Options alert={showAlert} settings={settings} />
                     </TabPane>
@@ -134,7 +140,7 @@ const Main: FunctionComponent<{
 const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm, onCancel, show }) => {
     const alertRef = useRef(null as HTMLDivElement);
     useLayoutEffect(() => {
-        if(show){
+        if (show) {
             const height = alertRef.current.offsetHeight;
             const width = alertRef.current.offsetWidth;
             alertRef.current.style.left = (window.innerWidth / 2 - width / 2) + "px";
@@ -149,13 +155,13 @@ const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm
                 <button type="button"
                     className={"btn btn-sm " + (danger ? "btn-danger" : "btn-primary")}
                     onClick={onConfirm}>
-                    OK
+                    {i18n("okBtn")}
                 </button>
                 {confirm &&
                     <button type="button"
                         className="btn btn-sm btn-secondary"
                         onClick={onCancel}>
-                        Cancel
+                        {i18n("cancelBtn")}
                     </button>}
             </div>
         </div>

@@ -34,6 +34,15 @@ gulp.task("css", () => {
         .pipe(gulpif(build, chrome.add()))
 });
 
+gulp.task("locales", () => {
+    return gulp.src("src/_locales/**/*")
+    .pipe(gulpif(build, src.add("/src/_locales")))
+    .pipe(gulp.dest("dist/chrome/debug/_locales"))
+    .pipe(gulp.dest("dist/webext/debug/_locales"))
+    .pipe(gulpif(build, webext.add("_locales")))
+    .pipe(gulpif(build, chrome.add("_locales")))
+})
+
 gulp.task("js", () => {
     return gulp.src("src/pages/*.js")
         .pipe(gulpif(production, uglify()))
@@ -186,7 +195,7 @@ gulp.task("done", cb => {
     cb();
 });
 
-gulp.task("default", gulp.series("clean", gulp.parallel("css", "ts", "lib", "html", "img"), "manifest", "build-end", "done"))
+gulp.task("default", gulp.series("clean", gulp.parallel("css", "ts", "lib", "html", "img", "locales"), "manifest", "build-end", "done"))
 
 gulp.task("build", gulp.series("build-start", "default"));
 
@@ -233,7 +242,7 @@ gulp.task("watch", gulp.series("default", () => {
             wsClients.delete(con)
         })
     });
-
+    gulp.watch("src/_locales/**/*", gulp.series("locales"))
     gulp.watch("src/*.css", gulp.series("css"));
     gulp.watch("src/pages/*.html", gulp.series("html"))
     gulp.watch("src/pages/*.[tj]sx", gulp.series("ts"));

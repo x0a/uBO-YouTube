@@ -39,6 +39,7 @@ function getWebExtensionsAPI(): typeof browser {
             api.tabs.executeScript = promisify(api.tabs, "executeScript");
             api.tabs.sendMessage = promisify(api.tabs, "sendMessage");
             api.tabs.update = promisify(api.tabs, "update");
+            api.tabs.create = promisify(api.tabs, "create");
             api.tabs.getCurrent = promisify(api.tabs, "getCurrent");
         }
         if (api.permissions) {

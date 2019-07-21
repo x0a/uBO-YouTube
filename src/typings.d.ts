@@ -1,5 +1,3 @@
-import { string } from "prop-types";
-
 type Channel = {
     display: string,
     username: string,

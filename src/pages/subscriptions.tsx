@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
-import { Confirm, diffList, bMessage, mergeSettings } from "./common";
-import { Channel, ChannelList, Settings } from "../typings";
+import { Confirm, diffList, bMessage, mergeSettings, i18n } from "./common";
+import { Channel, Settings } from "../typings";
 
 const ImportSubscriptions: FunctionComponent<{
     alert: Confirm,
@@ -32,9 +32,9 @@ const ImportSubscriptions: FunctionComponent<{
                 setImporting(false);
                 const nextWhitelist = diffList(settings.whitelisted, channels);
                 if (!nextWhitelist.length)
-                    return alert("No new channels found");
+                    return alert(i18n("noNew"));
 
-                alert(`Found ${channels.length} subscriptions, of which ${nextWhitelist.length} are not in the list. Add ${nextWhitelist.length} items to whitelist?`, true)
+                alert(i18n("importSubsConfirm", [channels.length, nextWhitelist.length]), true)
                     .then(() => {
                         const nextSettings = mergeSettings(settings, {
                             whitelisted: nextWhitelist,
@@ -48,11 +48,11 @@ const ImportSubscriptions: FunctionComponent<{
             })
             .catch(error => {
                 setImporting(false);
-                alert("Could not fetch subscriptions. Make sure you're logged in to YouTube.", false, true)
+                alert(i18n("importSubsFailed"), false, true)
             });
     }
     return <button className={"btn btn-sm btn-primary " + className} disabled={importing} onClick={importSubscriptions}>
-        Import from subscriptions
+        {i18n("importSubsBtn")}
     </button>
 }
 export default ImportSubscriptions

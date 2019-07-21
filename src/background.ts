@@ -465,6 +465,6 @@ if (Development && Development.detectedDevMode()) { // set to false in productio
     console.log("[", started, "]: Development mode");
 }
 
-function cloneObject(obj: any) {
+function cloneObject<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
 }

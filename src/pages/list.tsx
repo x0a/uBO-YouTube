@@ -1,6 +1,6 @@
 import * as React from "react";
 import { FunctionComponent, useState, useEffect } from "react";
-import { bMessage, Confirm, fullHeader, popupHeader } from "./common";
+import { bMessage, Confirm, fullHeader, popupHeader, i18n } from "./common";
 import { ChannelList, Channel } from "../typings";
 import Link from "./link";
 interface ChannelMod extends Channel {
@@ -9,11 +9,11 @@ interface ChannelMod extends Channel {
 type ChannelListModify = Array<ChannelMod>;
 
 const ChannelTable: FunctionComponent<{
-    list: ChannelList
-    title: string | JSX.Element,
-    actionDesc: string,
-    onAction: (item: Channel) => any
+    list: ChannelList;
+    title: string | JSX.Element;
+    actionDesc: string;
     enableBulk: boolean;
+    onAction: (item: Channel) => any;
     onBulkAction: (items: Array<Channel>) => any;
 }> = ({ title, list, onBulkAction, enableBulk, onAction, actionDesc }) => {
     const [channels, setChannels] = useState([] as ChannelListModify);
@@ -25,16 +25,26 @@ const ChannelTable: FunctionComponent<{
             display,
             username
         })))
-    const checkedCount = () => channels.some(channel => channel.checked);
+    const selectionsMade = () => channels.some(channel => channel.checked);
     const onListAction = () => {
         const selected = channels
             .filter(({ checked }) => checked)
             .map(({ id, display, username }) => ({ id, display, username }));
         onBulkAction(selected);
     }
+    const onSingleAction = (channel: Channel, event: React.SyntheticEvent) => {
+        event.stopPropagation();
+        onAction(channel);
+    }
     useEffect(() => {
+        const lastChecked = channels.filter(({ checked }) => checked);
         setChannels(list
-            .map(({ id, display, username }) => ({ checked: false, id, display, username })));
+            .map(({ id, display, username }) => ({
+                checked: lastChecked.findIndex(({ id: _id }) => _id === id) !== -1,
+                id,
+                display,
+                username
+            })));
     }, [list])
 
     return <div className="clearfix">
@@ -43,13 +53,13 @@ const ChannelTable: FunctionComponent<{
             <thead className="thead-dark d-sm-none d-md-table-header-group">
                 <tr>
                     {enableBulk && <th></th>}
-                    <th>Channel</th>
-                    <th>Remove</th>
+                    <th>{i18n("channelColumn")}</th>
+                    <th>{i18n("removeRow")}</th>
                 </tr>
             </thead>
             <tbody>
                 {!channels.length && <tr>
-                    <td className="text-muted">None</td>
+                    <td className="text-muted">{i18n("emptyList")}</td>
                     <td></td>
                     <td></td>
                 </tr>}
@@ -68,7 +78,7 @@ const ChannelTable: FunctionComponent<{
                     <td>
                         <button
                             className="btn btn-link text-danger float-right m-0 p-0"
-                            onClick={onAction.bind(this, channel)}
+                            onClick={event => onSingleAction(channel, event)}
                             title={actionDesc}>
                             <i className="fas fa-minus-circle" />
                         </button>
@@ -76,11 +86,11 @@ const ChannelTable: FunctionComponent<{
                 </tr>)}
             </tbody>
         </table>
-        {checkedCount() && <button
+        {selectionsMade() && <button
             className="btn btn-sm btn-danger float-right mb-2"
             onClick={onListAction}>
-            Remove selected
-            </button>}
+            {i18n("bulkRemoveBtn")}
+        </button>}
     </div>
 }
 
@@ -92,22 +102,22 @@ const WhitelistTable: FunctionComponent<{
     return <ChannelTable
         list={list}
         title={full
-            ? fullHeader("Whitelisted Channels")
-            : popupHeader("Whitelisted Channels")}
-        actionDesc="Remove channel from whitelist"
+            ? fullHeader(i18n("whitelistHeader"))
+            : popupHeader(i18n("whitelistHeader"))}
+        actionDesc={i18n("removeWhitelistTooltip")}
         enableBulk={full}
         onAction={channel => {
-            alert("Are you sure you want to remove '" + channel.display + "' from whitelist?", true, false)
+            alert(i18n("removeWhitelistConfirm", channel.display), true, false)
                 .then(() => {
                     bMessage("set", "remove-white", channel)
-                        .catch(error => alert("Could not remove: " + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }}
         onBulkAction={channels => {
-            alert("Are you sure you want to remove " + channels.length + " items from whitelist?", true, false)
+            alert(i18n("bulkRemoveWhitelistConfirm", channels.length), true, false)
                 .then(() => {
                     bMessage("set", "remove-white", channels.map(channel => channel.id))
-                        .catch(error => alert("Could not remove requested items" + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }}
     />
@@ -120,22 +130,22 @@ const BlacklistTable: FunctionComponent<{
     return <ChannelTable
         list={list}
         title={full
-            ? fullHeader("Blacklisted Advertisers")
-            : popupHeader("Blacklisted Advertisers")}
-        actionDesc="Remove advertiser from blacklist"
+            ? fullHeader(i18n("blacklistHeader"))
+            : popupHeader(i18n("blacklistHeader"))}
+        actionDesc={i18n("removeBlacklistTooltip")}
         enableBulk={full}
         onAction={channel => {
-            alert("Are you sure you want to remove '" + channel.display + "' from blacklist?", true, false)
+            alert(i18n("removeBlacklistConfirm", channel.display), true, false)
                 .then(() => {
                     bMessage("set", "remove-black", channel)
-                        .catch(error => alert("Could not remove: " + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }}
         onBulkAction={channels => {
-            alert("Are you sure you want to remove " + channels.length + " items from blacklist?", true, false)
+            alert(i18n("bulkRemoveBlacklistConfirm", channels.length), true, false)
                 .then(() => {
                     bMessage("set", "remove-black", channels.map(channel => channel.id))
-                        .catch(error => alert("Could not remove requested items: " + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }} />
 }
@@ -147,22 +157,22 @@ const MutelistTable: FunctionComponent<{
     return <ChannelTable
         list={list}
         title={full
-            ? fullHeader("Muted Advertisers")
-            : popupHeader("Muted Advertisers")}
-        actionDesc="Remove advertiser from mutelist"
+            ? fullHeader(i18n("mutelistHeader"))
+            : popupHeader(i18n("mutelistHeader"))}
+        actionDesc={i18n("removeMuteTooltip")}
         enableBulk={full}
         onAction={channel => {
-            alert("Are you sure you want to remove '" + channel.display + "' from mutelist?", true, false)
+            alert(i18n("removeMuteConfirm", channel.display), true, false)
                 .then(() => {
                     bMessage("set", "remove-mute", channel)
-                        .catch(error => alert("Could not remove: " + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }}
         onBulkAction={channels => {
-            alert("Are you sure you want to remove " + channels.length + " items from mute list", true, false)
+            alert(i18n("bulkRemoveMuteConfirm", channels.length), true, false)
                 .then(() => {
                     bMessage("set", "remove-mute", channels.map(channel => channel.id))
-                        .catch(error => alert("Could not remove requested items: " + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }} />
 }
@@ -175,22 +185,22 @@ const UnmutelistTable: FunctionComponent<{
     return <ChannelTable
         list={list}
         title={full
-            ? fullHeader("Unmuted Advertisers")
-            : popupHeader("Unmuted Advertisers")}
-        actionDesc="Unmute advertiser"
+            ? fullHeader(i18n("unmutedHeader"))
+            : popupHeader(i18n("unmutedHeader"))}
+        actionDesc={i18n("removeUnmuteTooltip")}
         enableBulk={full}
         onAction={channel => {
-            alert("Are you sure you want to resume muting for '" + channel.display + "'?", true, false)
+            alert(i18n("removeunMuteConfirm", channel.display), true, false)
                 .then(() => {
                     bMessage("set", "remove-mute", channel)
-                        .catch(error => alert("Could not remove: " + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }}
         onBulkAction={channels => {
-            alert("Are you sure you want to resume muting for " + channels.length + " items?", true, false)
+            alert(i18n("bulkRemoveUnmuteConfirm", channels.length), true, false)
                 .then(() => {
                     bMessage("set", "remove-mute", channels.map(channel => channel.id))
-                        .catch(error => alert("Could not remove requested items: " + error, false, true))
+                        .catch(error => alert(i18n("removeFailed", error), false, true))
                 })
         }} />
 }
