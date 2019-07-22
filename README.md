@@ -20,12 +20,16 @@ For convenience, I've created this filter list which can be imported to **Opera'
 
     https://raw.githubusercontent.com/x0a/uBO-YouTube/master/shared/whitelist.txt
 
-## Features
-TODO
-<br />
 <br />
 
-# Development
+# Contributing
+
+## Translations
+
+If you are multilingual, you can help by contributing some translations here: 
+https://crowdin.com/project/youtube-channel-whitelist-for/
+
+Feel free to contribute at your leisure.
 
 ## Packaging instructions
 Start by installing gulp and other build dependencies by running:
