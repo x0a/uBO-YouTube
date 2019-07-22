@@ -1,6 +1,6 @@
-import * as React from "react";
-import browser from "../browser";
-import { HostMessage, ClientMessage, Settings, Channel, ChannelList } from "../typings";
+import * as React from 'react';
+import browser from '../browser';
+import { HostMessage, ClientMessage, Settings, Channel, ChannelList } from '../typings';
 
 let settingsListener: (settings: Settings) => any = () => { };
 
@@ -10,7 +10,7 @@ const getExtURL = (path: string) => browser.runtime.getURL(path);
 const onSettings = (fn: (settings: Settings) => any) => {
     settingsListener = fn;
     browser.runtime.onMessage.addListener((message: any) => {
-        if (message.action === "update") {
+        if (message.action === 'update') {
             settingsListener(message.settings);
         }
     });
@@ -22,46 +22,46 @@ const bMessage = (action: string, subaction: string, param?: any) => {
             return message.response;
         })
         .then(async (response) => {
-            if (await isPopup && action === "set") { // if this message was sent via popup, we will never receive it as a message because only tabs receive messages
+            if (await isPopup && action === 'set') { // if this message was sent via popup, we will never receive it as a message because only tabs receive messages
                 settingsListener(response as Settings);
             }
             return response;
         })
 }
 const requestGooglePermission = () => {
-    return browser.permissions.request({ origins: ["*://*.content.googleapis.com/"] })
-        .then(() => bMessage("permission", "google-api"))
+    return browser.permissions.request({ origins: ['*://*.content.googleapis.com/'] })
+        .then(() => bMessage('permission', 'google-api'))
 }
 
 const readJSONFile = (file: File): Promise<any> => new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.addEventListener("load", event => {
+    reader.addEventListener('load', event => {
         try {
             const json = JSON.parse(reader.result as string);
             resolve(json);
         } catch (e) {
-            reject(browser.i18n.getMessage("parseFailed"));
+            reject(browser.i18n.getMessage('parseFailed'));
         }
     });
-    reader.addEventListener("error", event => {
+    reader.addEventListener('error', event => {
         reject(reader.error);
     })
     reader.readAsText(file.slice())
 })
 
 const isSettings = (prospect: any): prospect is Settings => {
-    return typeof prospect === "object"
+    return typeof prospect === 'object'
         && (!prospect.whitelisted || prospect.whitelisted instanceof Array)
         && (!prospect.blacklisted || prospect.blacklisted instanceof Array)
         && (!prospect.muted || prospect.muted instanceof Array)
-        && (typeof prospect.skipOverlays === "undefined" || typeof prospect.skipOverlays === "boolean")
-        && (typeof prospect.muteAll === "undefined" || typeof prospect.muteAll === "boolean")
+        && (typeof prospect.skipOverlays === 'undefined' || typeof prospect.skipOverlays === 'boolean')
+        && (typeof prospect.muteAll === 'undefined' || typeof prospect.muteAll === 'boolean')
 }
 const isChannel = (prospect: any): prospect is Channel => {
-    return typeof prospect === "object"
-        && typeof prospect.id === "string"
-        && typeof prospect.username === "string"
-        && typeof prospect.display === "string";
+    return typeof prospect === 'object'
+        && typeof prospect.id === 'string'
+        && typeof prospect.username === 'string'
+        && typeof prospect.display === 'string';
 }
 const cleanChannelList = (list: ChannelList): ChannelList => {
     return list.filter(channel => isChannel(channel))
@@ -99,9 +99,9 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
     }
 }
 const fullHeader = (text: string) => <h4>{text}</h4>;
-const popupHeader = (text: string) => <p className="font-weight-bold-sm font-size-6 text-center">{text}</p>;
+const popupHeader = (text: string) => <p className='font-weight-bold-sm font-size-6 text-center'>{text}</p>;
 const i18n = (messageName: string, substitutions?: any | Array<any>) =>
-    browser.i18n.getMessage(messageName, substitutions instanceof Array ? substitutions.map(i => i + "") : substitutions + "");
+    browser.i18n.getMessage(messageName, substitutions instanceof Array ? substitutions.map(i => i + '') : substitutions + '');
 
 type Confirm = (text: string, confirm?: boolean, danger?: boolean) => Promise<void>
 export {

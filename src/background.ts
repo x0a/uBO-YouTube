@@ -1,13 +1,11 @@
-"use strict";
-
-import browser from "./browser";
-import Development from "./dev-client"
-import MessageListener from "./ext-agent";
-import { compressToBase64, decompressFromBase64 } from "lz-string";
+import browser from './browser';
+import Development from './dev-client'
+import MessageListener from './ext-agent';
+import { compressToBase64, decompressFromBase64 } from 'lz-string';
 import {
     Channel, ChannelList, Settings,
     Ad, PendingItem, ParsedURL
-} from "./typings";
+} from './typings';
 
 let settings: SettingsManager;
 let ads: AdManager;
@@ -40,10 +38,10 @@ class SettingsManager {
     // The solution is to both compress JSON-serialized settings, and to split it into multiple items
     static getSettings(): Promise<Settings> {
         return browser.storage.sync.get(null).then(store => {
-            if (store.algorithm === "lz" && store.totalKeys) {
-                let compressedStr = "";
+            if (store.algorithm === 'lz' && store.totalKeys) {
+                let compressedStr = '';
                 for (let i = 0; i < store.totalKeys; i++) {
-                    compressedStr += store["lz_" + i];
+                    compressedStr += store['lz_' + i];
                 }
 
                 try {
@@ -63,7 +61,7 @@ class SettingsManager {
         browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
             for (let tab of tabs) {
                 const origin = (originTab && originTab.id === tab.id) || false;
-                browser.tabs.sendMessage(tab.id, { action: "update", settings: settings.get(), initiator: origin })
+                browser.tabs.sendMessage(tab.id, { action: 'update', settings: settings.get(), initiator: origin })
                     .then((response?: any) => {
                         //console.log(response);
                     })
@@ -75,7 +73,7 @@ class SettingsManager {
     static injectAll() {
         browser.tabs.query({}).then((tabs: any) => {
             for (let tab of tabs) {
-                browser.tabs.executeScript(tab.id, { file: "content.js" }).then(result => { }).catch(err => { })
+                browser.tabs.executeScript(tab.id, { file: 'content.js' }).then(result => { }).catch(err => { })
             }
         });
     }
@@ -102,10 +100,10 @@ class SettingsManager {
         const store = {} as any;
 
         for (let i = 0; i < times; i++) {
-            store["lz_" + i] = compressed.substring(i * max, (i + 1) * max);
+            store['lz_' + i] = compressed.substring(i * max, (i + 1) * max);
 
         }
-        store.algorithm = "lz";
+        store.algorithm = 'lz';
         store.totalKeys = times;
 
         return store;
@@ -202,7 +200,7 @@ class AdManager {
             this.push(ad);
             this.sendToTab(ad.details.tabId, ad);
         }).catch(ad => {
-            console.error("No UCID available", ad)
+            console.error('No UCID available', ad)
         });
 
         return [resolver, rejector];
@@ -217,7 +215,7 @@ class AdManager {
         browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
             for (let tab of tabs) {
                 if (tab.id !== tabId) continue;
-                browser.tabs.sendMessage(tab.id, { action: "ad-update", ad: ad })
+                browser.tabs.sendMessage(tab.id, { action: 'ad-update', ad: ad })
                     .then((response?: any) => { });
                 return;
             }
@@ -259,7 +257,7 @@ class AdManager {
     fetchChannelTitle(id: string): Promise<string> {
         if (this.apiAvailable) {
             // if user enabled the gAPI permission, use it because its 80% faster
-            return fetch("https://content.googleapis.com/youtube/v3/channels?part=snippet&id=" + id + "&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo")
+            return fetch('https://content.googleapis.com/youtube/v3/channels?part=snippet&id=' + id + '&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo')
                 .then(response => response.json())
                 .then(json => {
                     if (json && json.items && json.items.length && json.items[0].snippet && json.items[0].snippet.title) {
@@ -273,7 +271,7 @@ class AdManager {
                     return id;
                 })
         } else {
-            return fetch("https://www.youtube.com/channel/" + id)
+            return fetch('https://www.youtube.com/channel/' + id)
                 .then(response => response.text())
                 .then(text => {
                     let matches = text.match(/\<meta name=\"title\" content=\"(.+)\"\>/);
@@ -290,7 +288,7 @@ class AdManager {
     }
 
     getChannelFromURL(url: string): string {
-        if (!url) return "";
+        if (!url) return '';
 
         let matches = url.match(/\/channel\/([\w-]+)(?:\/|$|\?)/);
 
@@ -303,9 +301,9 @@ class AdManager {
     parseURL(url: string): ParsedURL {
         let pathname;
         let params = {} as Ad;
-        let queryStart = url.indexOf("?");
+        let queryStart = url.indexOf('?');
         // read from the last instance of "/" until the "?" query marker
-        pathname = url.substring(url.lastIndexOf("/", queryStart), queryStart)
+        pathname = url.substring(url.lastIndexOf('/', queryStart), queryStart)
         let queries = new URLSearchParams(url.substring(queryStart + 1));
 
         for (let [key, value] of queries.entries()) {
@@ -318,7 +316,7 @@ class AdManager {
         };
     }
     checkPermissions() {
-        const neededPerms = { origins: ["*://*.content.googleapis.com/"] };
+        const neededPerms = { origins: ['*://*.content.googleapis.com/'] };
         return browser.permissions.contains(neededPerms)
             .then((granted: boolean) => this.apiAvailable = granted);
     }
@@ -329,36 +327,36 @@ SettingsManager.getSettings().then((_settings: Settings) => {
     ads = new AdManager();
     const listener = new MessageListener();
 
-    listener.onAction("set")
-        .on("add-white", (_, channelId: Channel) => settings.whitelist.add(channelId))
-        .on("add-black", (_, channelId: Channel) => settings.blacklist.add(channelId))
-        .on("add-mute", (_, channelId: Channel) => settings.mutelist.add(channelId))
-        .on("remove-mute", (_, channel: Channel | Array<string>) =>
+    listener.onAction('set')
+        .on('add-white', (_, channelId: Channel) => settings.whitelist.add(channelId))
+        .on('add-black', (_, channelId: Channel) => settings.blacklist.add(channelId))
+        .on('add-mute', (_, channelId: Channel) => settings.mutelist.add(channelId))
+        .on('remove-mute', (_, channel: Channel | Array<string>) =>
             settings.mutelist.remove(channel instanceof Array ? channel : channel.id))
-        .on("remove-white", (_, channel: Channel | Array<string>) =>
+        .on('remove-white', (_, channel: Channel | Array<string>) =>
             settings.whitelist.remove(channel instanceof Array ? channel : channel.id))
-        .on("remove-black", (_, channel: Channel | Array<string>) =>
+        .on('remove-black', (_, channel: Channel | Array<string>) =>
             settings.blacklist.remove(channel instanceof Array ? channel : channel.id))
-        .on("bulk", (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
-        .on("reset", (_, __) => settings = new SettingsManager({} as Settings))
-        .on("mute-all", (_, shouldMute) => settings.toggleMuteAll(shouldMute))
-        .on("skip-overlays", (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
+        .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
+        .on('reset', (_, __) => settings = new SettingsManager({} as Settings))
+        .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))
+        .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
         .onAll((sender, _) => {
             settings.save();
             settings.updateAll(sender.tab);
             return settings.get();
         });
 
-    listener.onAction("get")
-        .on("settings", (_, __) => settings.get())
-        .on("ads", (_, __) => ads.get());
+    listener.onAction('get')
+        .on('settings', (_, __) => settings.get())
+        .on('ads', (_, __) => ads.get());
 
-    listener.onAction("tab")
-        .on("mute", (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
-        .on("last-ad", (sender, _) => ads.getLastAdFromTab(sender.tab.id));
+    listener.onAction('tab')
+        .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
+        .on('last-ad', (sender, _) => ads.getLastAdFromTab(sender.tab.id));
 
-    listener.onAction("permission")
-        .on("google-api", () => ads.checkPermissions());
+    listener.onAction('permission')
+        .on('google-api', () => ads.checkPermissions());
 
     listener.start();
 
@@ -372,7 +370,7 @@ SettingsManager.getSettings().then((_settings: Settings) => {
         let shouldCancel = false;
         let gotChannelTitle;
 
-        if (url.pathname === "/get_video_info" && url.params.video_id) {
+        if (url.pathname === '/get_video_info' && url.params.video_id) {
             let prevAd = ads.findPrevAdByVideoId(url.params.video_id);
 
             if (prevAd) { // at this point, all we have is the vID, no channel information, unless we've seen this specific vid before
@@ -381,19 +379,19 @@ SettingsManager.getSettings().then((_settings: Settings) => {
                 }
 
                 ad = cloneObject(prevAd);
-                ad.timestamp = Date.now() + "";
+                ad.timestamp = Date.now() + '';
                 gotChannelTitle = Promise.resolve();
             } else { //get more information by accessing the url ourselves
                 request.open('GET', details.url, false);  // `false` makes the request synchronous
                 request.send(null);
 
                 if (request.status === 200) {
-                    ad = ads.parseURL("?" + request.responseText).params;
+                    ad = ads.parseURL('?' + request.responseText).params;
 
                     ad.channelId = {
                         id: ad.ucid || ads.getChannelFromURL(ad.channel_url),
-                        display: "",
-                        username: ""
+                        display: '',
+                        username: ''
                     };
 
                     if (ad.channelId.id) {
@@ -436,12 +434,12 @@ SettingsManager.getSettings().then((_settings: Settings) => {
             }
 
         } else {
-            failed("Invalid request: " + url);
+            failed('Invalid request: ' + url);
         }
 
         return { cancel: shouldCancel };
 
-    }, { urls: ["*://www.youtube.com/get_video_info?*"] }, ["blocking"])
+    }, { urls: ['*://www.youtube.com/get_video_info?*'] }, ['blocking'])
 });
 
 SettingsManager.injectAll();
@@ -451,18 +449,18 @@ if (Development && Development.detectedDevMode()) { // set to false in productio
     const client = new Development();
 
     client
-        .on("reload", () => {
+        .on('reload', () => {
             client.close();
             browser.runtime.reload();
         })
-        .on("partialreload", () => {
+        .on('partialreload', () => {
             SettingsManager.injectAll();
-            console.log("Re-injected scripts");
+            console.log('Re-injected scripts');
         })
     client.connect();
 
-    (window as any).dev = (() => client.originalLog("Started", (Date.now() - started) / 60000, "minutes ago")) as any;
-    console.log("[", started, "]: Development mode");
+    (window as any).dev = (() => client.originalLog('Started', (Date.now() - started) / 60000, 'minutes ago')) as any;
+    console.log('[', started, ']: Development mode');
 }
 
 function cloneObject<T>(obj: T): T {

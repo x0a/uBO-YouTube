@@ -5,7 +5,7 @@ function getWebExtensionsAPI(): typeof browser {
 
     try {
         api = browser;
-        if (!api) throw "chrome";
+        if (!api) throw 'chrome';
     } catch (e) {
         if (chrome.promisified) return chrome;
         api = chrome;
@@ -35,22 +35,22 @@ function getWebExtensionsAPI(): typeof browser {
             }
         }
         if (api.tabs) {
-            api.tabs.query = promisify(api.tabs, "query");
-            api.tabs.executeScript = promisify(api.tabs, "executeScript");
-            api.tabs.sendMessage = promisify(api.tabs, "sendMessage");
-            api.tabs.update = promisify(api.tabs, "update");
-            api.tabs.create = promisify(api.tabs, "create");
-            api.tabs.getCurrent = promisify(api.tabs, "getCurrent");
+            api.tabs.query = promisify(api.tabs, 'query');
+            api.tabs.executeScript = promisify(api.tabs, 'executeScript');
+            api.tabs.sendMessage = promisify(api.tabs, 'sendMessage');
+            api.tabs.update = promisify(api.tabs, 'update');
+            api.tabs.create = promisify(api.tabs, 'create');
+            api.tabs.getCurrent = promisify(api.tabs, 'getCurrent');
         }
         if (api.permissions) {
-            api.permissions.contains = promisify(api.permissions, "contains");
-            api.permissions.request = promisify(api.permissions, "request");
+            api.permissions.contains = promisify(api.permissions, 'contains');
+            api.permissions.request = promisify(api.permissions, 'request');
         }
-        api.storage.sync.get = promisify(api.storage.sync, "get");
-        api.storage.sync.set = promisify(api.storage.sync, "set");
-        api.storage.sync.clear = promisify(api.storage.sync, "clear");
+        api.storage.sync.get = promisify(api.storage.sync, 'get');
+        api.storage.sync.set = promisify(api.storage.sync, 'set');
+        api.storage.sync.clear = promisify(api.storage.sync, 'clear');
 
-        api.runtime.sendMessage = promisify(api.runtime, "sendMessage");
+        api.runtime.sendMessage = promisify(api.runtime, 'sendMessage');
         api.promisified = true;
     };
     return api;

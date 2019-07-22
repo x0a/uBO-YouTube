@@ -1,4 +1,4 @@
-import browser from "./browser";
+import browser from './browser';
 
 class Development {
     developmentServer: string;
@@ -9,7 +9,7 @@ class Development {
     ws: WebSocket;
     listeners: Map<string, () => void>
     constructor(server?: string) {
-        this.developmentServer = server || "ws://127.0.0.1:3050";
+        this.developmentServer = server || 'ws://127.0.0.1:3050';
         this.originalLog = console.log;
         this.originalErr = console.error;
         this.reconnectInterval = 1500;
@@ -20,7 +20,7 @@ class Development {
     }
     connect() {
         this.ws = new WebSocket(this.developmentServer);
-        this.ws.addEventListener("open", event => {
+        this.ws.addEventListener('open', event => {
             this.timeoutInt = null;
             this.prepareDevEnv();
 
@@ -28,17 +28,17 @@ class Development {
                 userAgent: navigator.userAgent
             }));
 
-            console.log("Hello world");
+            console.log('Hello world');
         });
 
-        this.ws.addEventListener("message", event => {
+        this.ws.addEventListener('message', event => {
             const listener = this.listeners.get(event.data);
             if(listener) listener();
         });
 
-        this.ws.addEventListener("error", event => this.queueConnection());
+        this.ws.addEventListener('error', event => this.queueConnection());
 
-        this.ws.addEventListener("close", () => {
+        this.ws.addEventListener('close', () => {
             this.removeDevEnv();
             this.queueConnection();
         });

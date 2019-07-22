@@ -22,10 +22,10 @@ class MessageAgent {
         this.messageListener = this.messageListener.bind(this);
         this.requestsPending = [];
 
-        window.addEventListener("message", this.messageListener);
+        window.addEventListener('message', this.messageListener);
     }
     on(event: string, listener: Function) {
-        if (typeof listener !== "function") throw "Listener must be a function";
+        if (typeof listener !== 'function') throw 'Listener must be a function';
         if (!this.events[event]) this.events[event] = [];
         this.events[event].push(listener);
 
@@ -34,7 +34,7 @@ class MessageAgent {
 
     send(event: string, message?: any) {
         let callbackId = Math.random().toString(36).substring(7);
-        window.postMessage({ event: event, message: message, callbackId: callbackId, instance: this.instance }, "*");
+        window.postMessage({ event: event, message: message, callbackId: callbackId, instance: this.instance }, '*');
 
         let p: Promise<any> = new Promise((resolve, reject) => {
             this.resolvers.push({ id: callbackId, resolver: resolve, rejector: reject });
@@ -77,7 +77,7 @@ class MessageAgent {
                         callbackId: revent.callbackId,
                         message: messages.length === 1 ? messages[0] : messages,
                         instance: this.instance
-                    }, "*");
+                    }, '*');
                 }).then(done);
 
             } else if (revent.callbackId) { //we received a response to a message we sent
@@ -93,7 +93,7 @@ class MessageAgent {
     destroy() {
         Object.keys(this.events).forEach(key => this.events[key] = []);
         return Promise.all(this.requestsPending).then(() => {
-            window.removeEventListener("message", this.messageListener);
+            window.removeEventListener('message', this.messageListener);
             this.resolvers = null;
             this.events = null;
             this.instance = null;

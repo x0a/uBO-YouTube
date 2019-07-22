@@ -1,10 +1,8 @@
-"use strict";
-
-// This content script is to act as a segway between
+// This content script is to act as a messaging bus between
 // the locally-injected script which contains the main code
 // and the background script.
-import browser from "./browser";
-import MessageAgent from "./agent"
+import browser from './browser';
+import MessageAgent from './agent'
 
 class InitManager {
     queue: Array<any>;
@@ -26,16 +24,16 @@ class InitManager {
         this.firstRun = this.retrieveSettings();
 
         this.jsFile = (() => {
-            let el = document.createElement("script");
-            el.setAttribute("type", "text/javascript");
-            el.setAttribute("src", browser.runtime.getURL("inject.js"));
+            let el = document.createElement('script');
+            el.setAttribute('type', 'text/javascript');
+            el.setAttribute('src', browser.runtime.getURL('inject.js'));
             return el;
         })()
         this.cssFile = (() => {
-            let el = document.createElement("link");
-            el.setAttribute("rel", "stylesheet");
-            el.setAttribute("type", "text/css");
-            el.setAttribute("href", browser.runtime.getURL("inject.css"));
+            let el = document.createElement('link');
+            el.setAttribute('rel', 'stylesheet');
+            el.setAttribute('type', 'text/css');
+            el.setAttribute('href', browser.runtime.getURL('inject.css'));
             return el;
         })()
 
@@ -51,10 +49,10 @@ class InitManager {
         }
     }
     parseMessage(message: any) {
-        if (message.action === "update") {
-            agent.send("settings-update", { settings: message.settings, initiator: message.initiator });
-        } else if (message.action === "ad-update") {
-            agent.send("ad-update", message.ad);
+        if (message.action === 'update') {
+            agent.send('settings-update', { settings: message.settings, initiator: message.initiator });
+        } else if (message.action === 'ad-update') {
+            agent.send('ad-update', message.ad);
         }
     }
     pushPending() {
@@ -63,13 +61,13 @@ class InitManager {
         }
     }
     retrieveSettings() {
-        return browser.runtime.sendMessage({ action: "get", subaction: "settings" }).then((message: any) => {
+        return browser.runtime.sendMessage({ action: 'get', subaction: 'settings' }).then((message: any) => {
             if(message.error) throw message.error;
 
             return {
                 settings: message.response,
                 accessURLs: {
-                    ICO: browser.runtime.getURL("img/icon_16.png")
+                    ICO: browser.runtime.getURL('img/icon_16.png')
                 }
             }
         })
@@ -108,11 +106,11 @@ class AdWatcher {
         this.onReceiveSettings = onReceiveSettings;
         this.onScript = this.onScript.bind(this);
 
-        if (!("onbeforescriptexecute" in document)) {
+        if (!('onbeforescriptexecute' in document)) {
             this.scriptWatcher = this.polyfill();
         }
 
-        document.addEventListener("beforescriptexecute", this.onScript);
+        document.addEventListener('beforescriptexecute', this.onScript);
     }
 
     onScript(event: CustomEvent) {
@@ -131,18 +129,18 @@ class AdWatcher {
                     let payload = this.onReceiveSettings(videoData);
                     this.insertReplacement(parent, this.compilePayload(payload))
                 } else {
-                    console.log("Object missing data");
+                    console.log('Object missing data');
                 }
             } else {
-                console.log("Trouble parsing inline script tag:", event)
+                console.log('Trouble parsing inline script tag:', event)
             }
         }
     }
     isCorrectScript(el: HTMLScriptElement) {
         const search = "\\u003c?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?\\u003e\\n\\u003cvmap:VMAP";
 
-        return el.parentElement && el.parentElement.id === "player-wrap" &&
-            el.id !== "replacement" &&
+        return el.parentElement && el.parentElement.id === 'player-wrap' &&
+            el.id !== 'replacement' &&
             el.textContent.indexOf(search) !== -1;
     }
     compilePayload(object: any) {
@@ -150,9 +148,9 @@ class AdWatcher {
         return this.payloadBeginning + string + this.payloadEnd;
     }
     extractData(code: string) {
-        const beginningSearch = "ytplayer.config = ";
+        const beginningSearch = 'ytplayer.config = ';
         let beginning = code.indexOf(beginningSearch)
-        let end = code.indexOf(";ytplayer.load");
+        let end = code.indexOf(';ytplayer.load');
 
         if (beginning !== -1 && end !== -1) {
             try {
@@ -171,17 +169,17 @@ class AdWatcher {
     parseVMAP(vmap: string): XMLDocument {
         try {
             let parser = new DOMParser();
-            let parsed = parser.parseFromString(vmap, "text/xml");
+            let parsed = parser.parseFromString(vmap, 'text/xml');
             return parsed;
         } catch (e) {
-            console.log("Failed to parse VMAP", e);
+            console.log('Failed to parse VMAP', e);
         }
     }
     insertReplacement(parent: HTMLElement, code: string) {
         return parent.appendChild((() => {
-            let el = document.createElement("script");
-            el.setAttribute("id", "replacement");
-            el.setAttribute("type", "text/javascript");
+            let el = document.createElement('script');
+            el.setAttribute('id', 'replacement');
+            el.setAttribute('type', 'text/javascript');
             el.appendChild(document.createTextNode(code));
             return el;
         })());
@@ -190,8 +188,8 @@ class AdWatcher {
         let scriptWatcher = new MutationObserver(mutations => {
             for (let mutation of mutations) {
                 for (let node of mutation.addedNodes as NodeListOf<HTMLElement>) {
-                    if (node.tagName === "SCRIPT") {
-                        let syntheticEvent = new CustomEvent("beforescriptexecute", {
+                    if (node.tagName === 'SCRIPT') {
+                        let syntheticEvent = new CustomEvent('beforescriptexecute', {
                             detail: node,
                             cancelable: true
                         })
@@ -214,12 +212,12 @@ class AdWatcher {
         if (this.scriptWatcher) {
             this.scriptWatcher.disconnect();
         }
-        document.removeEventListener("beforescriptexecute", this.onScript);
+        document.removeEventListener('beforescriptexecute', this.onScript);
     }
 }
 
-window.dispatchEvent(new CustomEvent("uBOWLInstance")); // signal to any pre-existing instances that they should unload
-window.dispatchEvent(new CustomEvent("uBOWL-destroy"));
+window.dispatchEvent(new CustomEvent('uBOWLInstance')); // signal to any pre-existing instances that they should unload
+window.dispatchEvent(new CustomEvent('uBOWL-destroy'));
 
 const agent = new MessageAgent(); // My postMessage wrapper, to communicate with our injected script
 const init = new InitManager(document.documentElement);
@@ -235,30 +233,30 @@ const intermediary = (message: any) => browser.runtime.sendMessage(message).then
     return response;
 })
 agent
-    .on("ready", () => {
+    .on('ready', () => {
         init.ready = true;
         init.pushPending();
     })
-    .on("get-settings", init.getSettings)
-    .on("set-settings", (changes: any) => {
-        return intermediary({ action: "set", subaction: changes.type, param: changes.param });
+    .on('get-settings', init.getSettings)
+    .on('set-settings', (changes: any) => {
+        return intermediary({ action: 'set', subaction: changes.type, param: changes.param });
     })
-    .on("recent-ad", () => {
-        return intermediary({ action: "tab", subaction: "last-ad" })
+    .on('recent-ad', () => {
+        return intermediary({ action: 'tab', subaction: 'last-ad' })
     })
-    .on("mute", (shouldMute: boolean) => {
-        return intermediary({ action: "tab", subaction: "mute", param: shouldMute || false })
+    .on('mute', (shouldMute: boolean) => {
+        return intermediary({ action: 'tab', subaction: 'mute', param: shouldMute || false })
     });
 
 init.inject();
 
 let dejector: () => void;
 
-window.addEventListener("uBOWL-destroy", dejector = () => {
-    console.log("Unloading uBOWL..");
+window.addEventListener('uBOWL-destroy', dejector = () => {
+    console.log('Unloading uBOWL..');
 
-    window.removeEventListener("uBOWL-destroy", dejector);
-    agent.send("destroy");
+    window.removeEventListener('uBOWL-destroy', dejector);
+    agent.send('destroy');
     init.destroy();
     //adwatcher.destroy();
     agent.destroy();

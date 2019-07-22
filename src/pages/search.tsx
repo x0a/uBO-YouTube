@@ -1,7 +1,7 @@
-import * as React from "react";
-import { FunctionComponent, useEffect, useState } from "react";
-import { ChannelList, Channel } from "../typings";
-import { bMessage, requestGooglePermission, Confirm, i18n } from "./common";
+import * as React from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
+import { ChannelList, Channel } from '../typings';
+import { bMessage, requestGooglePermission, Confirm, i18n } from './common';
 
 const ChannelSearch: FunctionComponent<{
     full: boolean;
@@ -9,7 +9,7 @@ const ChannelSearch: FunctionComponent<{
     children?: any;
     whitelisted: ChannelList;
 }> = ({ full, whitelisted, alert, children }) => {
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState('');
     const [error, setError] = useState(false);
     const [searching, setSearching] = useState(false);
     const [channels, setChannels] = useState([] as any);
@@ -23,14 +23,14 @@ const ChannelSearch: FunctionComponent<{
         .then(granted => setPermission(granted));
 
     useEffect(() => {
-        bMessage("permission", "google-api")
+        bMessage('permission', 'google-api')
             .then(granted => setPermission(granted));
     }, [])
     useEffect(() => {
         let int: number;
         setChannels([]);
         if (search.length) {
-            int = setTimeout(() => fetch("https://content.googleapis.com/youtube/v3/search?type=channel&q=" + search + "&maxResults=10&part=snippet&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo")
+            int = setTimeout(() => fetch('https://content.googleapis.com/youtube/v3/search?type=channel&q=' + search + '&maxResults=10&part=snippet&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo')
                 .then(resp => resp.json())
                 .then(json => {
                     setSearching(false);
@@ -48,58 +48,58 @@ const ChannelSearch: FunctionComponent<{
         }
         return () => clearTimeout(int);
     }, [search])
-    let searchIcon = "";
+    let searchIcon = '';
 
     if (!searching && !error) {
-        searchIcon = "fa-search";
+        searchIcon = 'fa-search';
     } else if (searching) {
-        searchIcon = "fa-spinner fa-spin";
+        searchIcon = 'fa-spinner fa-spin';
     } else if (error) {
-        searchIcon = "fa-exclamation-circle";
+        searchIcon = 'fa-exclamation-circle';
     }
     const toggleWhitelist = (channel: Channel, whitelist: boolean) => {
         if (whitelist) {
-            bMessage("set", "add-white", channel);
+            bMessage('set', 'add-white', channel);
         } else {
-            bMessage("set", "remove-white", channel);
+            bMessage('set', 'remove-white', channel);
         }
     }
 
-    return <div className={full ? "mt-2" : ""}>
-        <div className="search-container">
+    return <div className={full ? 'mt-2' : ''}>
+        <div className='search-container'>
             <input
-                type="text"
+                type='text'
                 onChange={onChange}
                 value={search}
-                placeholder="Channel name.."
-                className="form-control form-control-sm"
+                placeholder='Channel name..'
+                className='form-control form-control-sm'
                 disabled={!permission} />
-            <i className={"fas search-feedback " + searchIcon} />
+            <i className={'fas search-feedback ' + searchIcon} />
         </div>
         <hr />
         {!permission && <div>
-            <p className="text-muted list-group-option">
-                {i18n("permissionDesc")}
+            <p className='text-muted list-group-option'>
+                {i18n('permissionDesc')}
             </p>
             <button
-                className="btn btn-primary btn-block btn-sm mt-2"
+                className='btn btn-primary btn-block btn-sm mt-2'
                 onClick={requestPermission}>
-                {i18n("permissionBtn")}
+                {i18n('permissionBtn')}
             </button>
         </div>}
         {permission
             && !error
             && !searching
             && !channels.length
-            && <span className={"text-muted list-group-option" + (!permission ? "text-muted" : "")}>
-                {i18n("searchDesc")}
+            && <span className={'text-muted list-group-option' + (!permission ? 'text-muted' : '')}>
+                {i18n('searchDesc')}
                 {children}
             </span>}
-        {searching && <span className="bold">
-            {i18n("searching")}
+        {searching && <span className='bold'>
+            {i18n('searching')}
         </span>}
-        {error && <span className="bold">
-            {i18n("searchFailed")}
+        {error && <span className='bold'>
+            {i18n('searchFailed')}
         </span>}
         {channels.map((item: any) => <ChannelItem
             onClick={toggleWhitelist}
@@ -119,39 +119,39 @@ const ChannelItem: FunctionComponent<{
     const thumbnail = item.snippet.thumbnails.default.url as string;
     const description = item.snippet.description as string;
     const [hovering, setHovering] = useState(false);
-    const url = "https://youtube.com/channel/" + item.id.channelId + (added ? "?igno=re&disableadblock=1" : "");
+    const url = 'https://youtube.com/channel/' + item.id.channelId + (added ? '?igno=re&disableadblock=1' : '');
     const toggle = () => {
         const channel = {
             id: item.id.channelId,
             display: item.snippet.title,
-            username: ""
+            username: ''
         }
         onClick(channel, !added);
     }
     return <div
-        className={"channel list-group-item"}
+        className={'channel list-group-item'}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}>
 
-        <div className="channel-thumb-container" >
-            <img className="channel-thumb" src={thumbnail} />
+        <div className='channel-thumb-container' >
+            <img className='channel-thumb' src={thumbnail} />
         </div>
-        <div className="channel-info">
-            <a className="channel-name mr-1" href={url}>{title}</a>
-            <span className={full ? "channel-desc" : "hidden"}>{description}</span>
+        <div className='channel-info'>
+            <a className='channel-name mr-1' href={url}>{title}</a>
+            <span className={full ? 'channel-desc' : 'hidden'}>{description}</span>
         </div>
-        <div className={"channel-action " + (hovering || (!hovering && added) ? "" : "invisible")}>
+        <div className={'channel-action ' + (hovering || (!hovering && added) ? '' : 'invisible')}>
             <button
-                className={"btn btn-sm " + (added ? (!hovering ? "btn-link" : "btn-danger") : "btn-primary")}
+                className={'btn btn-sm ' + (added ? (!hovering ? 'btn-link' : 'btn-danger') : 'btn-primary')}
                 disabled={added && !hovering}
                 onClick={toggle}>
 
-                {!added && <><i className="fas fa-plus mr-1" /><span>
-                    {i18n("addBtn")}
+                {!added && <><i className='fas fa-plus mr-1' /><span>
+                    {i18n('addBtn')}
                 </span></>}
-                {added && !hovering && "Added"}
-                {added && hovering && <><i className="fas fas-minus mr-1" /><span>
-                    {i18n("removeBtn")}
+                {added && !hovering && 'Added'}
+                {added && hovering && <><i className='fas fas-minus mr-1' /><span>
+                    {i18n('removeBtn')}
                 </span> </>}
             </button>
         </div>

@@ -1,6 +1,6 @@
-import * as React from "react";
-import { FunctionComponent } from "react";
-import { openTab } from "./common";
+import * as React from 'react';
+import { FunctionComponent } from 'react';
+import { openTab } from './common';
 
 const Link: FunctionComponent<{
     className?: string,

@@ -1,12 +1,12 @@
-"use strict";
-import MessageAgent from "./agent";
-import icons from "./icons";
+'use strict';
+import MessageAgent from './agent';
+import icons from './icons';
 
 import {
     Channel, Settings, AccessURL,
     Action, MutationElement, ChannelList,
     MenuItem, InfoLink, VideoPoly, VideoBasic, Ad
-} from "./typings";
+} from './typings';
 
 const enum Layout {
     Polymer,
@@ -47,17 +47,17 @@ class MutationWatcher {
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ["hidden", "href", "style"],
+            attributeFilter: ['hidden', 'href', 'style'],
             attributeOldValue: true
         });
     }
 
     isPlayerUpdate(mutation: MutationElement): HTMLElement {
-        if (mutation.target.id === "movie_player") {
+        if (mutation.target.id === 'movie_player') {
             return mutation.target;
-        } else if (mutation.target.id === "player-container" && mutation.addedNodes.length) {
+        } else if (mutation.target.id === 'player-container' && mutation.addedNodes.length) {
             for (let node of mutation.addedNodes) {
-                if (node.id === "movie_player") {
+                if (node.id === 'movie_player') {
                     return node as HTMLElement;
                 }
             }
@@ -65,44 +65,44 @@ class MutationWatcher {
     }
     isPlayerErrorChange(mutation: MutationElement): null | boolean {
         for (const node of mutation.addedNodes)
-            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("ytp-error"))
+            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('ytp-error'))
                 return true;
         for (const node of mutation.removedNodes)
-            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("ytp-error"))
+            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('ytp-error'))
                 return false;
         return null;
     }
     isPlayerDurationUpdate(mutation: MutationElement) {
-        return mutation.target.className === "ytp-time-duration"
+        return mutation.target.className === 'ytp-time-duration'
             && mutation.addedNodes.length;
     }
 
     isPolyUserInfo(mutation: MutationElement): HTMLElement {
         if (
             (
-                mutation.target.id === "owner-name"
+                mutation.target.id === 'owner-name'
                 && mutation.addedNodes.length
             ) || (
-                mutation.type === "attributes"
+                mutation.type === 'attributes'
                 && mutation.target.parentNode
-                && (mutation.target.parentNode as HTMLElement).id === "owner-name"
-                && mutation.attributeName === "href"
+                && (mutation.target.parentNode as HTMLElement).id === 'owner-name'
+                && mutation.attributeName === 'href'
             )
         ) {
-            return mutation.target.closest("ytd-video-owner-renderer") as HTMLElement;
+            return mutation.target.closest('ytd-video-owner-renderer') as HTMLElement;
         } else {
             return null;
         }
     }
 
     isBasicUserInfo(mutation: MutationElement): HTMLElement {
-        if (mutation.target.id === "watch7-container" && mutation.addedNodes.length) {
+        if (mutation.target.id === 'watch7-container' && mutation.addedNodes.length) {
             for (let node of mutation.addedNodes) {
-                if (node.id === "watch7-main-container") {
-                    return node.querySelector("#watch7-user-header") as HTMLElement;
+                if (node.id === 'watch7-main-container') {
+                    return node.querySelector('#watch7-user-header') as HTMLElement;
                 }
             }
-        } else if (mutation.target.id === "watch7-user-header") {
+        } else if (mutation.target.id === 'watch7-user-header') {
             return mutation.target as HTMLElement;
         }
 
@@ -111,27 +111,27 @@ class MutationWatcher {
 
     isRelatedUpdate(mutation: MutationElement) {
         return (
-            mutation.type === "attributes"
-            && mutation.target.id === "continuations"
-            && mutation.attributeName === "hidden"
+            mutation.type === 'attributes'
+            && mutation.target.id === 'continuations'
+            && mutation.attributeName === 'hidden'
         );
     }
 
     hasNewItems(mutation: MutationElement) {
         return (
-            mutation.type === "attributes"
-            && mutation.target.localName === "yt-page-navigation-progress"
-            && mutation.attributeName === "hidden"
+            mutation.type === 'attributes'
+            && mutation.target.localName === 'yt-page-navigation-progress'
+            && mutation.attributeName === 'hidden'
             && mutation.oldValue === null
         ) || (
-                mutation.type === "childList"
-                && (mutation.target.id === "items" || mutation.target.id === "contents")
+                mutation.type === 'childList'
+                && (mutation.target.id === 'items' || mutation.target.id === 'contents')
             )
     }
 
     finishedLoadingBasic(mutation: MutationElement): boolean {
         for (let node of mutation.removedNodes) {
-            if (node.id === "progress") {
+            if (node.id === 'progress') {
                 return true; // old layout, progress bar removed
             }
         }
@@ -139,27 +139,27 @@ class MutationWatcher {
     }
 
     isOverlayAd(mutation: MutationElement): HTMLButtonElement {
-        return mutation.type === "childList"
-            && mutation.target.classList.contains("ytp-ad-module")
+        return mutation.type === 'childList'
+            && mutation.target.classList.contains('ytp-ad-module')
             && mutation.addedNodes.length
-            && mutation.target.querySelector("button.ytp-ad-overlay-close-button")
+            && mutation.target.querySelector('button.ytp-ad-overlay-close-button')
     }
 
     isAdSkipContainer(mutation: MutationElement): HTMLElement {
         return (
-            mutation.target.classList.contains("ytp-ad-skip-button-container")
+            mutation.target.classList.contains('ytp-ad-skip-button-container')
             && mutation.target
         ) || (
-                mutation.type === "childList"
-                && mutation.target.classList.contains("video-ads")
+                mutation.type === 'childList'
+                && mutation.target.classList.contains('video-ads')
                 && mutation.addedNodes.length
-                && mutation.target.querySelector(".ytp-ad-skip-button-container")
+                && mutation.target.querySelector('.ytp-ad-skip-button-container')
             );
     }
 
     adSkipButton(container: HTMLElement): HTMLButtonElement {
-        return container.style.display !== "none"
-            && container.querySelector("button");
+        return container.style.display !== 'none'
+            && container.querySelector('button');
     }
 
     pollUpdate(method: Function) {
@@ -195,7 +195,7 @@ class MutationWatcher {
     findInjection(mutation: MutationRecord, selector: string) {
         const target = mutation.target as HTMLElement;
         if (target.matches(selector)) {
-            if (mutation.type === "attributes") {
+            if (mutation.type === 'attributes') {
                 console.log(
                     `%c[${selector}].${mutation.attributeName}` +
                     ` = %c"${mutation.oldValue}"` +
@@ -209,7 +209,7 @@ class MutationWatcher {
                 console.log(`%c[${selector}] >`, 'font-weight: bold;', mutation);
             }
         }
-        else if (mutation.type === "childList") {
+        else if (mutation.type === 'childList') {
             for (let node of mutation.addedNodes as NodeListOf<HTMLElement>) {
                 if (node.nodeType !== Node.ELEMENT_NODE)
                     continue;
@@ -253,14 +253,14 @@ class MutationWatcher {
     getSelector(el: HTMLElement) {
         const classes = Array.from(el.classList);
         return el.tagName.toLowerCase()
-            + (classes.length ? "." + classes.join(".") : "")
-            + (el.id.length ? "#" + el.id : "")
+            + (classes.length ? '.' + classes.join('.') : '')
+            + (el.id.length ? '#' + el.id : '')
     }
     onMutation(mutations: Array<MutationElement>) {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
-            //this.findInjection(mutation, ".ytp-error");
+            //this.findInjection(mutation, '.ytp-error');
             if (mode === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
 
@@ -273,7 +273,7 @@ class MutationWatcher {
                 } else if (this.isRelatedUpdate(mutation)) {
                     this.pollUpdate(pages.video.updateVideos);
                 } else if (player = this.isPlayerUpdate(mutation)) {
-                    pages.video.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
+                    pages.video.updateAdPlaying(player, !!player.classList.contains('ad-showing'));
                     let errorState = this.isPlayerErrorChange(mutation);
                     if (errorState !== null) {
                         pages.video.onVideoError(errorState);
@@ -289,7 +289,7 @@ class MutationWatcher {
                 if (mode === PageType.Channel) {
                     let player, skipContainer;
                     if (player = this.isPlayerUpdate(mutation)) {
-                        pages.channel.updateAdPlaying(player, !!player.classList.contains("ad-showing"));
+                        pages.channel.updateAdPlaying(player, !!player.classList.contains('ad-showing'));
                         let errorState = this.isPlayerErrorChange(mutation);
                         if (errorState !== null) {
                             pages.channel.onVideoError(errorState);
@@ -327,29 +327,29 @@ class WhitelistButton {
     constructor(onClick: EventListener, toggled: boolean) {
         this.toggled = toggled;
 
-        this.button = document.createElement("button");
-        this.button.className = "UBO-wl-btn";
-        this.button.title = "Enable ads for this channel";
-        this.button.addEventListener("click", onClick);
+        this.button = document.createElement('button');
+        this.button.className = 'UBO-wl-btn';
+        this.button.title = 'Enable ads for this channel';
+        this.button.addEventListener('click', onClick);
 
-        this.buttonContainer = document.createElement("div");
-        this.buttonContainer.className = "UBO-wl-container";
+        this.buttonContainer = document.createElement('div');
+        this.buttonContainer.className = 'UBO-wl-container';
     }
 
     off() {
         if (!this.toggled) return;
 
         this.toggled = false;
-        this.button.title = "Enable ads for this channel";
-        this.button.classList.remove("yt-uix-button-toggled");
+        this.button.title = 'Enable ads for this channel';
+        this.button.classList.remove('yt-uix-button-toggled');
     }
 
     on() {
         if (this.toggled) return;
 
         this.toggled = true;
-        this.button.title = "Ads enabled for this channel";
-        this.button.classList.add("yt-uix-button-toggled");
+        this.button.title = 'Ads enabled for this channel';
+        this.button.classList.add('yt-uix-button-toggled');
     }
 
 
@@ -358,8 +358,8 @@ class WhitelistButton {
 class WhitelistButtonPoly extends WhitelistButton {
     constructor(onClick: EventListener, toggled: boolean) {
         super(onClick, toggled);
-        this.button.className += " UBO-wl-poly " + (toggled ? " yt-uix-button-toggled" : "");
-        this.button.innerHTML = "ADS";
+        this.button.className += ' UBO-wl-poly ' + (toggled ? ' yt-uix-button-toggled' : '');
+        this.button.innerHTML = 'ADS';
         this.buttonContainer.appendChild(this.button);
     }
     exists() {
@@ -373,8 +373,8 @@ class WhitelistButtonPoly extends WhitelistButton {
 class WhitelistButtonBasic extends WhitelistButton {
     constructor(onClick: EventListener, toggled: boolean) {
         super(onClick, toggled);
-        this.button.className += " UBO-old yt-uix-button yt-uix-button-size-default yt-uix-button-subscribed-branded hover-enabled" + (toggled ? " yt-uix-button-toggled" : "");
-        this.button.innerHTML = "Ads";
+        this.button.className += ' UBO-old yt-uix-button yt-uix-button-size-default yt-uix-button-subscribed-branded hover-enabled' + (toggled ? ' yt-uix-button-toggled' : '');
+        this.button.innerHTML = 'Ads';
     }
     exists() {
         return document.body.contains(this.button);
@@ -405,15 +405,15 @@ class AdOptions {
         this.unMuteIcon = this.generateIcon(icons.unMute);
         this.muteIcon = this.generateIcon(icons.mute)
         this.muteButton = this.generateMenuItem(
-            "Mute advertiser",
-            "Automatically mute all ads from this advertiser",
+            'Mute advertiser',
+            'Automatically mute all ads from this advertiser',
             this.muteIcon,
             onMute
         )
 
         this.skipButton = this.generateMenuItem(
-            "Force skip",
-            "Attempt to skip this ad",
+            'Force skip',
+            'Attempt to skip this ad',
             icons.fastForward,
             () => {
                 this.closeMenu();
@@ -421,20 +421,20 @@ class AdOptions {
             }
         )
         this.blacklistButton = this.generateMenuItem(
-            "Block advertiser",
-            "Block all ads from this advertiser",
+            'Block advertiser',
+            'Block all ads from this advertiser',
             icons.block,
             onBlacklist
         );
 
         this.menu = (() => {
-            let el = document.createElement("div");
-            el.setAttribute("class", "UBO-menu hidden");
+            let el = document.createElement('div');
+            el.setAttribute('class', 'UBO-menu hidden');
             el.appendChild(this.blacklistButton);
             el.appendChild(this.muteButton);
             el.appendChild(this.skipButton);
-            el.addEventListener("focusin", () => this.menuFocused = true);
-            el.addEventListener("focusout", () => {
+            el.addEventListener('focusin', () => this.menuFocused = true);
+            el.addEventListener('focusout', () => {
                 this.menuFocused = false;
                 this.lostFocus();
             });
@@ -444,29 +444,29 @@ class AdOptions {
         ;
 
         this.optionsButton = (() => {
-            let el = document.createElement("button");
-            el.setAttribute("class", "UBO-ads-btn ytp-button hidden");
+            let el = document.createElement('button');
+            el.setAttribute('class', 'UBO-ads-btn ytp-button hidden');
 
             el.appendChild(this.tooltip = (() => {
-                let el = document.createElement("span");
-                el.setAttribute("class", "UBO-ads-tooltip");
+                let el = document.createElement('span');
+                el.setAttribute('class', 'UBO-ads-tooltip');
                 return el;
             })());
 
             el.appendChild((() => {
-                let el = document.createElement("div");
-                el.setAttribute("class", "UBO-icon-container");
+                let el = document.createElement('div');
+                el.setAttribute('class', 'UBO-icon-container');
                 el.appendChild((() => {
-                    let el = document.createElement("img");
-                    el.setAttribute("src", accessURLs.ICO);
+                    let el = document.createElement('img');
+                    el.setAttribute('src', accessURLs.ICO);
                     return el;
                 })());
                 return el;
             })());
 
-            el.addEventListener("click", this.toggleMenu);
-            el.addEventListener("focusin", () => this.buttonFocused = true);
-            el.addEventListener("focusout", () => {
+            el.addEventListener('click', this.toggleMenu);
+            el.addEventListener('focusin', () => this.buttonFocused = true);
+            el.addEventListener('focusout', () => {
                 this.buttonFocused = false;
                 this.lostFocus();
             });
@@ -483,17 +483,17 @@ class AdOptions {
     generateMenuItem(text: string, description: string, iconVector: string | Element, onClick: EventListener): MenuItem {
         const defaultIcon = iconVector instanceof Element ? iconVector : this.generateIcon(iconVector);
 
-        let el: MenuItem = document.createElement("button") as MenuItem;
+        let el: MenuItem = document.createElement('button') as MenuItem;
         let currentIcon = defaultIcon;
         let itemText = document.createTextNode(text);
         let tooltipText = document.createTextNode(description);
 
-        el.setAttribute("class", "UBO-menu-item");
+        el.setAttribute('class', 'UBO-menu-item');
         el.appendChild(currentIcon);
         el.appendChild(itemText);
         el.appendChild((() => {
-            let el = document.createElement("span");
-            el.setAttribute("class", "UBO-ads-tooltip");
+            let el = document.createElement('span');
+            el.setAttribute('class', 'UBO-ads-tooltip');
             el.appendChild(tooltipText);
             return el;
         })())
@@ -513,19 +513,19 @@ class AdOptions {
             el.setText(text);
             el.setDescription(description);
         }
-        el.addEventListener("click", onClick);
+        el.addEventListener('click', onClick);
         return el;
     }
 
     generateIcon(iconVector: string): Element {
         return (() => {
-            let el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            el.setAttribute("viewBox", "0 0 512 512");
-            el.setAttribute("class", "UBO-icon");
+            let el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            el.setAttribute('viewBox', '0 0 512 512');
+            el.setAttribute('class', 'UBO-icon');
             el.appendChild((() => {
-                let el = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                el.setAttributeNS(null, "fill", "currentColor");
-                el.setAttributeNS(null, "d", iconVector);
+                let el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                el.setAttributeNS(null, 'fill', 'currentColor');
+                el.setAttributeNS(null, 'd', iconVector);
                 return el;
             })());
             return el;
@@ -535,15 +535,15 @@ class AdOptions {
     set muteTab(shouldMute: boolean) {
         if (shouldMute) {
 
-            agent.send("mute", true)
+            agent.send('mute', true)
                 .then(resp => {
                     this.muted = true;
                     this.muteButton.setIcon(this.unMuteIcon);
-                    this.muteButton.setText("Unmute advertiser");
-                    this.muteButton.setDescription("Remove advertiser from mutelist");
+                    this.muteButton.setText('Unmute advertiser');
+                    this.muteButton.setDescription('Remove advertiser from mutelist');
                 })
                 .catch(error => {
-                    console.error("Error muting:", error);
+                    console.error('Error muting:', error);
                 });
 
         } else {
@@ -551,7 +551,7 @@ class AdOptions {
                 this.muted = false;
                 this.muteButton.setDefaults();
             }
-            agent.send("mute", false).then(done).catch(done); // replicate .finally
+            agent.send('mute', false).then(done).catch(done); // replicate .finally
         }
     }
 
@@ -572,7 +572,7 @@ class AdOptions {
     }
 
     reset() {
-        this.tooltip.textContent = "Options for this advertiser";
+        this.tooltip.textContent = 'Options for this advertiser';
         this.blacklistOption = false;
         this.muteOption = false;
         this.skipOption = false;
@@ -597,26 +597,26 @@ class AdOptions {
     }
 
     closeMenu() {
-        this.menu.classList.add("hidden");
-        this.tooltip.classList.remove("hidden");
+        this.menu.classList.add('hidden');
+        this.tooltip.classList.remove('hidden');
         this.menuOpen = false;
     }
 
     openMenu() {
-        this.menu.classList.remove("hidden");
-        this.tooltip.classList.add("hidden");
-        this.menu.style.left = (this.optionsButton.offsetLeft - (this.menu.offsetWidth / 2) + (this.optionsButton.offsetWidth / 2)) + "px";
-        this.menu.style.bottom = "49px";
+        this.menu.classList.remove('hidden');
+        this.tooltip.classList.add('hidden');
+        this.menu.style.left = (this.optionsButton.offsetLeft - (this.menu.offsetWidth / 2) + (this.optionsButton.offsetWidth / 2)) + 'px';
+        this.menu.style.bottom = '49px';
         this.menuOpen = true;
     }
 
     show() {
-        this.optionsButton.classList.remove("hidden");
+        this.optionsButton.classList.remove('hidden');
     }
 
     hide() {
         this.closeMenu();
-        this.optionsButton.classList.add("hidden");
+        this.optionsButton.classList.add('hidden');
     }
 
     renderButton() {
@@ -650,7 +650,7 @@ class SingleChannelPage {
         this.adOptions = new AdOptions(this.addBlacklist.bind(this), this.toggleMute.bind(this), this.attemptSkip.bind(this));
         this.channelId = null;
         this.currentAd = null;
-        this.currentDuration = "";
+        this.currentDuration = '';
         this.firstRun = true;
         this.adPlaying = false;
         this.adConfirmed = false;
@@ -663,10 +663,10 @@ class SingleChannelPage {
     }
 
     updatePage(forceUpdate?: boolean, verify?: boolean) {
-        if (!this.dataNode && !this.setDataNode()) return;// console.error("Container not available");
+        if (!this.dataNode && !this.setDataNode()) return;// console.error('Container not available');
 
         this.channelId = this.getChannelId(this.dataNode);
-        if (!this.channelId) throw "Channel ID not available";
+        if (!this.channelId) throw 'Channel ID not available';
 
         let whitelisted = pages.updateURL(this.channelId, verify);
 
@@ -676,10 +676,10 @@ class SingleChannelPage {
             this.insertButton(this.whitelistButton);
             // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
             if (this.firstRun) {
-                let player = document.querySelector("#movie_player") as HTMLElement;
+                let player = document.querySelector('#movie_player') as HTMLElement;
 
                 if (player) {
-                    this.updateAdPlaying(player, !!player.classList.contains("ad-showing"), true);
+                    this.updateAdPlaying(player, !!player.classList.contains('ad-showing'), true);
                 }
 
                 this.firstRun = false;
@@ -692,8 +692,8 @@ class SingleChannelPage {
 
     updateAdPlaying(player: HTMLElement, playing: boolean, firstRun = false) {
         if (playing && !this.adPlaying) {
-            let container = player.querySelector(".ytp-right-controls");
-            if (!container) return console.error("Can't find .ytp-right-controls");
+            let container = player.querySelector('.ytp-right-controls');
+            if (!container) return console.error('Can\'t find .ytp-right-controls');
 
             let options = this.adOptions.renderButton();
             let menu = this.adOptions.renderMenu();
@@ -704,15 +704,15 @@ class SingleChannelPage {
             if (!player.contains(menu)) {
                 player.appendChild(menu);
             }
-            if (this.currentPlayer = player.querySelector("video")) {
+            if (this.currentPlayer = player.querySelector('video')) {
                 this.adOptions.skipOption = true;
                 this.adOptions.show();
             }
             if (firstRun) {
-                let duration = player.querySelector(".ytp-time-duration");
-                this.currentDuration = (duration && duration.textContent) || "";
+                let duration = player.querySelector('.ytp-time-duration');
+                this.currentDuration = (duration && duration.textContent) || '';
 
-                agent.send("recent-ad").then(message => {
+                agent.send('recent-ad').then(message => {
                     this.currentAd = message.ad as Ad;
                     this.updateAdButton();
                 })
@@ -815,9 +815,9 @@ class SingleChannelPage {
     }
 
     toSeconds(durationText: string): number {
-        if (typeof durationText !== "string") return;
+        if (typeof durationText !== 'string') return;
 
-        let durationParts = durationText.split(":");
+        let durationParts = durationText.split(':');
         let seconds = 0, level = durationParts.length;
 
         for (let i = 0; i < durationParts.length; i++) {
@@ -828,31 +828,31 @@ class SingleChannelPage {
     }
 
     addBlacklist() {
-        if (!this.currentAd.channelId) throw ("Channel ID not available for blacklisting");
-        agent.send("set-settings", { param: this.currentAd.channelId, type: "add-black" })
+        if (!this.currentAd.channelId) throw ('Channel ID not available for blacklisting');
+        agent.send('set-settings', { param: this.currentAd.channelId, type: 'add-black' })
             .then(() => this.attemptSkip())
-            .catch(error => console.error("Error blacklisting:", error))
+            .catch(error => console.error('Error blacklisting:', error))
     }
 
     toggleMute() {
-        if (!this.currentAd.channelId) throw "Ad channel ID not available for muting";
+        if (!this.currentAd.channelId) throw 'Ad channel ID not available for muting';
         let shouldMute = ChannelID.inmutelist(this.currentAd.channelId) === -1;
-        let action = shouldMute ? "add-mute" : "remove-mute";
+        let action = shouldMute ? 'add-mute' : 'remove-mute';
 
-        agent.send("set-settings", { param: this.currentAd.channelId, type: action })
-            .then(() => agent.send("mute", shouldMute))
-            .catch(error => console.error("Error setting settings", error));
+        agent.send('set-settings', { param: this.currentAd.channelId, type: action })
+            .then(() => agent.send('mute', shouldMute))
+            .catch(error => console.error('Error setting settings', error));
     }
 
     toggleWhitelist() {
         this.channelId = this.getChannelId(this.dataNode);
-        if (!this.channelId) throw "Channel ID not available";
+        if (!this.channelId) throw 'Channel ID not available';
 
         if (ChannelID.inwhitelist(this.channelId) !== -1) {
-            agent.send("set-settings", { param: this.channelId, type: "remove-white" });
+            agent.send('set-settings', { param: this.channelId, type: 'remove-white' });
             this.whitelistButton.off();
         } else {
-            agent.send("set-settings", { param: this.channelId, type: "add-white" });
+            agent.send('set-settings', { param: this.channelId, type: 'add-white' });
             this.whitelistButton.on();
         }
 
@@ -873,7 +873,7 @@ class VideoPagePoly extends SingleChannelPage {
     }
 
     setDataNode(container: HTMLElement) {
-        return this.dataNode = container || this.dataNode || document.querySelector("ytd-video-owner-renderer");
+        return this.dataNode = container || this.dataNode || document.querySelector('ytd-video-owner-renderer');
     }
 
     setParentNode(parent: HTMLElement) {
@@ -890,7 +890,7 @@ class VideoPagePoly extends SingleChannelPage {
     }
     updateVideos(whitelisted: boolean, forceUpdate: boolean) {
         this.updateInfobar(this.dataNode, whitelisted);
-        let relatedVideos = document.querySelectorAll("ytd-compact-video-renderer,ytd-playlist-panel-video-renderer") as NodeListOf<VideoPoly>;
+        let relatedVideos = document.querySelectorAll('ytd-compact-video-renderer,ytd-playlist-panel-video-renderer') as NodeListOf<VideoPoly>;
 
         pages.updateVideos(relatedVideos, forceUpdate)
     }
@@ -900,7 +900,7 @@ class VideoPagePoly extends SingleChannelPage {
         if (!container) return false;
         if (!channelId) return false;
 
-        let links = container.querySelectorAll("a") as NodeListOf<InfoLink>;
+        let links = container.querySelectorAll('a') as NodeListOf<InfoLink>;
 
         for (let link of links) {
             // this link hasn't been looked at
@@ -922,9 +922,9 @@ class VideoPagePoly extends SingleChannelPage {
 
         if (!container) return null;
 
-        channelId.username = ChannelID.getUsernameFromURL(oGet(container, "data.navigationEndpoint.browseEndpoint.canonicalBaseUrl")) || ""
-        channelId.id = oGet(container, "data.navigationEndpoint.browseEndpoint.browseId") || "";
-        channelId.display = oGet(container, "data.title.runs[0].text") || "";
+        channelId.username = ChannelID.getUsernameFromURL(oGet(container, 'data.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
+        channelId.id = oGet(container, 'data.navigationEndpoint.browseEndpoint.browseId') || '';
+        channelId.display = oGet(container, 'data.title.runs[0].text') || '';
 
         return ChannelID.validate(channelId);
     }
@@ -938,7 +938,7 @@ class VideoPageBasic extends SingleChannelPage {
         this.updateVideos = this.updateVideos.bind(this);
     }
     setDataNode(container: HTMLElement) {
-        return this.dataNode = container || this.dataNode || document.querySelector("#watch7-user-header");
+        return this.dataNode = container || this.dataNode || document.querySelector('#watch7-user-header');
     }
     setParentNode(parent?: HTMLElement) {
         if (parent) {
@@ -946,9 +946,9 @@ class VideoPageBasic extends SingleChannelPage {
         } else {
             if (!this.buttonParent || this.buttonParent && this.dataNode && this.buttonParent.parentElement !== this.dataNode) {
                 if (this.dataNode) {
-                    return this.buttonParent = this.dataNode.querySelector("#watch7-subscription-container")
+                    return this.buttonParent = this.dataNode.querySelector('#watch7-subscription-container')
                 } else {
-                    return this.buttonParent = document.querySelector("#watch7-subscription-container");
+                    return this.buttonParent = document.querySelector('#watch7-subscription-container');
                 }
             } else {
                 return this.buttonParent;
@@ -974,7 +974,7 @@ class VideoPageBasic extends SingleChannelPage {
     getChannelId(container: HTMLElement) {
         this.setDataNode(container);
 
-        let links = this.dataNode.querySelectorAll("a") as ArrayLike<any>;
+        let links = this.dataNode.querySelectorAll('a') as ArrayLike<any>;
         return ChannelID.validate(ChannelID.extractFromLinks(links as Array<any>));
     }
 }
@@ -991,11 +991,11 @@ class ChannelPagePoly extends SingleChannelPage {
     setDataNode(container: HTMLElement) {
         // ytd-page-manager contains data at .data.response.metadata
         // whereas ytd-browse contains data at .data.metadata
-        return this.dataNode = container || this.dataNode || document.querySelector("ytd-page-manager");//"ytd-browse");
+        return this.dataNode = container || this.dataNode || document.querySelector('ytd-page-manager');//'ytd-browse');
     }
 
     setParentNode(parent?: HTMLElement) {
-        return this.buttonParent = parent || this.buttonParent || document.querySelector("#edit-buttons");
+        return this.buttonParent = parent || this.buttonParent || document.querySelector('#edit-buttons');
     }
     insertButton(button: WhitelistButtonInstance) {
         this.setParentNode();
@@ -1011,9 +1011,9 @@ class ChannelPagePoly extends SingleChannelPage {
         container = this.setDataNode(container);
         if (!container) return null;
 
-        channelId.username = oGet(container, "data.response.metadata.channelMetadataRenderer.doubleclickTrackingUsername") || "";
-        channelId.display = oGet(container, "data.response.metadata.channelMetadataRenderer.title") || "";
-        channelId.id = oGet(container, "data.response.metadata.channelMetadataRenderer.externalId") || "";
+        channelId.username = oGet(container, 'data.response.metadata.channelMetadataRenderer.doubleclickTrackingUsername') || '';
+        channelId.display = oGet(container, 'data.response.metadata.channelMetadataRenderer.title') || '';
+        channelId.id = oGet(container, 'data.response.metadata.channelMetadataRenderer.externalId') || '';
 
         return ChannelID.validate(channelId);
     }
@@ -1031,7 +1031,7 @@ class ChannelPageBasic extends SingleChannelPage {
     }
 
     setParentNode(parent?: HTMLElement) {
-        return this.buttonParent = parent || this.buttonParent || document.querySelector(".primary-header-actions");
+        return this.buttonParent = parent || this.buttonParent || document.querySelector('.primary-header-actions');
     }
     insertButton(button: WhitelistButtonBasic) {
         this.setParentNode();
@@ -1043,15 +1043,15 @@ class ChannelPageBasic extends SingleChannelPage {
     }
     getChannelId() {
         let links = [location as any] as Array<any>
-        let link = document.querySelector("link[rel='canonical']") as any
+        let link = document.querySelector('link[rel="canonical"]') as any
 
         if (link) {
             links.push(link);
         }
 
         let channelId = ChannelID.extractFromLinks(links);
-        channelId.username = (link && link.getAttribute("username")) || "";
-        channelId.display = document.querySelector(".branded-page-header-title-link").textContent || "";
+        channelId.username = (link && link.getAttribute('username')) || '';
+        channelId.display = document.querySelector('.branded-page-header-title-link').textContent || '';
         return ChannelID.validate(channelId)
     }
 }
@@ -1061,7 +1061,7 @@ class SearchPagePoly {
         this.updatePage = this.updatePage.bind(this);
     }
     updatePage(forceUpdate?: boolean) {
-        let channelElements: NodeListOf<ChannelElement> = document.querySelectorAll("ytd-channel-renderer");
+        let channelElements: NodeListOf<ChannelElement> = document.querySelectorAll('ytd-channel-renderer');
 
         if (!channelElements) return;
 
@@ -1074,7 +1074,7 @@ class SearchPagePoly {
                     whitelisted ? channelElement.whitelistButton.on() : channelElement.whitelistButton.off();
             } else {
                 let button = new WhitelistButtonPoly(this.toggleWhitelist.bind(this, channelElement), whitelisted);
-                let container = channelElement.querySelector("#subscribe-button");
+                let container = channelElement.querySelector('#subscribe-button');
 
                 container.insertBefore(button.render(), container.firstChild);
                 channelElement.whitelistButton = button;
@@ -1085,7 +1085,7 @@ class SearchPagePoly {
     }
     toggleWhitelist(dataNode: HTMLElement) {
         let channelId = this.getChannelId(dataNode);
-        if (!channelId) throw "Channel ID not available";
+        if (!channelId) throw 'Channel ID not available';
 
         if (ChannelID.inwhitelist(channelId) !== -1) {
             ChannelID.whitelistRemove(channelId);
@@ -1095,11 +1095,11 @@ class SearchPagePoly {
     }
     getChannelId(container: HTMLElement) {
         let channelId = ChannelID.createNew();
-        if (!container) throw "Search element required to get channelId under search mode";
+        if (!container) throw 'Search element required to get channelId under search mode';
 
-        channelId.display = oGet(container, "data.title.simpleText") || "";
-        channelId.id = oGet(container, "data.channelId") || "";
-        channelId.username = ChannelID.getUsernameFromURL(oGet(container, "data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl")) || "";
+        channelId.display = oGet(container, 'data.title.simpleText') || '';
+        channelId.id = oGet(container, 'data.channelId') || '';
+        channelId.username = ChannelID.getUsernameFromURL(oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || '';
 
         return ChannelID.validate(channelId);
     }
@@ -1115,24 +1115,24 @@ class SearchPageBasic {
 }
 class ChannelID {
     static createNew(): Channel {
-        return { id: "", username: "", display: "" };
+        return { id: '', username: '', display: '' };
     }
     static getUsernameFromURL(url: string): string {
-        if (!url) return "";
+        if (!url) return '';
 
         let matches = url.match(/\/user\/(.+)/);
 
         if (matches && matches.length > 1) {
             return matches[1];
         } else {
-            return "";
+            return '';
         }
     }
     static whitelistRemove(channelId: Channel) {
-        return agent.send("set-settings", { param: channelId, type: "remove-white" });
+        return agent.send('set-settings', { param: channelId, type: 'remove-white' });
     }
     static whitelistAdd(channelId: Channel) {
-        return agent.send("set-settings", { param: channelId, type: "add-white" });
+        return agent.send('set-settings', { param: channelId, type: 'add-white' });
     }
     static inmutelist(search: Channel | string, idOnly = false) {
         return ChannelID.searchlist(settings.muted, search, idOnly);
@@ -1149,7 +1149,7 @@ class ChannelID {
 
         if (idOnly) {
             id = channelId as string;
-            username = "";
+            username = '';
         } else {
             id = (channelId as Channel).id;
             username = (channelId as Channel).username;
@@ -1181,9 +1181,9 @@ class ChannelID {
             let matches;
 
             if (matches = link.href.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/)) {
-                if (matches[1] === "user") {
+                if (matches[1] === 'user') {
                     channelId.username = matches[2] //we can safely assume that /user/$1 is a username
-                } else if (matches[1] === "channel") {
+                } else if (matches[1] === 'channel') {
                     channelId.id = matches[2];
 
                     if (link.textContent) { //to weed out the metadata link on channel pages
@@ -1214,11 +1214,11 @@ class Page {
             this.search = new SearchPageBasic();
         }
 
-        this.currentURL = "";
+        this.currentURL = '';
         this.updateAllVideos = this.updateAllVideos.bind(this);
     }
     static getDesign() {
-        if ((window as any).Polymer || document.querySelector("ytd-app")) {
+        if ((window as any).Polymer || document.querySelector('ytd-app')) {
             return Layout.Polymer;
         } else {
             return Layout.Basic;
@@ -1235,11 +1235,11 @@ class Page {
         }
     }
     determineMode(url = location.href): PageType {
-        if (url.indexOf("youtube.com/watch?") !== -1) {
+        if (url.indexOf('youtube.com/watch?') !== -1) {
             return PageType.Video;
-        } else if (url.indexOf("youtube.com/channel/") !== -1 || url.indexOf("youtube.com/user/") !== -1) {
+        } else if (url.indexOf('youtube.com/channel/') !== -1 || url.indexOf('youtube.com/user/') !== -1) {
             return PageType.Channel;
-        } else if (url.indexOf("youtube.com/results?") !== -1) {
+        } else if (url.indexOf('youtube.com/results?') !== -1) {
             return PageType.Search;
         } else {
             return PageType.Any;
@@ -1271,21 +1271,21 @@ class Page {
         for (let video of videos) {
             if (!forceUpdate && video.data.processed) continue;
 
-            let id = oGet(video, "data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId") ||
+            let id = oGet(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId') ||
                 (channelId && channelId.id);
 
             if (id) {
-                let links = video.querySelectorAll("a[href^='/watch?']") as NodeListOf<HTMLAnchorElement>;
+                let links = video.querySelectorAll('a[href^="/watch?"]') as NodeListOf<HTMLAnchorElement>;
                 if (!links.length) continue;
 
                 let destURL = video.data.originalHref;
 
                 if (ChannelID.inwhitelist(id, true) !== -1) {
                     if (!video.data.originalHref) {
-                        destURL = links[0].getAttribute("href");
+                        destURL = links[0].getAttribute('href');
                         video.data.originalHref = destURL;
                     }
-                    destURL += "&disableadblock=1";
+                    destURL += '&disableadblock=1';
                 } else {
                     if (!destURL) {
                         video.data.processed = true;
@@ -1296,9 +1296,9 @@ class Page {
                 for (let link of links)
                     link.href = destURL;
 
-                if (oGet(video, "data.navigationEndpoint.webNavigationEndpointData.url"))
+                if (oGet(video, 'data.navigationEndpoint.webNavigationEndpointData.url'))
                     video.data.navigationEndpoint.webNavigationEndpointData.url = destURL;
-                if (oGet(video, "data.navigationEndpoint.commandMetadata.webCommandMetadata.url"))
+                if (oGet(video, 'data.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
                     video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url = destURL;
 
                 video.data.processed = true;
@@ -1306,14 +1306,14 @@ class Page {
         }
     }
     updateAllVideos(forceUpdate?: boolean, channelId?: Channel) {
-        const query = "ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer";
+        const query = 'ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer';
         const videos = document.querySelectorAll(query) as NodeListOf<VideoPoly>;
 
         return this.updateVideos(videos, forceUpdate, channelId);
     }
 
     updateAllVideosBasic(whitelisted: boolean, forceUpdate = false) {
-        let videos: NodeListOf<VideoBasic> = document.querySelectorAll(".yt-lockup-video");
+        let videos: NodeListOf<VideoBasic> = document.querySelectorAll('.yt-lockup-video');
 
         for (let vid of videos) {
             if (!forceUpdate && vid.processed) continue;
@@ -1322,7 +1322,7 @@ class Page {
             if (whitelisted !== null) {
                 inwhite = whitelisted;
             } else {
-                let user = vid.querySelector(".stat.attribution span");
+                let user = vid.querySelector('.stat.attribution span');
                 let values = ChannelID.createNew();
 
                 if (!user || !(values.username = user.textContent))
@@ -1330,10 +1330,10 @@ class Page {
                 inwhite = ChannelID.inwhitelist(values) !== -1
             }
             if (inwhite || forceUpdate) { // exists
-                let links = vid.querySelectorAll("a[href^='/watch?']");
+                let links = vid.querySelectorAll('a[href^="/watch?"]');
 
                 for (let link of links) {
-                    link.setAttribute("href", pages.reflectURLFlag(link.getAttribute("href"), inwhite));
+                    link.setAttribute('href', pages.reflectURLFlag(link.getAttribute('href'), inwhite));
                 }
             }
             vid.processed = true;
@@ -1344,41 +1344,41 @@ class Page {
         // removed the data-ytid attribute from video elements
         // So there's really no way to get the UCID anymore,
         // short of wasting time chasing some Google API.
-        let videos: NodeListOf<VideoBasic> = document.querySelectorAll(".video-list-item");
+        let videos: NodeListOf<VideoBasic> = document.querySelectorAll('.video-list-item');
 
         for (let vid of videos) {
             if (!forceUpdate && vid.processed) continue;
 
-            let user, userNode = vid.querySelector("[data-ytid]");
+            let user, userNode = vid.querySelector('[data-ytid]');
 
             if (!user) {
                 continue;
             } else {
-                user = userNode.getAttribute("data-ytid");
+                user = userNode.getAttribute('data-ytid');
             }
             let inwhite = ChannelID.inwhitelist(user, true) !== -1
-            let links = vid.querySelectorAll("a[href^='/watch?']");
+            let links = vid.querySelectorAll('a[href^="/watch?"]');
             if (inwhite || forceUpdate) {
                 for (let link of links) {
-                    link.setAttribute("href", this.reflectURLFlag(link.getAttribute("href"), inwhite));
+                    link.setAttribute('href', this.reflectURLFlag(link.getAttribute('href'), inwhite));
                 }
             }
             vid.processed = true;
         }
     }
     updateURL(channelId: Channel, verify: boolean) {
-        if (!channelId) throw "No channel ID passed to updateURL";
+        if (!channelId) throw 'No channel ID passed to updateURL';
 
-        if (location.href.indexOf("&disableadblock=1") !== -1) {
+        if (location.href.indexOf('&disableadblock=1') !== -1) {
             // ads are enabled, should we correct that?
             if (ChannelID.inwhitelist(channelId) === -1) {
-                window.history.replaceState(history.state, "", pages.reflectURLFlag(location.href, false));
+                window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, false));
                 return false;
             } else return true;
         } else {
             // ads are not enabled, lets see if they should be
             if (ChannelID.inwhitelist(channelId) !== -1) {
-                window.history.replaceState(history.state, "", pages.reflectURLFlag(location.href, true));
+                window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, true));
 
                 if (verify) this.confirmDisabled();
                 return true;
@@ -1393,18 +1393,18 @@ class Page {
 
         if (shouldContain) {
             url = this.reflectURLFlag(url, false); // remove first, then add
-            let paramsStart = url.indexOf("?");
-            return url + (paramsStart === -1 ? "?igno=re" : (paramsStart === url.length - 1 ? "igno=re" : "")) + "&disableadblock=1"
+            let paramsStart = url.indexOf('?');
+            return url + (paramsStart === -1 ? '?igno=re' : (paramsStart === url.length - 1 ? 'igno=re' : '')) + '&disableadblock=1'
 
         } else {
-            return url.replace(search, "");
+            return url.replace(search, '');
         }
     }
 
     confirmDisabled(): void {
         setTimeout(() =>
-            fetch("https://www.youtube.com/favicon.ico?ads=true").catch(() =>
-                prompt("Ads may still be blocked, make sure you've added the following rule to your uBlock Origin whitelist", "*youtube.com/*&disableadblock=1")
+            fetch('https://www.youtube.com/favicon.ico?ads=true').catch(() =>
+                prompt('Ads may still be blocked, make sure you\'ve added the following rule to your uBlock Origin whitelist', '*youtube.com/*&disableadblock=1')
             )
             , 300);
     }
@@ -1423,7 +1423,7 @@ function oGet(object: any, keyString: string) {
     for (let prop of props) {
         if (prop.length === 0) continue;
         if (current[prop] !== undefined) current = current[prop];
-        else return // console.log("Failed at", level);            
+        else return // console.log('Failed at', level);            
     }
 
     return current;
@@ -1440,15 +1440,15 @@ class LoadHastener {
     constructor() {
         this.watcher = new MutationObserver(mutations => {
             for (let mutation of mutations) {
-                if (mutation.type === "childList") {
+                if (mutation.type === 'childList') {
                     for (let node of mutation.addedNodes) {
-                        if (node.nodeName === "BODY") {
+                        if (node.nodeName === 'BODY') {
                             return this.switchToBody();
-                        } else if (node.nodeName === "SCRIPT") {
-                            if ((node as HTMLScriptElement).src.indexOf("polymer.js") !== -1) {
+                        } else if (node.nodeName === 'SCRIPT') {
+                            if ((node as HTMLScriptElement).src.indexOf('polymer.js') !== -1) {
                                 return this.confirmDesign(Layout.Polymer);
                             }
-                        } else if ((node as Element).localName === "ytd-app") {
+                        } else if ((node as Element).localName === 'ytd-app') {
                             return this.confirmDesign(Layout.Polymer);
                         }
                     }
@@ -1460,19 +1460,19 @@ class LoadHastener {
     }
 
     getDesign(): Promise<Layout> {
-        if (document.readyState === "complete" || document.readyState === "interactive") {
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
             return Promise.resolve(Page.getDesign());
         } else {
             return new Promise(resolve => {
                 this.designConfirmed = resolve;
                 this.watcher.observe(document.body || document.documentElement, { childList: true });
-                document.addEventListener("DOMContentLoaded", this.contentLoaded);
+                document.addEventListener('DOMContentLoaded', this.contentLoaded);
             })
         }
     }
     confirmDesign(design: Layout): void {
         this.watcher.disconnect();
-        document.removeEventListener("DOMContentLoaded", this.contentLoaded)
+        document.removeEventListener('DOMContentLoaded', this.contentLoaded)
         this.designConfirmed(design);
     }
 
@@ -1493,15 +1493,15 @@ function init(design: Layout) {
     watcher.start();
 
     agent
-        .on("settings-update", (updated: any) => {
+        .on('settings-update', (updated: any) => {
             settings = updated.settings;
             pages.update(true, updated.initiator)
         })
-        .on("ad-update", (ad: any) => {
+        .on('ad-update', (ad: any) => {
             pages.updateAd(ad);
         })
-        .on("destroy", () => {
-            console.log("Detaching inject script..");
+        .on('destroy', () => {
+            console.log('Detaching inject script..');
 
             agent.destroy();
             watcher.destroy();
@@ -1510,10 +1510,10 @@ function init(design: Layout) {
             watcher = null;
             pages = null;
         })
-        .send("ready");
+        .send('ready');
 
     function domCleanup() {
-        let nodes = document.querySelectorAll(".UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu");
+        let nodes = document.querySelectorAll('.UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu');
 
         for (let node of nodes) {
             node.remove();
@@ -1522,7 +1522,7 @@ function init(design: Layout) {
 }
 // MAIN ENTRY POINT
 agent = new MessageAgent();
-agent.send("get-settings").then(response => {
+agent.send('get-settings').then(response => {
     settings = response.settings;
     accessURLs = response.accessURLs;
 

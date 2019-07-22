@@ -1,6 +1,6 @@
 
-import * as React from "react";
-import { FunctionComponent, useState, cloneElement } from "react";
+import * as React from 'react';
+import { FunctionComponent, useState, cloneElement } from 'react';
 
 const TabContainer: FunctionComponent<{
     children: React.ReactElement<TabPaneProps>[],
@@ -15,24 +15,24 @@ const TabContainer: FunctionComponent<{
     }));
 
     return <>
-        <ul className="nav nav-tabs d-sm-none d-md-flex">
-            <li className="nav-item">
-                <a className="nav-link">
-                    <img src="/img/icon_16.png" />
+        <ul className='nav nav-tabs d-sm-none d-md-flex'>
+            <li className='nav-item'>
+                <a className='nav-link'>
+                    <img src='/img/icon_16.png' />
                 </a>
             </li>
 
             {navTitles.map(([id, title]) =>
-                <li key={title} className="nav-item">
+                <li key={title} className='nav-item'>
                     <a
-                        className={"nav-link " + (currentTab === id ? "active" : "")}
+                        className={'nav-link ' + (currentTab === id ? 'active' : '')}
                         onClick={() => setCurrentTab(id)}
-                        href={"#" + id}>
+                        href={'#' + id}>
                         {title}
                     </a>
                 </li>)}
         </ul>
-        <div className="tab-content mt-2">
+        <div className='tab-content mt-2'>
             {tabs}
         </div>
     </>;
@@ -45,7 +45,7 @@ interface TabPaneProps {
     children: JSX.Element[] | JSX.Element | string
 }
 const TabPane: FunctionComponent<TabPaneProps> = ({ active, children }) => {
-    return <div className={"tab-pane fade " + (active ? "active show" : "")}>
+    return <div className={'tab-pane fade ' + (active ? 'active show' : '')}>
         {children}
     </div>
 }
