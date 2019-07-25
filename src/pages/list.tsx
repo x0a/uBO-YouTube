@@ -160,7 +160,7 @@ const MutelistTable: FunctionComponent<{
         title={full
             ? fullHeader(i18n('mutelistHeader'))
             : popupHeader(i18n('mutelistHeader'))}
-        actionDesc={i18n('removeMuteTooltip')}
+        actionDesc={i18n('removeMuteBtn')}
         enableBulk={full}
         onAction={channel => {
             alert(i18n('removeMuteConfirm', channel.display), true, false)
@@ -188,7 +188,7 @@ const UnmutelistTable: FunctionComponent<{
         title={full
             ? fullHeader(i18n('unmutedHeader'))
             : popupHeader(i18n('unmutedHeader'))}
-        actionDesc={i18n('removeUnmuteTooltip')}
+        actionDesc={i18n('muteBtn')}
         enableBulk={full}
         onAction={channel => {
             alert(i18n('removeunMuteConfirm', channel.display), true, false)

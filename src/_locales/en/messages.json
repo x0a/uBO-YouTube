@@ -9,7 +9,18 @@
     },
     "optionsBtn": {
         "message": "Options",
-        "description": "For a button, when clicked opens the full settings page"
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "Options for this advertiser"
+    },
+    "adOptionsTooltip": {
+        "message": "Manage ads from \"$title$\"",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
     },
     "reset": {
         "message": "Reset to default settings"
@@ -27,9 +38,19 @@
         "message": "Whitelist",
         "description": "Appears as title for tab in options page"
     },
+    "whitelistTooltip": {
+        "message": "Enable ads for this channel"
+    },
+    "whitelistedTooltip": {
+        "message": "Ads enabled for this channel"
+    },
     "adsTabTitle": {
         "message": "Ads",
         "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "Ads",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
     },
     "miscTabTitle": {
         "message": "Misc",
@@ -61,11 +82,14 @@
     "bulkRemoveBtn": {
         "message": "Remove selected"
     },
+    "adsStillBlocked": {
+        "message": "Ads may still be blocked, make sure you've added the following rule to your uBlock Origin whitelist"
+    },
     "adsHeaderLong": {
-        "message":"Recently detected advertisers"
+        "message": "Recently detected advertisers"
     },
     "adsHeaderShort": {
-        "message":"Recent ads"
+        "message": "Recent ads"
     },
     "whitelistHeader": {
         "message": "Whitelisted Channels"
@@ -97,7 +121,6 @@
             }
         }
     },
-
     "blacklistHeader": {
         "message": "Blacklisted Advertisers"
     },
@@ -123,7 +146,7 @@
     "unmutedHeader": {
         "message": "Unmuted Advertisers"
     },
-    "removeUnmuteTooltip": {
+    "muteBtn": {
         "message": "Mute advertiser"
     },
     "removeUnmuteConfirm": {
@@ -145,8 +168,11 @@
     "mutelistHeader": {
         "message": "Muted Advertisers"
     },
-    "removeMuteTooltip": {
+    "removeMuteBtn": {
         "message": "Unmute advertiser"
+    },
+    "removeMuteTooltip": {
+        "message": "Remove advertiser from mutelist"
     },
     "removeMuteConfirm": {
         "message": "Are you sure you want to remove \"$channelName$\" from mutelist?",
@@ -191,19 +217,28 @@
     "overlaysOption": {
         "message": "Hide ad overlays"
     },
-    "adBlocked":{
+    "adBlocked": {
         "message": "Blocked",
         "description": "Shown next to ads that were blocked"
     },
-    "adAllowed":{
+    "adAllowed": {
         "message": "Allowed",
         "description": "Shown next to ads that were allowed through"
     },
-    "muteAdvertiserTooltip":{
-        "message": "Mute ads from this advertiser"
+    "muteAdvertiserTooltip": {
+        "message": "Automatically mute all ads from this advertiser"
     },
-    "blacklistAdvertiserTooltip":{
-        "message": "Block ads from this advertiser"
+    "blacklistAdvertiserTooltip": {
+        "message": "Block all ads from this advertiser"
+    },
+    "blacklistBtn": {
+        "message": "Block advertiser"
+    },
+    "skipBtn": {
+        "message": "Force skip"
+    },
+    "skipTooltip": {
+        "message": "Attempt to skip this ad"
     },
     "permissionDesc": {
         "message": "A one-time permission is needed to search for YouTube channels"

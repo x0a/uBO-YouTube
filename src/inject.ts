@@ -26,9 +26,13 @@ interface ChannelElement extends HTMLDivElement {
     whitelistButton: WhitelistButtonPoly;
 }
 
+interface LocaleMessages {
+    [messageName: string]: string
+}
 /* ---------------------------- */
 
 let settings: Settings;
+let locale: LocaleMessages;
 let accessURLs: AccessURL;
 let pages: Page, watcher: MutationWatcher, agent: MessageAgent;
 
@@ -329,7 +333,7 @@ class WhitelistButton {
 
         this.button = document.createElement('button');
         this.button.className = 'UBO-wl-btn';
-        this.button.title = 'Enable ads for this channel';
+        this.button.title = i18n('whitelistTooltip');
         this.button.addEventListener('click', onClick);
 
         this.buttonContainer = document.createElement('div');
@@ -340,7 +344,7 @@ class WhitelistButton {
         if (!this.toggled) return;
 
         this.toggled = false;
-        this.button.title = 'Enable ads for this channel';
+        this.button.title = i18n('whitelistTooltip');
         this.button.classList.remove('yt-uix-button-toggled');
     }
 
@@ -348,7 +352,7 @@ class WhitelistButton {
         if (this.toggled) return;
 
         this.toggled = true;
-        this.button.title = 'Ads enabled for this channel';
+        this.button.title = i18n('whitelistedTooltip');
         this.button.classList.add('yt-uix-button-toggled');
     }
 
@@ -359,7 +363,7 @@ class WhitelistButtonPoly extends WhitelistButton {
     constructor(onClick: EventListener, toggled: boolean) {
         super(onClick, toggled);
         this.button.className += ' UBO-wl-poly ' + (toggled ? ' yt-uix-button-toggled' : '');
-        this.button.innerHTML = 'ADS';
+        this.button.innerHTML = i18n('adsEnableBtn').toUpperCase();
         this.buttonContainer.appendChild(this.button);
     }
     exists() {
@@ -374,7 +378,7 @@ class WhitelistButtonBasic extends WhitelistButton {
     constructor(onClick: EventListener, toggled: boolean) {
         super(onClick, toggled);
         this.button.className += ' UBO-old yt-uix-button yt-uix-button-size-default yt-uix-button-subscribed-branded hover-enabled' + (toggled ? ' yt-uix-button-toggled' : '');
-        this.button.innerHTML = 'Ads';
+        this.button.innerHTML = i18n('adsEnableBtn');
     }
     exists() {
         return document.body.contains(this.button);
@@ -405,15 +409,15 @@ class AdOptions {
         this.unMuteIcon = this.generateIcon(icons.unMute);
         this.muteIcon = this.generateIcon(icons.mute)
         this.muteButton = this.generateMenuItem(
-            'Mute advertiser',
-            'Automatically mute all ads from this advertiser',
+            i18n('muteBtn'),
+            i18n('muteAdvertiserTooltip'),
             this.muteIcon,
             onMute
         )
 
         this.skipButton = this.generateMenuItem(
-            'Force skip',
-            'Attempt to skip this ad',
+            i18n('skipBtn'),
+            i18n('skipTooltip'),
             icons.fastForward,
             () => {
                 this.closeMenu();
@@ -421,8 +425,8 @@ class AdOptions {
             }
         )
         this.blacklistButton = this.generateMenuItem(
-            'Block advertiser',
-            'Block all ads from this advertiser',
+            i18n('blacklistBtn'),
+            i18n('blacklistAdvertiserTooltip'),
             icons.block,
             onBlacklist
         );
@@ -539,8 +543,8 @@ class AdOptions {
                 .then(resp => {
                     this.muted = true;
                     this.muteButton.setIcon(this.unMuteIcon);
-                    this.muteButton.setText('Unmute advertiser');
-                    this.muteButton.setDescription('Remove advertiser from mutelist');
+                    this.muteButton.setText(i18n('removeMuteBtn'));
+                    this.muteButton.setDescription(i18n('removeMuteTooltip'));
                 })
                 .catch(error => {
                     console.error('Error muting:', error);
@@ -568,11 +572,11 @@ class AdOptions {
     }
 
     set advertiserName(title: string) {
-        this.tooltip.textContent = `Manage ads from "${title}"`;
+        this.tooltip.textContent = i18n('adOptionsTooltip', title);
     }
 
     reset() {
-        this.tooltip.textContent = 'Options for this advertiser';
+        this.tooltip.textContent = i18n('adOptionsDefaultTooltip');
         this.blacklistOption = false;
         this.muteOption = false;
         this.skipOption = false;
@@ -1404,7 +1408,7 @@ class Page {
     confirmDisabled(): void {
         setTimeout(() =>
             fetch('https://www.youtube.com/favicon.ico?ads=true').catch(() =>
-                prompt('Ads may still be blocked, make sure you\'ve added the following rule to your uBlock Origin whitelist', '*youtube.com/*&disableadblock=1')
+                prompt(i18n('adsStillBlocked'), '*youtube.com/*&disableadblock=1')
             )
             , 300);
     }
@@ -1485,8 +1489,28 @@ class LoadHastener {
     }
 
 }
+const i18n = (messageName: string, substitutions?: any | Array<any>): string => {
+    const message = locale[messageName];
+    if (!message) {
+        console.error('No i18n message found for', messageName);
+        return '';
+    }
 
-function init(design: Layout) {
+    if (!substitutions)
+        return message;
+
+    const subs = substitutions instanceof Array
+        ? substitutions.map(i => i + '')
+        : [substitutions + ''];
+    let result = message;
+    
+    for (let i = 0; i < subs.length; i++)
+        result = result.replace(new RegExp('\\$' + (i + 1) + '\\$', 'g'), subs[i]);
+
+    return result;
+}
+
+const init = (design: Layout) => {
     pages = new Page(design || Page.getDesign());
     watcher = new MutationWatcher();
     pages.update(true);
@@ -1525,6 +1549,7 @@ agent = new MessageAgent();
 agent.send('get-settings').then(response => {
     settings = response.settings;
     accessURLs = response.accessURLs;
+    locale = response.i18n;
 
     let load = new LoadHastener();
     load.getDesign().then(design => init(design));
