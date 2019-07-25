@@ -62,12 +62,28 @@ class InitManager {
     }
     retrieveSettings() {
         return browser.runtime.sendMessage({ action: 'get', subaction: 'settings' }).then((message: any) => {
-            if(message.error) throw message.error;
+            if (message.error) throw message.error;
 
             return {
                 settings: message.response,
                 accessURLs: {
                     ICO: browser.runtime.getURL('img/icon_16.png')
+                },
+                i18n: {
+                    adOptionsDefaultTooltip: browser.i18n.getMessage('adOptionsDefaultTooltip'),
+                    adOptionsTooltip: browser.i18n.getMessage('adOptionsTooltip', '$1$'),
+                    removeMuteBtn: browser.i18n.getMessage('removeMuteBtn'),
+                    removeMuteTooltip: browser.i18n.getMessage("removeMuteTooltip"),
+                    adsStillBlocked: browser.i18n.getMessage('adsStillBlocked'),
+                    whitelistTooltip: browser.i18n.getMessage('whitelistTooltip'),
+                    whitelistedTooltip: browser.i18n.getMessage('whitelistedTooltip'),
+                    muteBtn: browser.i18n.getMessage('muteBtn'),
+                    blacklistAdvertiserTooltip: browser.i18n.getMessage('blacklistAdvertiserTooltip'),
+                    muteAdvertiserTooltip: browser.i18n.getMessage('muteAdvertiserTooltip'),
+                    adsEnableBtn: browser.i18n.getMessage('adsEnableBtn'),
+                    blacklistBtn: browser.i18n.getMessage('blacklistBtn'),
+                    skipBtn: browser.i18n.getMessage('skipBtn'),
+                    skipTooltip: browser.i18n.getMessage('skipTooltip')
                 }
             }
         })
@@ -214,6 +230,13 @@ class AdWatcher {
         }
         document.removeEventListener('beforescriptexecute', this.onScript);
     }
+}
+
+if (location.pathname === "/ubo-yt") {
+    const allowed = ['whitelist', 'ads', 'misc'];
+    const tab = allowed.find(tab => '#' + tab === location.hash.toLowerCase()) || '';
+
+    browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
 }
 
 window.dispatchEvent(new CustomEvent('uBOWLInstance')); // signal to any pre-existing instances that they should unload
