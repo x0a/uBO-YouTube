@@ -352,6 +352,12 @@ SettingsManager.getSettings().then((_settings: Settings) => {
         .on('ads', (_, __) => ads.get());
 
     listener.onAction('tab')
+        .on('settings', (sender, tab) =>
+            browser.tabs.create({
+                url: browser.runtime.getURL('settings.html') + (tab ? '#' + tab : ''),
+                active: true
+            })
+                .then(() => browser.tabs.remove(sender.tab.id)))
         .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
         .on('last-ad', (sender, _) => ads.getLastAdFromTab(sender.tab.id));
 
