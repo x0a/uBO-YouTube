@@ -195,13 +195,16 @@ class AdManager {
 
         this.pending.push({ details: details, promise: promise });
 
-        promise.then((ad: Ad) => {
-            this.pending.splice(this.pending.findIndex(item => promise === item.promise), 1)
-            this.push(ad);
-            this.sendToTab(ad.details.tabId, ad);
-        }).catch(ad => {
-            console.error('No UCID available', ad)
-        });
+        promise
+            .then((ad: Ad) => {
+                this.pending.splice(this.pending.findIndex(item => promise === item.promise), 1)
+                this.push(ad);
+                this.sendToTab(ad.details.tabId, ad);
+            })
+            .catch(ad => {
+                this.pending.splice(this.pending.findIndex(item => promise === item.promise), 1);
+                console.error('No UCID available', ad);
+            });
 
         return [resolver, rejector];
     }
@@ -274,7 +277,7 @@ class AdManager {
             return fetch('https://www.youtube.com/channel/' + id)
                 .then(response => response.text())
                 .then(text => {
-                    let matches = text.match(/\<meta name=\"title\" content=\"(.+)\"\>/);
+                    const matches = text.match(/\<meta name=\"title\" content=\"(.+)\"\>/);
                     if (matches && matches[1]) {
                         return matches[1];
                     } else {
@@ -290,7 +293,7 @@ class AdManager {
     getChannelFromURL(url: string): string {
         if (!url) return '';
 
-        let matches = url.match(/\/channel\/([\w-]+)(?:\/|$|\?)/);
+        const matches = url.match(/\/channel\/([\w-]+)(?:\/|$|\?)/);
 
         if (matches && matches[1])
             return matches[1];
@@ -299,14 +302,13 @@ class AdManager {
     }
 
     parseURL(url: string): ParsedURL {
-        let pathname;
-        let params = {} as Ad;
-        let queryStart = url.indexOf('?');
+        const params = {} as Ad;
+        const queryStart = url.indexOf('?');
         // read from the last instance of "/" until the "?" query marker
-        pathname = url.substring(url.lastIndexOf('/', queryStart), queryStart)
-        let queries = new URLSearchParams(url.substring(queryStart + 1));
+        const pathname = url.substring(url.lastIndexOf('/', queryStart), queryStart)
+        const queries = new URLSearchParams(url.substring(queryStart + 1));
 
-        for (let [key, value] of queries.entries()) {
+        for (const [key, value] of queries.entries()) {
             params[key] = value;
         }
 
@@ -427,7 +429,7 @@ SettingsManager.getSettings().then((_settings: Settings) => {
                     }
                 }
             }
-
+            ad.video_id = url.params.video_id;
             ad.details = details;
             ad.blocked = shouldCancel;
 
