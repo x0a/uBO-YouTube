@@ -292,7 +292,7 @@ class MutationWatcher {
                 } else if (overlaySkipButton = this.isOverlayAd(mutation)) {
                     overlaySkipButton.click();
                 } else if (this.isAdCompanion(mutation)) {
-                    pages.video.updateAdButton();
+                    setTimeout(() => pages.video.updateAdButton(), 500);
                 }
             } else {
                 if (mode === PageType.Channel) {
@@ -308,7 +308,7 @@ class MutationWatcher {
                     } else if (skipContainer = this.isAdSkipContainer(mutation)) {
                         pages.channel.skipButtonUpdate(this.adSkipButton(skipContainer));
                     } else if (this.isAdCompanion(mutation)) {
-                        pages.video.updateAdButton();
+                        setTimeout(() => pages.video.updateAdButton(), 500);
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
@@ -753,8 +753,10 @@ class SingleChannelPage {
             this.attemptSkip();
     }
     updateAdInformation(ad: Ad) {
-        if (this.currentAd) {
+        if (this.currentAd && this.currentAd.video_id !== ad.video_id) {
             this.adConfirmed = false;
+            this.adOptions.reset();
+            this.adOptions.skipOption = true;
         }
         this.currentAd = ad;
         this.updateAdButton();
@@ -817,10 +819,15 @@ class SingleChannelPage {
 
     verifyAd() {
         return this.withinSpec(this.currentDuration, this.currentAd.length_seconds)
-            || this.matchAdCompanion();
+            || this.matchAdCompanion()
+            || (typeof this.currentPlayer.src === 'string'
+                && this.currentPlayer.src.indexOf('blob:') === 0);
+        // if all else fails, just go with the fact that the ad is streaming from YT
+        // and not some third party
     }
     matchAdCompanion() {
         const companion = document.querySelector('ytd-companion-slot-renderer');
+
         return companion
             && oGet(companion, 'data.actionCompanionAdRenderer.adVideoId') === this.currentAd.video_id
     }
