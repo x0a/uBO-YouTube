@@ -18,14 +18,29 @@ const ChannelTable: FunctionComponent<{
     onBulkAction: (items: Array<Channel>) => any;
 }> = ({ title, list, onBulkAction, enableBulk, onAction, actionDesc }) => {
     const [channels, setChannels] = useState([] as ChannelListModify);
+    const [checkAll, toggleCheckAll] = useState(false);
     const getURL = (id: string) => 'https://youtube.com/channel/' + id;
-    const toggleCheck = (_id: string) => enableBulk && setChannels(channels
+    const toggleCheck = (_id: string) => {
+        if(enableBulk) setChannels(channels
         .map(({ checked, id, display, username }) => ({
             checked: _id === id ? !checked : checked,
             id,
             display,
             username
         })))
+        toggleCheckAll(false);
+    }
+    const toggleAll = () => {
+        const nextCheck = !checkAll;
+        setChannels(channels
+            .map(({ id, display, username }) => ({
+                checked: nextCheck,
+                id,
+                display,
+                username
+            })))
+        toggleCheckAll(nextCheck);
+    }
     const selectionsMade = () => channels.some(channel => channel.checked);
     const onListAction = () => {
         const selected = channels
@@ -53,7 +68,9 @@ const ChannelTable: FunctionComponent<{
         <table className='table table-sm table-hover'>
             <thead className='thead-dark d-sm-none d-md-table-header-group'>
                 <tr>
-                    {enableBulk && <th></th>}
+                    {enableBulk && <th>{!!channels.length &&
+                        <input type="checkbox" checked={checkAll} onChange={toggleAll} />
+                    }</th>}
                     <th>{i18n('channelColumn')}</th>
                     <th>{i18n('removeRow')}</th>
                 </tr>
