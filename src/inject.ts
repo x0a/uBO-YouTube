@@ -165,7 +165,10 @@ class MutationWatcher {
         return container.style.display !== 'none'
             && container.querySelector('button');
     }
-
+    isAdCompanion(mutation: MutationElement): boolean {
+        return mutation.target.id === "player-ads"
+            && !!mutation.addedNodes.length
+    }
     pollUpdate(method: Function) {
         // To prevent excessive updating, wait
         let ticket: Action;
@@ -264,7 +267,7 @@ class MutationWatcher {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
-            //this.findInjection(mutation, '.ytp-error');
+            //this.findInjection(mutation, 'ytd-companion-slot-renderer');
             if (mode === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
 
@@ -288,6 +291,8 @@ class MutationWatcher {
                     pages.video.skipButtonUpdate(this.adSkipButton(skipContainer));
                 } else if (overlaySkipButton = this.isOverlayAd(mutation)) {
                     overlaySkipButton.click();
+                } else if (this.isAdCompanion(mutation)) {
+                    pages.video.updateAdButton();
                 }
             } else {
                 if (mode === PageType.Channel) {
@@ -302,6 +307,8 @@ class MutationWatcher {
                         pages.channel.durationUpdate(mutation.target.textContent);
                     } else if (skipContainer = this.isAdSkipContainer(mutation)) {
                         pages.channel.skipButtonUpdate(this.adSkipButton(skipContainer));
+                    } else if (this.isAdCompanion(mutation)) {
+                        pages.video.updateAdButton();
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
@@ -717,7 +724,7 @@ class SingleChannelPage {
                 this.currentDuration = (duration && duration.textContent) || '';
 
                 agent.send('recent-ad').then(message => {
-                    this.currentAd = message.ad as Ad;
+                    this.currentAd = message.response as Ad;
                     this.updateAdButton();
                 })
             }
@@ -754,7 +761,7 @@ class SingleChannelPage {
     }
 
     updateAdButton() {
-        if (!this.adConfirmed && this.adPlaying && this.currentAd && this.withinSpec(this.currentDuration, this.currentAd.length_seconds)) {
+        if (!this.adConfirmed && this.adPlaying && this.currentAd && this.verifyAd()) {
             this.adConfirmed = true;
             this.adOptions.muteOption = true;
             this.adOptions.blacklistOption = true;
@@ -808,6 +815,15 @@ class SingleChannelPage {
         this.updateAdButton()
     }
 
+    verifyAd() {
+        return this.withinSpec(this.currentDuration, this.currentAd.length_seconds)
+            || this.matchAdCompanion();
+    }
+    matchAdCompanion() {
+        const companion = document.querySelector('ytd-companion-slot-renderer');
+        return companion
+            && oGet(companion, 'data.actionCompanionAdRenderer.adVideoId') === this.currentAd.video_id
+    }
     withinSpec(durationText: string, target: number) {
         let duration = this.toSeconds(durationText);
 
@@ -1503,7 +1519,7 @@ const i18n = (messageName: string, substitutions?: any | Array<any>): string => 
         ? substitutions.map(i => i + '')
         : [substitutions + ''];
     let result = message;
-    
+
     for (let i = 0; i < subs.length; i++)
         result = result.replace(new RegExp('\\$' + (i + 1) + '\\$', 'g'), subs[i]);
 
