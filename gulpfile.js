@@ -208,6 +208,7 @@ gulp.task("watch", gulp.series("default", () => {
     let server = require("http").createServer(() => { })
     server.listen(3050, () => { })
     ws = new wsServer({ httpServer: server });
+    console.log("Websockets server listening on port 3050...");
 
     ws.on("request", req => {
         let con = req.accept(null, req.origin);
