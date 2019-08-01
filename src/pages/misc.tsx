@@ -4,7 +4,7 @@ import { Settings } from '../typings';
 import {
     Confirm, isSettings, cleanSettings, diffSettings,
     mergeSettings, readJSONFile, bMessage, openTab,
-    getExtURL, i18n
+    getExtURL, i18n, getManifest
 } from './common';
 
 const Import: FunctionComponent<{
@@ -92,7 +92,12 @@ const Reset: FunctionComponent<{
         <i className='fas fa-trash' /> {i18n('resetBtn')}
     </button>
 }
-
+const ListGroupItem: FunctionComponent<{
+    children: JSX.Element | Array<JSX.Element | string> | string
+}> = ({ children }) =>
+        <div className='list-group-item d-flex w-100 justify-content-between'>
+            {children}
+        </div>
 const SettingsPage = () => <button
     className='btn btn-primary btn-sm'
     onClick={() => {
@@ -109,24 +114,42 @@ const Options: FunctionComponent<{
     return <div className='row'>
         <div className='d-sm-none d-md-block col-md-6'>
             <div className='list-group list-group-flush'>
-                <div className='list-group-item'>
-                    <div className='d-flex w-100 justify-content-between'>
-                        {i18n('import')}
-                        <Import alert={alert} settings={settings} />
+                <ListGroupItem>
+                    {i18n('import')}
+                    <Import alert={alert} settings={settings} />
+                </ListGroupItem>
+                <ListGroupItem>
+                    {i18n('export')}
+                    <Export settings={settings} />
+                </ListGroupItem>
+                <ListGroupItem>
+                    {i18n('reset')}
+                    <Reset alert={alert} className='' />
+                </ListGroupItem>
+            </div>
+        </div>
+        <div className='d-sm-none d-md-block col-md-6'>
+            <div className='list-group list-group-flush'>
+                <ListGroupItem>
+                    Version
+                    <div>
+                        <strong>{getManifest().version}</strong>
                     </div>
-                </div>
-                <div className='list-group-item'>
-                    <div className='d-flex w-100 justify-content-between'>
-                        {i18n('export')}
-                        <Export settings={settings} />
+                </ListGroupItem>
+                <ListGroupItem>
+                    Provide translations
+                    <a href="https://crowdin.com/project/youtube-channel-whitelist-for">
+                        <strong>Crowdin</strong>
+                    </a>
+                </ListGroupItem>
+                <ListGroupItem>
+                    Report issues/suggestions
+                    <div>
+                        <a href="https://github.com/x0a/uBO-YouTube">
+                            <strong>Github</strong>
+                        </a>
                     </div>
-                </div>
-                <div className='list-group-item'>
-                    <div className='d-flex w-100 justify-content-between'>
-                        {i18n('reset')}
-                        <Reset alert={alert} className='' />
-                    </div>
-                </div>
+                </ListGroupItem>
             </div>
         </div>
         <div className='d-md-none float-right-sm'>

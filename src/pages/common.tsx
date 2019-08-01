@@ -28,6 +28,7 @@ const bMessage = (action: string, subaction: string, param?: any) => {
             return response;
         })
 }
+const getManifest = () => browser.runtime.getManifest();
 const requestGooglePermission = () => {
     return browser.permissions.request({ origins: ['*://*.content.googleapis.com/'] })
         .then(() => bMessage('permission', 'google-api'))
@@ -108,5 +109,5 @@ export {
     bMessage, Confirm, isSettings, cleanSettings,
     diffSettings, diffList, readJSONFile, mergeSettings,
     fullHeader, popupHeader, onSettings, openTab, getExtURL,
-    requestGooglePermission, i18n
+    requestGooglePermission, i18n, getManifest
 }

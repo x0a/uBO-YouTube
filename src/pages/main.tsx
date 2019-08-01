@@ -4,7 +4,7 @@ import { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable } from '
 import { bMessage, onSettings, i18n } from './common';
 import { Settings } from '../typings';
 import { TabContainer, TabPane } from './tabs';
-import Options from './options';
+import Options from './misc';
 import ChannelSearch from './search';
 import ImportSubscriptions from './subscriptions';
 import Switch from './switch';
