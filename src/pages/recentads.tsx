@@ -12,17 +12,21 @@ const AdItem: FunctionComponent<{
 }> = ({ ad, muted, blocked, full }) => {
     let url = '';
     const matches = ad.details.url.match(/\&video_id=([A-Za-z_\-0-9]+)\&/);
+    
     if (matches && matches.length > 1) {
         const videoId = matches[1];
         url = 'http://www.youtube.com/watch?v=' + videoId;
     }
+
     const channelURL = 'http://www.youtube.com/channel/' + ad.channelId.id;
+
     const onMute = () => {
         bMessage('set', 'add-mute', ad.channelId);
     }
     const onBlock = () => {
         bMessage('set', 'add-black', ad.channelId)
     }
+
     return <tr>
         <td>
             <Link className='font-weight-bold-sm' href={channelURL}>{ad.author}</Link>
@@ -63,14 +67,17 @@ const RecentAds: FunctionComponent<{
     settings: Settings;
 }> = ({ full, settings }) => {
     const [ads, setAds] = useState([] as Array<Ad>);
+
     useEffect(() => {
         bMessage('get', 'ads').then((ads: Array<Ad>) => {
             console.log('Ads: ', ads);
-            setAds(ads);
+            setAds(full ? ads : ads.slice(Math.max(ads.length - 5, 0), ads.length));
         })
     }, [])
-    const isBlocked = (channel: Channel) => settings.blacklisted.findIndex(({ id }) => id === channel.id) !== -1
-    const isMuted = (channel: Channel) => settings.muted.findIndex(({ id }) => id === channel.id) !== -1
+
+    const isBlocked = (channel: Channel) => settings.blacklisted.findIndex(({ id }) => id === channel.id) !== -1;
+    const isMuted = (channel: Channel) => settings.muted.findIndex(({ id }) => id === channel.id) !== -1;
+
     return <>
         {full
             ? fullHeader(i18n('adsHeaderShort'))
