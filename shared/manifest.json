@@ -1,6 +1,7 @@
 {
     "manifest_version": 2,
     "name": "YouTube Channel Whitelist for uBlock Origin",
+    "shortname": "uBO-YouTube",
     "version": "0.8.12",
     "author": "x0a",
     "description": "Exempt your favorite channels from adblocking.",
