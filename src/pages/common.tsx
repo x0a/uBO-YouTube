@@ -5,6 +5,7 @@ import { HostMessage, ClientMessage, Settings, Channel, ChannelList } from '../t
 let settingsListener: (settings: Settings) => any = () => { };
 
 const isPopup = browser.tabs.getCurrent().then(tab => tab === undefined);
+const checkDev = browser.management.getSelf().then(self => self.installType === 'development');
 const openTab = (url: string) => browser.tabs.create({ url });
 const getExtURL = (path: string) => browser.runtime.getURL(path);
 const onSettings = (fn: (settings: Settings) => any) => {
@@ -109,5 +110,5 @@ export {
     bMessage, Confirm, isSettings, cleanSettings,
     diffSettings, diffList, readJSONFile, mergeSettings,
     fullHeader, popupHeader, onSettings, openTab, getExtURL,
-    requestGooglePermission, i18n, getManifest
+    requestGooglePermission, i18n, getManifest, checkDev
 }

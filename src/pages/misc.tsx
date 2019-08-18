@@ -4,7 +4,7 @@ import { Settings } from '../typings';
 import {
     Confirm, isSettings, cleanSettings, diffSettings,
     mergeSettings, readJSONFile, bMessage, openTab,
-    getExtURL, i18n, getManifest
+    getExtURL, i18n, getManifest, checkDev
 } from './common';
 
 const Import: FunctionComponent<{
@@ -111,6 +111,12 @@ const Options: FunctionComponent<{
     settings: Settings,
     alert: Confirm,
 }> = ({ settings, alert }) => {
+    const [isDev, setDev] = useState(false);
+
+    useEffect(() => {
+        checkDev.then(dev => setDev(dev));
+    }, []);
+
     return <div className='row'>
         <div className='d-sm-none d-md-block col-md-6'>
             <div className='list-group list-group-flush'>
@@ -133,7 +139,7 @@ const Options: FunctionComponent<{
                 <ListGroupItem>
                     Version
                     <div>
-                        <strong>{getManifest().version}</strong>
+                        <strong>{getManifest().version + (isDev ? ' (development)' : '')} </strong>
                     </div>
                 </ListGroupItem>
                 <ListGroupItem>
