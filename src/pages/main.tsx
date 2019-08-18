@@ -38,6 +38,7 @@ const Main: FunctionComponent<{
         muted: [],
         muteAll: false,
         skipOverlays: true,
+        skipAdErrors: true
     } as Settings);
     const [alert, setAlert] = useState(defaultAlert)
 
@@ -102,6 +103,14 @@ const Main: FunctionComponent<{
                                             onChange={(e) => bMessage('set', 'mute-all', e.currentTarget.checked)} />
                                         <span className='ml-2'>
                                             {i18n('muteOption')}
+                                        </span>
+                                    </li>
+                                    <li className='list-group-item list-group-option'>
+                                        <Switch
+                                            checked={settings.skipAdErrors}
+                                            onChange={(e) => bMessage('set', 'skip-ad-errors', e.currentTarget.checked)} />
+                                        <span className='ml-2'>
+                                            {i18n('adErrorsOption')}
                                         </span>
                                     </li>
                                     <li className='list-group-item list-group-option'>

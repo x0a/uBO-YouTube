@@ -16,7 +16,7 @@ class SettingsManager {
     mutelist: Channels;
     muteAll: boolean;
     skipOverlays: boolean;
-
+    skipAdErrors: boolean;
     constructor(settings: Settings) {
         if (!settings) settings = {} as Settings;
         if (!settings.whitelisted) settings.whitelisted = [];
@@ -24,6 +24,7 @@ class SettingsManager {
         if (!settings.muted) settings.muted = [];
         if (!settings.muteAll) settings.muteAll = false;
         if (settings.skipOverlays === undefined) settings.skipOverlays = true;
+        if (settings.skipAdErrors === undefined) settings.skipAdErrors = true;
 
         this.whitelist = new Channels(settings.whitelisted);
         this.blacklist = new Channels(settings.blacklisted);
@@ -84,13 +85,17 @@ class SettingsManager {
     toggleSkipOverlays(on: boolean) {
         this.skipOverlays = !!on;
     }
+    toggleSkipAdErrors(on: boolean){
+        this.skipAdErrors = !!on;
+    }
     get(): Settings {
         return {
             whitelisted: this.whitelist.get(),
             blacklisted: this.blacklist.get(),
             muted: this.mutelist.get(),
             muteAll: this.muteAll,
-            skipOverlays: this.skipOverlays
+            skipOverlays: this.skipOverlays,
+            skipAdErrors: this.skipAdErrors
         };
     }
     getCompressed(): any {
@@ -343,6 +348,7 @@ SettingsManager.getSettings().then((_settings: Settings) => {
         .on('reset', (_, __) => settings = new SettingsManager({} as Settings))
         .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))
         .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
+        .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
         .onAll((sender, _) => {
             settings.save();
             settings.updateAll(sender.tab);
