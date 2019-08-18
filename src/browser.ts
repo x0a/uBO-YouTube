@@ -47,10 +47,12 @@ function getWebExtensionsAPI(): typeof browser {
             api.permissions.contains = promisify(api.permissions, 'contains');
             api.permissions.request = promisify(api.permissions, 'request');
         }
+        if(api.management) { 
+            api.management.getSelf = promisify(api.management, 'getSelf');
+        }
         api.storage.sync.get = promisify(api.storage.sync, 'get');
         api.storage.sync.set = promisify(api.storage.sync, 'set');
         api.storage.sync.clear = promisify(api.storage.sync, 'clear');
-
         api.runtime.sendMessage = promisify(api.runtime, 'sendMessage');
         api.promisified = true;
     };
