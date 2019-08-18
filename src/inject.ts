@@ -76,10 +76,6 @@ class MutationWatcher {
                 return false;
         return null;
     }
-    isPlayerDurationUpdate(mutation: MutationElement) {
-        return mutation.target.className === 'ytp-time-duration'
-            && mutation.addedNodes.length;
-    }
 
     isPolyUserInfo(mutation: MutationElement): HTMLElement {
         if (
@@ -164,10 +160,6 @@ class MutationWatcher {
     adSkipButton(container: HTMLElement): HTMLButtonElement {
         return container.style.display !== 'none'
             && container.querySelector('button');
-    }
-    isAdCompanion(mutation: MutationElement): boolean {
-        return mutation.target.id === "player-ads"
-            && !!mutation.addedNodes.length
     }
     pollUpdate(method: Function) {
         // To prevent excessive updating, wait
@@ -267,7 +259,7 @@ class MutationWatcher {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
-            //this.findInjection(mutation, 'ytd-companion-slot-renderer');
+            //this.findInjection(mutation, 'video');
             if (mode === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
 
@@ -285,14 +277,11 @@ class MutationWatcher {
                     if (errorState !== null) {
                         pages.video.onVideoError(errorState);
                     }
-                } else if (this.isPlayerDurationUpdate(mutation)) {
-                    pages.video.durationUpdate(mutation.target.textContent);
                 } else if (skipContainer = this.isAdSkipContainer(mutation)) {
                     pages.video.skipButtonUpdate(this.adSkipButton(skipContainer));
                 } else if (overlaySkipButton = this.isOverlayAd(mutation)) {
-                    overlaySkipButton.click();
-                } else if (this.isAdCompanion(mutation)) {
-                    setTimeout(() => pages.video.updateAdButton(), 500);
+                    if (settings.skipOverlays)
+                        overlaySkipButton.click();
                 }
             } else {
                 if (mode === PageType.Channel) {
@@ -303,12 +292,8 @@ class MutationWatcher {
                         if (errorState !== null) {
                             pages.channel.onVideoError(errorState);
                         }
-                    } else if (this.isPlayerDurationUpdate(mutation)) {
-                        pages.channel.durationUpdate(mutation.target.textContent);
                     } else if (skipContainer = this.isAdSkipContainer(mutation)) {
                         pages.channel.skipButtonUpdate(this.adSkipButton(skipContainer));
-                    } else if (this.isAdCompanion(mutation)) {
-                        setTimeout(() => pages.video.updateAdButton(), 500);
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
@@ -645,7 +630,6 @@ class SingleChannelPage {
     adOptions: AdOptions;
     channelId?: Channel;
     currentAd: Ad;
-    currentDuration: string;
     firstRun: boolean;
     adPlaying: boolean;
     adConfirmed: boolean;
@@ -658,10 +642,13 @@ class SingleChannelPage {
         this.dataNode = null
         this.buttonParent = null;
         this.whitelistButton = new ButtonFactory(this.toggleWhitelist.bind(this), false);
-        this.adOptions = new AdOptions(this.addBlacklist.bind(this), this.toggleMute.bind(this), this.attemptSkip.bind(this));
+        this.adOptions = new AdOptions(
+            this.addBlacklist.bind(this),
+            this.toggleMute.bind(this),
+            this.attemptSkip.bind(this)
+        );
         this.channelId = null;
         this.currentAd = null;
-        this.currentDuration = '';
         this.firstRun = true;
         this.adPlaying = false;
         this.adConfirmed = false;
@@ -718,11 +705,10 @@ class SingleChannelPage {
             if (this.currentPlayer = player.querySelector('video')) {
                 this.adOptions.skipOption = true;
                 this.adOptions.show();
+                this.onVideoPlayable(this.currentPlayer)
+                    .then(() => this.updateAdButton());
             }
             if (firstRun) {
-                let duration = player.querySelector('.ytp-time-duration');
-                this.currentDuration = (duration && duration.textContent) || '';
-
                 agent.send('recent-ad').then(message => {
                     this.currentAd = message.response as Ad;
                     this.updateAdButton();
@@ -749,7 +735,7 @@ class SingleChannelPage {
     onVideoError(error: boolean) {
         this.videoError = error;
 
-        if (this.videoError && this.adPlaying && this.skipButton)
+        if (this.videoError && this.adPlaying && this.skipButton && settings.skipAdErrors)
             this.attemptSkip();
     }
     updateAdInformation(ad: Ad) {
@@ -758,8 +744,13 @@ class SingleChannelPage {
             this.adOptions.reset();
             this.adOptions.skipOption = true;
         }
+
         this.currentAd = ad;
-        this.updateAdButton();
+
+        if (this.currentPlayer) {
+            this.onVideoPlayable(this.currentPlayer)
+                .then(() => this.updateAdButton());
+        }
     }
 
     updateAdButton() {
@@ -782,8 +773,8 @@ class SingleChannelPage {
             // All of these conditions are met with muteAll !== inmute
 
             this.adOptions.muteTab = muteAll !== inMutelist;
-        } else if (this.adPlaying && this.currentPlayer && settings.muteAll) {
-            this.adOptions.muteTab = true;
+        } else if (this.adPlaying && this.currentPlayer) {
+            this.adOptions.muteTab = settings.muteAll;
         }
     }
     attemptSkip() {
@@ -812,46 +803,31 @@ class SingleChannelPage {
             this.skipButton.click();
         }
     }
-    durationUpdate(duration: string) {
-        this.currentDuration = duration;
-        this.updateAdButton()
-    }
 
     verifyAd() {
-        return this.withinSpec(this.currentDuration, this.currentAd.length_seconds)
-            || this.matchAdCompanion()
+        //console.log(!!this.currentPlayer, typeof this.currentPlayer.src === 'string' && this.currentPlayer.src);
+        return this.matchAdCompanion()
             || (typeof this.currentPlayer.src === 'string'
                 && this.currentPlayer.src.indexOf('blob:') === 0);
         // if all else fails, just go with the fact that the ad is streaming from YT
         // and not some third party
+    }
+
+    onVideoPlayable(video: HTMLVideoElement) {
+        return new Promise((resolve, reject) => {
+            const listener = () => {
+                video.removeEventListener('playing', listener);
+                resolve();
+            }
+            video.addEventListener('playing', listener)
+            setTimeout(reject, 4000);
+        })
     }
     matchAdCompanion() {
         const companion = document.querySelector('ytd-companion-slot-renderer');
 
         return companion
             && oGet(companion, 'data.actionCompanionAdRenderer.adVideoId') === this.currentAd.video_id
-    }
-    withinSpec(durationText: string, target: number) {
-        let duration = this.toSeconds(durationText);
-
-        if (!duration) {
-            return false;
-        } else {
-            return Math.abs(duration - target) < 2;
-        }
-    }
-
-    toSeconds(durationText: string): number {
-        if (typeof durationText !== 'string') return;
-
-        let durationParts = durationText.split(':');
-        let seconds = 0, level = durationParts.length;
-
-        for (let i = 0; i < durationParts.length; i++) {
-            seconds += ~~durationParts[i] * Math.pow(60, --level);
-        }
-
-        return seconds;
     }
 
     addBlacklist() {
@@ -1567,6 +1543,13 @@ const init = (design: Layout) => {
         }
     }
 }
+
+//Object.defineProperty((window as any).HTMLElement.prototype, 'data', {
+//    set: function (to: any) { this.fuckbro = to; console.log('fuck bro', this, to); return to; },
+//    get: function () { return this.fuckbro },
+//    enumerable: true,
+//    configurable: true,
+//})
 // MAIN ENTRY POINT
 agent = new MessageAgent();
 agent.send('get-settings').then(response => {
