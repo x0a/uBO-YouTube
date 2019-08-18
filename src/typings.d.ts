@@ -22,6 +22,7 @@ interface Settings {
     muted: ChannelList;
     muteAll: boolean;
     skipOverlays: boolean;
+    skipAdErrors: boolean;
 }
 
 interface AccessURL {

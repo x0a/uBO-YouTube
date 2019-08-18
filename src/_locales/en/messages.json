@@ -217,6 +217,9 @@
     "overlaysOption": {
         "message": "Hide ad overlays"
     },
+    "adErrorsOption": {
+        "message": "Skip ad playback errors"
+    },
     "adBlocked": {
         "message": "Blocked",
         "description": "Shown next to ads that were blocked"

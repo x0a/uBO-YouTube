@@ -75,7 +75,8 @@ const cleanSettings = (prospect: Settings): Settings => {
         blacklisted: cleanChannelList(prospect.blacklisted),
         muted: cleanChannelList(prospect.muted),
         muteAll: prospect.muteAll === undefined ? false : prospect.muteAll,
-        skipOverlays: prospect.skipOverlays === undefined ? true : prospect.skipOverlays
+        skipOverlays: prospect.skipOverlays === undefined ? true : prospect.skipOverlays,
+        skipAdErrors: prospect.skipAdErrors === undefined ? true : prospect.skipAdErrors
     }
 }
 
@@ -88,7 +89,8 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         blacklisted: diffList(current.blacklisted, next.blacklisted),
         muted: diffList(current.muted, next.muted),
         muteAll: next.muteAll,
-        skipOverlays: next.skipOverlays
+        skipOverlays: next.skipOverlays,
+        skipAdErrors: next.skipAdErrors
     }
 }
 const mergeSettings = (current: Settings, next: Settings): Settings => {
@@ -97,7 +99,8 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         blacklisted: current.blacklisted.concat(next.blacklisted),
         muted: current.muted.concat(next.muted),
         muteAll: next.muteAll,
-        skipOverlays: next.skipOverlays
+        skipOverlays: next.skipOverlays,
+        skipAdErrors: next.skipAdErrors
     }
 }
 const fullHeader = (text: string) => <h4>{text}</h4>;
