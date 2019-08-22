@@ -3,18 +3,20 @@ import browser from '../browser';
 import { HostMessage, ClientMessage, Settings, Channel, ChannelList } from '../typings';
 
 let settingsListener: (settings: Settings) => any = () => { };
+type SettingsFn = (settings: Settings) => any;
 
 const isPopup = browser.tabs.getCurrent().then(tab => tab === undefined);
 const checkDev = browser.management.getSelf().then(self => self.installType === 'development');
 const openTab = (url: string) => browser.tabs.create({ url });
 const getExtURL = (path: string) => browser.runtime.getURL(path);
-const onSettings = (fn: (settings: Settings) => any) => {
+const onSettings = (fn: SettingsFn): SettingsFn => {
     settingsListener = fn;
     browser.runtime.onMessage.addListener((message: any) => {
         if (message.action === 'update') {
             settingsListener(message.settings);
         }
     });
+    return fn;
 }
 const bMessage = (action: string, subaction: string, param?: any) => {
     return browser.runtime.sendMessage({ action, subaction, param } as HostMessage)
@@ -58,6 +60,7 @@ const isSettings = (prospect: any): prospect is Settings => {
         && (!prospect.muted || prospect.muted instanceof Array)
         && (typeof prospect.skipOverlays === 'undefined' || typeof prospect.skipOverlays === 'boolean')
         && (typeof prospect.muteAll === 'undefined' || typeof prospect.muteAll === 'boolean')
+        && (typeof prospect.skipAdErrors === 'undefined' || typeof prospect.skipAdErrors === 'boolean')
 }
 const isChannel = (prospect: any): prospect is Channel => {
     return typeof prospect === 'object'
@@ -65,9 +68,11 @@ const isChannel = (prospect: any): prospect is Channel => {
         && typeof prospect.username === 'string'
         && typeof prospect.display === 'string';
 }
-const cleanChannelList = (list: ChannelList): ChannelList => {
-    return list.filter(channel => isChannel(channel))
-        .map(({ id, username, display }) => ({ id, username, display }))
+const cleanChannelList = (list?: ChannelList): ChannelList => {
+    return list instanceof Array
+        ? list.filter(channel => isChannel(channel))
+            .map(({ id, username, display }) => ({ id, username, display }))
+        : []
 }
 const cleanSettings = (prospect: Settings): Settings => {
     return {
