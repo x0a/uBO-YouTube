@@ -60,17 +60,13 @@ const Main: FunctionComponent<{
     }) as Promise<void>;
 
     useEffect(() => {
-        bMessage('get', 'settings').then(settings => {
-            console.log('Received settings: ', settings);
-            setSettings(settings)
-        });
-
-        onSettings(settings => {
-            console.log('Received settings: ', settings);
-            setSettings(settings)
-        })
+        bMessage('get', 'settings')
+            .then(onSettings(settings => {
+                console.log('Received settings: ', settings);
+                setSettings(settings)
+            }));
     }, []);
-
+    
     return <div className={!full && !alert.show ? 'main' : ''}>
         {alert.show && <Alert {...alert} />}
         {!(alert.show && !full) &&
