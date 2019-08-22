@@ -18,25 +18,32 @@ class SettingsManager {
     skipOverlays: boolean;
     skipAdErrors: boolean;
     constructor(settings: Settings) {
-        if (!settings) settings = {} as Settings;
-        if (!settings.whitelisted) settings.whitelisted = [];
-        if (!settings.blacklisted) settings.blacklisted = [];
-        if (!settings.muted) settings.muted = [];
-        if (!settings.muteAll) settings.muteAll = false;
-        if (settings.skipOverlays === undefined) settings.skipOverlays = true;
-        if (settings.skipAdErrors === undefined) settings.skipAdErrors = true;
-
+        settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
         this.blacklist = new Channels(settings.blacklisted);
         this.mutelist = new Channels(settings.muted);
         this.muteAll = settings.muteAll
         this.skipOverlays = settings.skipOverlays;
+        this.skipAdErrors = settings.skipAdErrors;
     }
     // The reason for this complexity is that chrome.storage.sync
     // has a storage limit of about 8k bytes per item
     // And an overall storage limit of 100k bytes.
     // With raw JSON, you quickly start running into problems if you try to import subscriptions
     // The solution is to both compress JSON-serialized settings, and to split it into multiple items
+    static sanitizeSettings(settings?: Settings): Settings {
+        settings = settings || {} as Settings;
+
+        if (!settings.whitelisted) settings.whitelisted = [];
+        if (!settings.blacklisted) settings.blacklisted = [];
+        if (!settings.muted) settings.muted = [];
+
+        settings.muteAll = !!settings.muteAll;
+        settings.skipOverlays = settings.skipOverlays === undefined ? true : !!settings.skipOverlays;
+        settings.skipAdErrors = settings.skipAdErrors === undefined ? true : !!settings.skipAdErrors;
+
+        return settings;
+    }
     static getSettings(): Promise<Settings> {
         return browser.storage.sync.get(null).then(store => {
             if (store.algorithm === 'lz' && store.totalKeys) {
@@ -61,6 +68,7 @@ class SettingsManager {
     updateAll(originTab: browser.tabs.Tab) {
         browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
             for (let tab of tabs) {
+                if (tab.id === undefined) continue;
                 const origin = (originTab && originTab.id === tab.id) || false;
                 browser.tabs.sendMessage(tab.id, { action: 'update', settings: settings.get(), initiator: origin })
                     .then((response?: any) => {
@@ -85,7 +93,7 @@ class SettingsManager {
     toggleSkipOverlays(on: boolean) {
         this.skipOverlays = !!on;
     }
-    toggleSkipAdErrors(on: boolean){
+    toggleSkipAdErrors(on: boolean) {
         this.skipAdErrors = !!on;
     }
     get(): Settings {
@@ -184,13 +192,10 @@ class AdManager {
     }
 
     push(ad: Ad) {
-        while (this.ads.length > 20) {
-            this.ads.shift(); // just trim a little off the top fam
-        }
-        this.ads.push(ad);
+        this.ads = pushTrim(this.ads, ad, 20);
     }
 
-    queue(details: any): Array<Function> {
+    queue(details: any): [(ad: Ad) => any, (error: any) => any] {
         let resolver, rejector;
 
         let promise = new Promise<Ad>((resolve, reject) => {
@@ -479,4 +484,14 @@ if (Development && Development.detectedDevMode()) { // set to false in productio
 
 function cloneObject<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
+}
+
+function arrayTrim(array: Array<any>, max: number) {
+    return array.slice(Math.max(array.length - max, 0), array.length)
+}
+
+function pushTrim<T>(array: T[], item: any, max: number): T[] {
+    const arr = arrayTrim(array, max - 1);
+    arr.push(item);
+    return arr;
 }
