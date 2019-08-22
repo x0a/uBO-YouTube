@@ -5,14 +5,14 @@ import { openTab } from './common';
 const Link: FunctionComponent<{
     className?: string,
     href: string,
-    children: JSX.Element[] | JSX.Element | string
+    children: (JSX.Element | string)[] | JSX.Element | string
 }> = ({ href, className, children }) => {
     const onClick = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
         const event = e.nativeEvent as MouseEvent;
         const el = event.target as HTMLAnchorElement;
-        
+
         e.stopPropagation();
-        
+
         if (event.button === 0) {
             event.preventDefault();
             openTab(el.href);

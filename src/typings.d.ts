@@ -74,6 +74,7 @@ interface Ad {
     video_id?: string;
     channel_url?: string;
     length_seconds?: number;
+    player_response?: string;
     ucid?: string;
     author?: string;
     blocked?: boolean;

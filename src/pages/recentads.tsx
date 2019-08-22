@@ -3,7 +3,13 @@ import { FunctionComponent, useEffect, useState } from 'react';
 import { bMessage, popupHeader, fullHeader, i18n } from './common';
 import { Ad, Settings, Channel } from '../typings';
 import Link from './link';
-
+const getTitleFromAd = (ad: Ad): string => {
+    if(!ad.player_response) return '';
+    const playerInfo = JSON.parse(ad.player_response);
+    if(playerInfo.videoDetails && playerInfo.videoDetails.title)
+        return playerInfo.videoDetails.title;
+    return '';
+}
 const AdItem: FunctionComponent<{
     ad: Ad;
     muted: boolean;
@@ -27,12 +33,17 @@ const AdItem: FunctionComponent<{
         bMessage('set', 'add-black', ad.channelId)
     }
 
+    ad.title = ad.title || getTitleFromAd(ad) || 'Link';
+
     return <tr>
         <td>
             <Link className='font-weight-bold-sm' href={channelURL}>{ad.author}</Link>
         </td>
         {full && <td>
-            <Link href={url}>{ad.title}</Link>
+            <Link href={url}>
+                <i className="fas fa-link mr-1" />
+                {ad.title}
+            </Link>
         </td>}
         {full && <td>
             <div className='d-flex align-items-center'>

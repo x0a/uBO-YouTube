@@ -64,6 +64,10 @@
         "message": "Advertiser",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
     },
+    "videoColumn": {
+        "message": "Video",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
     "statusColumn": {
         "message": "Status",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
