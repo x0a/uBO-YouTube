@@ -83,7 +83,11 @@ class InitManager {
                     adsEnableBtn: browser.i18n.getMessage('adsEnableBtn'),
                     blacklistBtn: browser.i18n.getMessage('blacklistBtn'),
                     skipBtn: browser.i18n.getMessage('skipBtn'),
-                    skipTooltip: browser.i18n.getMessage('skipTooltip')
+                    skipTooltip: browser.i18n.getMessage('skipTooltip'),
+                    pauseAfterAdBtn: browser.i18n.getMessage('pauseAfterAdBtn'),
+                    pauseAfterAdTooltip: browser.i18n.getMessage('pauseAfterAdTooltip'),
+                    cancelPauseAfterAdBtn: browser.i18n.getMessage('cancelPauseAfterAdBtn'),
+                    cancelPauseAfterAdTooltip: browser.i18n.getMessage('cancelPauseAfterAdTooltip')
                 }
             }
         })

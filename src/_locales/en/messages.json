@@ -247,6 +247,18 @@
     "skipTooltip": {
         "message": "Attempt to skip this ad"
     },
+    "pauseAfterAdBtn": {
+        "message": "Pause after ad"
+    },
+    "pauseAfterAdTooltip": {
+        "message":"Pause video after ad finished playing"
+    },
+    "cancelPauseAfterAdBtn": {
+        "message": "Cancel pause"
+    },
+    "cancelPauseAfterAdTooltip": {
+        "message": "Don't pause after ad finished playing"
+    },
     "permissionDesc": {
         "message": "A one-time permission is needed to search for YouTube channels"
     },
