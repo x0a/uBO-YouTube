@@ -85,9 +85,9 @@ class MutationWatcher {
                 && mutation.addedNodes.length
             ) || (
                 mutation.type === 'attributes'
-                && mutation.target.parentNode
-                && (mutation.target.parentNode as HTMLElement).id === 'owner-name'
                 && mutation.attributeName === 'href'
+                && mutation.target.parentNode
+                && (mutation.target.parentNode as HTMLElement).localName === 'ytd-video-owner-renderer'
             )
         ) {
             return mutation.target.closest('ytd-video-owner-renderer') as HTMLElement;
@@ -262,7 +262,7 @@ class MutationWatcher {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
-            this.findInjection(mutation, 'ytd-video-owner-renderer');
+            this.findInjection(mutation, 'a.ytd-video-owner-renderer');
             if (mode === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
 
