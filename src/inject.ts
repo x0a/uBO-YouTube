@@ -1,5 +1,6 @@
 'use strict';
 import MessageAgent from './agent';
+import hookEvents from "./events";
 import icons from './icons';
 
 import {
@@ -90,6 +91,8 @@ class MutationWatcher {
             )
         ) {
             return mutation.target.closest('ytd-video-owner-renderer') as HTMLElement;
+        } else if (mutation.target.localName === 'ytd-video-owner-renderer') {
+            return mutation.target;
         } else {
             return null;
         }
@@ -259,11 +262,12 @@ class MutationWatcher {
         let mode = pages.getMode();
 
         for (let mutation of mutations) {
-            //this.findInjection(mutation, 'video');
+            this.findInjection(mutation, 'ytd-video-owner-renderer');
             if (mode === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
 
                 if (userInfo = this.isPolyUserInfo(mutation)) {
+                    // console.log('was userinfo');
                     pages.video.setDataNode(userInfo)
                     pages.video.updatePage();
                 } else if (userInfo = this.isBasicUserInfo(mutation)) {
@@ -383,9 +387,11 @@ class WhitelistButtonBasic extends WhitelistButton {
 class AdOptions {
     unMuteIcon: Element;
     muteIcon: Element;
+    playIcon: Element;
     muteButton: MenuItem;
     skipButton: MenuItem;
     blacklistButton: MenuItem;
+    pauseButton: MenuItem;
     menu: HTMLDivElement;
     optionsButton: HTMLButtonElement;
     tooltip: HTMLSpanElement;
@@ -395,11 +401,12 @@ class AdOptions {
     menuOpen: boolean;
     muted: boolean;
 
-    constructor(onBlacklist: EventListener, onMute: EventListener, onSkip: () => {}) {
+    constructor(onBlacklist: EventListener, onMute: EventListener, onSkip: () => {}, onPause: () => any) {
         this.toggleMenu = this.toggleMenu.bind(this);
         this.lostFocus = this.lostFocus.bind(this);
         this.unMuteIcon = this.generateIcon(icons.unMute);
-        this.muteIcon = this.generateIcon(icons.mute)
+        this.muteIcon = this.generateIcon(icons.mute);
+        this.playIcon = this.generateIcon(icons.play);
         this.muteButton = this.generateMenuItem(
             i18n('muteBtn'),
             i18n('muteAdvertiserTooltip'),
@@ -422,12 +429,18 @@ class AdOptions {
             icons.block,
             onBlacklist
         );
-
+        this.pauseButton = this.generateMenuItem(
+            i18n('pauseAfterAdBtn'),
+            i18n('pauseAfterAdTooltip'),
+            icons.pause,
+            onPause
+        );
         this.menu = (() => {
             let el = document.createElement('div');
             el.setAttribute('class', 'UBO-menu hidden');
             el.appendChild(this.blacklistButton);
             el.appendChild(this.muteButton);
+            // el.appendChild(this.pauseButton);
             el.appendChild(this.skipButton);
             el.addEventListener('focusin', () => this.menuFocused = true);
             el.addEventListener('focusout', () => {
@@ -527,7 +540,15 @@ class AdOptions {
             return el;
         })()
     }
-
+    set pauseAfterAd(shouldPause: boolean) {
+        if (shouldPause) {
+            this.pauseButton.setIcon(this.playIcon);
+            this.pauseButton.setText(i18n('cancelPauseAfterAdBtn'))
+            this.pauseButton.setDescription(i18n('cancelPauseAfterAdTooltip'))
+        } else {
+            this.pauseButton.setDefaults();
+        }
+    }
     set muteTab(shouldMute: boolean) {
         if (shouldMute) {
 
@@ -572,6 +593,7 @@ class AdOptions {
         this.blacklistOption = false;
         this.muteOption = false;
         this.skipOption = false;
+        this.pauseAfterAd = false
     }
 
     toggleMenu() {
@@ -635,6 +657,7 @@ class SingleChannelPage {
     adConfirmed: boolean;
     awaitingSkip: boolean;
     videoError: boolean;
+    pauseAfterAd: boolean;
     skipButton: HTMLButtonElement;
     currentPlayer: HTMLVideoElement;
 
@@ -645,7 +668,8 @@ class SingleChannelPage {
         this.adOptions = new AdOptions(
             this.addBlacklist.bind(this),
             this.toggleMute.bind(this),
-            this.attemptSkip.bind(this)
+            this.attemptSkip.bind(this),
+            this.togglePauseAfterAd.bind(this)
         );
         this.channelId = null;
         this.currentAd = null;
@@ -661,7 +685,7 @@ class SingleChannelPage {
     }
 
     updatePage(forceUpdate?: boolean, verify?: boolean) {
-        if (!this.dataNode && !this.setDataNode()) return;// console.error('Container not available');
+        if (!this.dataNode && !this.setDataNode()) return console.error('Container not available');
 
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
@@ -717,6 +741,11 @@ class SingleChannelPage {
 
             this.adPlaying = true;
         } else if (!playing && this.adPlaying) {
+            if (this.pauseAfterAd) {
+                console.log('pausing');
+                this.currentPlayer.pause();
+                this.pauseAfterAd = false;
+            }
             this.adOptions.muteTab = false;
             this.adOptions.hide();
             this.adOptions.reset();
@@ -742,6 +771,7 @@ class SingleChannelPage {
         if (this.currentAd && this.currentAd.video_id !== ad.video_id) {
             this.adConfirmed = false;
             this.adOptions.reset();
+            this.adOptions.pauseAfterAd = this.pauseAfterAd;
             this.adOptions.skipOption = true;
         }
 
@@ -846,7 +876,9 @@ class SingleChannelPage {
             .then(() => agent.send('mute', shouldMute))
             .catch(error => console.error('Error setting settings', error));
     }
-
+    togglePauseAfterAd() {
+        this.adOptions.pauseAfterAd = this.pauseAfterAd = !this.pauseAfterAd;
+    }
     toggleWhitelist() {
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
@@ -1488,6 +1520,7 @@ class LoadHastener {
     }
 
 }
+
 const i18n = (messageName: string, substitutions?: any | Array<any>): string => {
     const message = locale[messageName];
     if (!message) {
@@ -1514,7 +1547,12 @@ const init = (design: Layout) => {
     watcher = new MutationWatcher();
     pages.update(true);
     watcher.start();
-
+    document.awaitEventListener("visibilitychange", 30000)
+        .then(event => {
+            document.removeEventListener("visibilitychange", event.fn, event.capture);
+            unhookEvents();
+        })
+        .catch(() => unhookEvents())
     agent
         .on('settings-update', (updated: any) => {
             settings = updated.settings;
@@ -1526,6 +1564,7 @@ const init = (design: Layout) => {
         .on('destroy', () => {
             console.log('Detaching inject script..');
 
+            unhookEvents()
             agent.destroy();
             watcher.destroy();
             domCleanup();
@@ -1544,13 +1583,7 @@ const init = (design: Layout) => {
     }
 }
 
-//Object.defineProperty((window as any).HTMLElement.prototype, 'data', {
-//    set: function (to: any) { this.fuckbro = to; console.log('fuck bro', this, to); return to; },
-//    get: function () { return this.fuckbro },
-//    enumerable: true,
-//    configurable: true,
-//})
-// MAIN ENTRY POINT
+const unhookEvents = hookEvents();
 agent = new MessageAgent();
 agent.send('get-settings').then(response => {
     settings = response.settings;

@@ -137,6 +137,26 @@ interface ParsedURL {
     params: Ad | Video;
 }
 
+interface InterceptedEvent {
+    name: string;
+    fn: EventListener,
+    capture: boolean
+}
+interface EventRequest{
+    eventName: string,
+    resolve: (event: InterceptedEvent) => any
+}
+
+declare global {
+    interface EventTarget {
+        awaiting: Array<EventRequest>;
+        eventListeners: Array<InterceptedEvent>;
+        getEventListeners(eventName: string): Array<InterceptedEvent>;
+        awaitEventListener(eventName: string, expiresMs?: number): Promise<InterceptedEvent>
+    }
+}
+
+
 export {
     Channel, ChannelList, MutationElement,
     Settings, Action, AccessURL,
