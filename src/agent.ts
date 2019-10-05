@@ -53,7 +53,6 @@ class MessageAgent {
         const awaitingReply = new Promise((resolve, reject) => {
             this.replyListeners = this.replyListeners.concat({ replyId, resolve, reject })
         })
-
         this.sendEvent({
             name,
             message,
@@ -74,7 +73,7 @@ class MessageAgent {
     }
 
     private handleDispatch(event: AgentEvent) {
-        if (!event || !event.from || event.from === this.instanceId) return; // do not process if the event came from ourselves
+        if (this.active && !event || !event.from || event.from === this.instanceId) return; // do not process if the event came from ourselves
 
         if (event.type === EventType.ReplyResolve || event.type === EventType.ReplyReject) { // received a reply to a message we sent
             this.onReply(event)
@@ -104,17 +103,17 @@ class MessageAgent {
             })
             .map(result => result instanceof Promise ? result : Promise.resolve(result));
 
-        if (!this.active) return; // if one of the functions led to the destruction of the agent, dont bother replying
+        if (!pendingResults.length || !this.active) return; // if one of the functions led to the destruction of the agent, dont bother replying
 
         Promise.all(pendingResults)
-            .then(results => this.sendReply(results.length === 1 ? results[0] : results, event.replyId))
-            .catch(error => this.sendReply(error, event.replyId, false))
+            .then(results => this.sendReply(results.length === 1 ? results[0] : results, event))
+            .catch(error => this.sendReply(error, event, false))
     }
-    private sendReply(message: any, replyId: string, success = true) {
+    private sendReply(message: any, to: AgentEvent, success = true) {
         this.sendEvent({
             sharedId: this.sharedId,
             type: success ? EventType.ReplyResolve : EventType.ReplyReject,
-            replyId,
+            replyId: to.replyId,
             message,
             from: this.instanceId
         });

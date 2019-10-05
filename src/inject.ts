@@ -1581,9 +1581,6 @@ const init = (design: Layout) => {
         })
         .on('destroy', () => {
             console.log('Detaching inject script..');
-
-            unhookEvents()
-            agent.destroy();
             watcher.destroy();
             domCleanup();
             agent = null;
@@ -1604,11 +1601,17 @@ const init = (design: Layout) => {
 const unhookEvents = hookEvents();
 
 agent = new MessageAgent('uBOWL-message', true);
-agent.send('get-settings').then(response => {
-    settings = response.settings;
-    accessURLs = response.accessURLs;
-    locale = response.i18n;
-
-    let load = new LoadHastener();
-    load.getDesign().then(design => init(design));
-});
+agent
+    .on('destroy', () => {
+        unhookEvents();
+        agent.destroy();
+    })
+    .send('get-settings')
+    .then(response => {
+        settings = response.settings;
+        accessURLs = response.accessURLs;
+        locale = response.i18n;
+        
+        let load = new LoadHastener();
+        load.getDesign().then(design => init(design));
+    });

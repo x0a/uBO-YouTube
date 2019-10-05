@@ -242,8 +242,8 @@ if (location.pathname === "/ubo-yt") {
 
     browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
 }
-
-window.dispatchEvent(new CustomEvent('uBOWL-destroy')); // signal to any pre-existing instances that they should unload
+const instance = Math.random();
+window.dispatchEvent(new CustomEvent('uBOWL-destroy', { detail: instance })); // signal to any pre-existing instances that they should unload
 
 const agent = new MessageAgent('uBOWL-message', true); // My postMessage wrapper, to communicate with our injected script
 const init = new InitManager(document.documentElement);
@@ -279,14 +279,14 @@ agent
 
 init.inject();
 
-let dejector: () => void;
-
-window.addEventListener('uBOWL-destroy', dejector = () => {
+let dejector: (event: CustomEvent) => void;
+window.addEventListener('uBOWL-destroy', dejector = (event) => {
+    if (event.detail === instance) return;
     console.log('Unloading uBOWL..');
 
     window.removeEventListener('uBOWL-destroy', dejector);
     agent.send('destroy');
     init.destroy();
-    //adwatcher.destroy();
+    // adwatcher.destroy();
     agent.destroy();
 });
