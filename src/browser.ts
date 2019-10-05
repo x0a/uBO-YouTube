@@ -42,12 +42,13 @@ function getWebExtensionsAPI(): typeof browser {
             api.tabs.create = promisify(api.tabs, 'create');
             api.tabs.remove = promisify(api.tabs, 'remove');
             api.tabs.getCurrent = promisify(api.tabs, 'getCurrent');
+            api.tabs.highlight = promisify(api.tabs, 'highlight');
         }
         if (api.permissions) {
             api.permissions.contains = promisify(api.permissions, 'contains');
             api.permissions.request = promisify(api.permissions, 'request');
         }
-        if(api.management) { 
+        if (api.management) {
             api.management.getSelf = promisify(api.management, 'getSelf');
         }
         api.storage.sync.get = promisify(api.storage.sync, 'get');
