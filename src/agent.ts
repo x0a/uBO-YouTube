@@ -1,105 +1,156 @@
-
-interface AgentResolver {
-    id: string;
-    resolver: Function;
-    rejector: Function;
+const enum EventType {
+    ReplyResolve,
+    ReplyReject,
+    Message
 }
-
 interface AgentEvent {
-    [eventName: string]: Array<Function>
+    type: EventType;
+    sharedId: string;
+    from: string;
+    name?: string;
+    message: any;
+    replyId: string;
 }
-
+interface AgentEventListener {
+    name: string;
+    fn: (msg: any) => any;
+}
+interface AgentReplyListener {
+    replyId: string;
+    resolve: (msg: any) => any;
+    reject: (error: any) => any;
+}
 class MessageAgent {
-    instance: string;
-    resolvers: Array<AgentResolver>;
-    events: AgentEvent;
-    requestsPending: Array<Promise<void>>;
+    instanceId: string;
+    sharedId: string;
 
-    constructor(identifier?: string) {
-        this.instance = identifier || Math.random().toString(36).substring(7); //used to differentiate between us and others
-        this.resolvers = [];
-        this.events = {};
-        this.messageListener = this.messageListener.bind(this);
-        this.requestsPending = [];
+    private eventListeners: Array<AgentEventListener>;
+    private replyListeners: Array<AgentReplyListener>;
+    private active: boolean;
+    private sendEvent: (event: AgentEvent) => void;
+    private unhookWindow: () => any;
 
-        window.addEventListener('message', this.messageListener);
+    /** Allows communication between two scripts, using native .dispatchEvent or .postMessage */
+    constructor(sharedId: string, eventBased = false) {
+        this.instanceId = this.generateId();
+        this.eventListeners = [];
+        this.replyListeners = [];
+        this.active = true;
+        this.sharedId = sharedId;
+        const [sendEvent, unhookWindow] = this.hookWindow(sharedId, eventBased);
+        this.sendEvent = sendEvent;
+        this.unhookWindow = unhookWindow;
     }
-    on(event: string, listener: Function) {
-        if (typeof listener !== 'function') throw 'Listener must be a function';
-        if (!this.events[event]) this.events[event] = [];
-        this.events[event].push(listener);
-
+    on(name: string, fn: (msg: any) => any) {
+        if (!this.active) throw "Agent has been destroyed";
+        this.eventListeners = this.eventListeners.concat({ name, fn });
         return this;
     }
+    send(name: string, message?: any): Promise<any> {
+        if (!this.active) throw "Agent has been destroyed";
+        const replyId = this.generateId();
 
-    send(event: string, message?: any) {
-        let callbackId = Math.random().toString(36).substring(7);
-        window.postMessage({ event: event, message: message, callbackId: callbackId, instance: this.instance }, '*');
-
-        let p: Promise<any> = new Promise((resolve, reject) => {
-            this.resolvers.push({ id: callbackId, resolver: resolve, rejector: reject });
-        }).then(response => {
-            let i = this.requestsPending.findIndex(item => item === p);
-            this.requestsPending.splice(i, 1);
-            return response;
-        }).catch(err => {
-            return err;
+        const awaitingReply = new Promise((resolve, reject) => {
+            this.replyListeners = this.replyListeners.concat({ replyId, resolve, reject })
         })
-        this.requestsPending.push(p);
-        return p;
-    }
-    messageListener(e: MessageEvent) {
-        let revent = e.data;
-        let promises = [];
 
-        if (revent.instance && revent.instance !== this.instance) { //do not process if the event came from ourselves
-            if (revent.event && revent.event in this.events) {
-                let done;
+        this.sendEvent({
+            name,
+            message,
+            replyId,
+            type: EventType.Message,
+            from: this.instanceId,
+            sharedId: this.sharedId
+        });
 
-                let pending = new Promise(resolve => {
-                    done = resolve;
-                }).then(() => {
-                    this.requestsPending.splice(this.requestsPending.findIndex(item => item === pending));
-                });
-
-                this.requestsPending.push(pending);
-
-                for (let i = 0; i < this.events[revent.event].length; i++) {
-                    let response = this.events[revent.event][i](revent.message); //execute listener
-                    if (response instanceof Promise) //if a promise
-                        promises.push(response); //wait til resolved
-                    else
-                        promises.push(Promise.resolve(response)) //resolve immediately
-                }
-
-                Promise.all(promises).then(messages => { //send messages as single array once all promises are resolved
-                    window.postMessage({
-                        callbackId: revent.callbackId,
-                        message: messages.length === 1 ? messages[0] : messages,
-                        instance: this.instance
-                    }, '*');
-                }).then(done);
-
-            } else if (revent.callbackId) { //we received a response to a message we sent
-                let index = this.resolvers.findIndex(val => val.id === revent.callbackId);
-
-                if (index === -1) return;
-                let callback = this.resolvers[index];
-                this.resolvers.splice(index, 1); //remove resolver from array
-                callback.resolver(revent.message); //execute callback
-            }
-        }
+        return awaitingReply;
     }
     destroy() {
-        Object.keys(this.events).forEach(key => this.events[key] = []);
-        return Promise.all(this.requestsPending).then(() => {
-            window.removeEventListener('message', this.messageListener);
-            this.resolvers = null;
-            this.events = null;
-            this.instance = null;
-        })
+        this.active = false;
+        this.unhookWindow();
+        this.eventListeners = [];
+        this.replyListeners = [];
+        this.instanceId = "";
     }
 
+    private handleDispatch(event: AgentEvent) {
+        if (!event || !event.from || event.from === this.instanceId) return; // do not process if the event came from ourselves
+
+        if (event.type === EventType.ReplyResolve || event.type === EventType.ReplyReject) { // received a reply to a message we sent
+            this.onReply(event)
+        } else if (event.type === EventType.Message) { // received a message
+            this.onMessage(event);
+        }
+    }
+    private onReply(event: AgentEvent) {
+        const i = this.replyListeners.findIndex(({ replyId }) => replyId === event.replyId);
+        if (i !== -1) {
+            if (event.type === EventType.ReplyResolve)
+                this.replyListeners[i].resolve(event.message);
+            else
+                this.replyListeners[i].reject(event.message);
+            this.replyListeners.splice(i, 1);
+        }
+    }
+    private onMessage(event: AgentEvent) {
+        const pendingResults = this.eventListeners
+            .filter(({ name }) => name === event.name)
+            .map(({ fn }) => {
+                try {
+                    return fn(event.message)
+                } catch (error) {
+                    return Promise.reject(error);
+                }
+            })
+            .map(result => result instanceof Promise ? result : Promise.resolve(result));
+
+        if (!this.active) return; // if one of the functions led to the destruction of the agent, dont bother replying
+
+        Promise.all(pendingResults)
+            .then(results => this.sendReply(results.length === 1 ? results[0] : results, event.replyId))
+            .catch(error => this.sendReply(error, event.replyId, false))
+    }
+    private sendReply(message: any, replyId: string, success = true) {
+        this.sendEvent({
+            sharedId: this.sharedId,
+            type: success ? EventType.ReplyResolve : EventType.ReplyReject,
+            replyId,
+            message,
+            from: this.instanceId
+        });
+    }
+    private hookWindow(sharedId: string, eventBased: boolean): [(event: AgentEvent) => void, () => void] {
+        const contextualize = (() => { //  specific to content scripts on firefox
+            try {
+                // @ts-ignore
+                if (!cloneInto) throw "No clone into"
+                // @ts-ignore
+                return (object: any) => cloneInto(object, document.defaultView)
+            } catch (e) {
+                return (object: any) => object;
+            }
+        })();
+        const onEventDispatch = eventBased
+            ? (event: CustomEvent) => this.handleDispatch(event.detail)
+            : (event: MessageEvent) => this.handleDispatch(event.data);
+        const sendEvent = eventBased
+            ? (event: AgentEvent) => window.dispatchEvent(new CustomEvent(sharedId, { detail: contextualize(event) }))
+            : (event: AgentEvent) => window.postMessage(event, '*');
+
+        if (eventBased)
+            window.addEventListener(sharedId, onEventDispatch)
+        else
+            window.addEventListener('message', onEventDispatch);
+
+        const unhookWindow = eventBased
+            ? () => window.removeEventListener(sharedId, onEventDispatch)
+            : () => window.removeEventListener('message', onEventDispatch);
+
+        return [sendEvent, unhookWindow]
+    }
+    private generateId() {
+        return Math.random().toString(36).substring(7);
+    }
 }
 
 export default MessageAgent;

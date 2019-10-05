@@ -243,10 +243,9 @@ if (location.pathname === "/ubo-yt") {
     browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
 }
 
-window.dispatchEvent(new CustomEvent('uBOWLInstance')); // signal to any pre-existing instances that they should unload
-window.dispatchEvent(new CustomEvent('uBOWL-destroy'));
+window.dispatchEvent(new CustomEvent('uBOWL-destroy')); // signal to any pre-existing instances that they should unload
 
-const agent = new MessageAgent(); // My postMessage wrapper, to communicate with our injected script
+const agent = new MessageAgent('uBOWL-message', true); // My postMessage wrapper, to communicate with our injected script
 const init = new InitManager(document.documentElement);
 /*const adwatcher = new AdWatcher(payload => {
     console.log("Received args:", payload);
@@ -264,7 +263,7 @@ agent
         init.ready = true;
         init.pushPending();
     })
-    .on('get-settings', init.getSettings)
+    .on('get-settings', () => init.getSettings())
     .on('set-settings', (changes: any) => {
         return intermediary({ action: 'set', subaction: changes.type, param: changes.param });
     })
@@ -273,6 +272,9 @@ agent
     })
     .on('mute', (shouldMute: boolean) => {
         return intermediary({ action: 'tab', subaction: 'mute', param: shouldMute || false })
+    })
+    .on('highlight-tab', () => {
+        return intermediary({ action: 'tab', subaction: 'highlight' });
     });
 
 init.inject();
