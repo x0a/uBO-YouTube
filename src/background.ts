@@ -17,6 +17,7 @@ class SettingsManager {
     muteAll: boolean;
     skipOverlays: boolean;
     skipAdErrors: boolean;
+    pauseAfterAd: boolean;
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
@@ -25,6 +26,7 @@ class SettingsManager {
         this.muteAll = settings.muteAll
         this.skipOverlays = settings.skipOverlays;
         this.skipAdErrors = settings.skipAdErrors;
+        this.pauseAfterAd = settings.pauseAfterAd
     }
     // The reason for this complexity is that chrome.storage.sync
     // has a storage limit of about 8k bytes per item
@@ -39,6 +41,7 @@ class SettingsManager {
         if (!settings.muted) settings.muted = [];
 
         settings.muteAll = !!settings.muteAll;
+        settings.pauseAfterAd = !!settings.pauseAfterAd;
         settings.skipOverlays = settings.skipOverlays === undefined ? true : !!settings.skipOverlays;
         settings.skipAdErrors = settings.skipAdErrors === undefined ? true : !!settings.skipAdErrors;
 
@@ -66,19 +69,28 @@ class SettingsManager {
         })
     }
     updateAll(originTab: browser.tabs.Tab) {
-        browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
-            for (let tab of tabs) {
-                if (tab.id === undefined) continue;
-                const origin = (originTab && originTab.id === tab.id) || false;
-                browser.tabs.sendMessage(tab.id, { action: 'update', settings: settings.get(), initiator: origin })
-                    .then((response?: any) => {
-                        //console.log(response);
-                    })
-                    .catch(() => { });
-            }
-        });
+        browser.tabs.query({})
+            .then((tabs: Array<browser.tabs.Tab>) => {
+                for (let tab of tabs) {
+                    if (tab.id === undefined) continue;
+                    const origin = (originTab && originTab.id === tab.id) || false;
+                    browser.tabs.sendMessage(tab.id, { action: 'update', settings: settings.get(), initiator: origin })
+                        .then((response?: any) => {
+                            //console.log(response);
+                        })
+                        .catch(() => { });
+                }
+            });
     }
-
+    highlightTab(originTab: browser.tabs.Tab) {
+        browser.tabs.query({})
+            .then(tabs => {
+                const current = tabs.find(({ active }) => active);
+                if (!current) throw "No current tab";
+                browser.tabs.highlight({ tabs: [current.index, originTab.index] });
+            })
+            .catch(error => console.error("Unable to highlight tab:", error));
+    }
     static injectAll() {
         browser.tabs.query({}).then((tabs: any) => {
             for (let tab of tabs) {
@@ -96,6 +108,9 @@ class SettingsManager {
     toggleSkipAdErrors(on: boolean) {
         this.skipAdErrors = !!on;
     }
+    togglePauseAfterAd(on: boolean) {
+        this.pauseAfterAd = !!on;
+    }
     get(): Settings {
         return {
             whitelisted: this.whitelist.get(),
@@ -103,7 +118,8 @@ class SettingsManager {
             muted: this.mutelist.get(),
             muteAll: this.muteAll,
             skipOverlays: this.skipOverlays,
-            skipAdErrors: this.skipAdErrors
+            skipAdErrors: this.skipAdErrors,
+            pauseAfterAd: this.pauseAfterAd
         };
     }
     getCompressed(): any {
@@ -350,11 +366,12 @@ SettingsManager.getSettings().then((_settings: Settings) => {
         .on('remove-black', (_, channel: Channel | Array<string>) =>
             settings.blacklist.remove(channel instanceof Array ? channel : channel.id))
         .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
-        .on('reset', (_, __) => settings = new SettingsManager({} as Settings))
+        .on('reset', () => settings = new SettingsManager({} as Settings))
         .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))
         .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
         .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
-        .onAll((sender, _) => {
+        .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
+        .onAll((sender) => {
             settings.save();
             settings.updateAll(sender.tab);
             return settings.get();
@@ -372,7 +389,8 @@ SettingsManager.getSettings().then((_settings: Settings) => {
             })
                 .then(() => browser.tabs.remove(sender.tab.id)))
         .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
-        .on('last-ad', (sender, _) => ads.getLastAdFromTab(sender.tab.id));
+        .on('last-ad', (sender, _) => ads.getLastAdFromTab(sender.tab.id))
+        .on('highlight', sender => settings.highlightTab(sender.tab));
 
     listener.onAction('permission')
         .on('google-api', () => ads.checkPermissions());

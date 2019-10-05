@@ -224,6 +224,9 @@
     "adErrorsOption": {
         "message": "Skip ad playback errors"
     },
+    "adErrorsOptionTooltip":{
+        "message": "Skips to video if ad fails to play, rather than showing the 'An error occurred' with TV static"
+    },
     "adBlocked": {
         "message": "Blocked",
         "description": "Shown next to ads that were blocked"
@@ -247,17 +250,11 @@
     "skipTooltip": {
         "message": "Attempt to skip this ad"
     },
-    "pauseAfterAdBtn": {
-        "message": "Pause after ad"
+    "pauseAfterAdOption": {
+        "message": "Anti-Startle Mode"
     },
     "pauseAfterAdTooltip": {
-        "message":"Pause video after ad finished playing"
-    },
-    "cancelPauseAfterAdBtn": {
-        "message": "Cancel pause"
-    },
-    "cancelPauseAfterAdTooltip": {
-        "message": "Don't pause after ad finished playing"
+        "message":"If a muted ad finishes playing, and the tab is not currently in focus, video is quietly paused in the background until user returns to it"
     },
     "permissionDesc": {
         "message": "A one-time permission is needed to search for YouTube channels"

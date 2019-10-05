@@ -18,6 +18,15 @@ interface AlertProps {
     onConfirm: () => any,
     onCancel: () => any
 }
+const defaultSettings = (): Settings => ({
+    blacklisted: [],
+    whitelisted: [],
+    muted: [],
+    muteAll: false,
+    skipOverlays: true,
+    skipAdErrors: true,
+    pauseAfterAd: false
+})
 
 const Main: FunctionComponent<{
     full: boolean,
@@ -32,14 +41,7 @@ const Main: FunctionComponent<{
         onCancel: () => { }
     } as AlertProps);
 
-    const [settings, setSettings] = useState({
-        blacklisted: [],
-        whitelisted: [],
-        muted: [],
-        muteAll: false,
-        skipOverlays: true,
-        skipAdErrors: true
-    } as Settings);
+    const [settings, setSettings] = useState(defaultSettings());
     const [alert, setAlert] = useState(defaultAlert)
 
     const showAlert = (text: string, confirm = false, danger = false) => new Promise((resolve, reject) => {
@@ -66,7 +68,7 @@ const Main: FunctionComponent<{
                 setSettings(settings)
             }));
     }, []);
-    
+
     return <div className={!full && !alert.show ? 'main' : ''}>
         {alert.show && <Alert {...alert} />}
         {!(alert.show && !full) &&
@@ -93,30 +95,28 @@ const Main: FunctionComponent<{
                             {full && <div className='col-md-3 d-sm-none d-md-block'>
                                 <h4>{i18n('adOptionsHeader')}</h4>
                                 <ul className='list-group'>
-                                    <li className='list-group-item list-group-option'>
-                                        <Switch
-                                            checked={settings.muteAll}
-                                            onChange={(e) => bMessage('set', 'mute-all', e.currentTarget.checked)} />
-                                        <span className='ml-2'>
-                                            {i18n('muteOption')}
-                                        </span>
-                                    </li>
-                                    <li className='list-group-item list-group-option'>
-                                        <Switch
-                                            checked={settings.skipAdErrors}
-                                            onChange={(e) => bMessage('set', 'skip-ad-errors', e.currentTarget.checked)} />
-                                        <span className='ml-2'>
-                                            {i18n('adErrorsOption')}
-                                        </span>
-                                    </li>
-                                    <li className='list-group-item list-group-option'>
-                                        <Switch
-                                            checked={settings.skipOverlays}
-                                            onChange={(e) => bMessage('set', 'skip-overlays', e.currentTarget.checked)} />
-                                        <span className='ml-2'>
-                                            {i18n('overlaysOption')}
-                                        </span>
-                                    </li>
+                                    <SwitchableOption
+                                        checked={settings.muteAll}
+                                        onChange={(checked) => bMessage('set', 'mute-all', checked)}
+                                        text={i18n('muteOption')}
+                                    />
+                                    <SwitchableOption
+                                        checked={settings.pauseAfterAd}
+                                        onChange={(checked) => bMessage('set', 'pause-after-ad', checked)}
+                                        text={i18n('pauseAfterAdOption')}
+                                        tooltip={i18n('pauseAfterAdTooltip')}
+                                    />
+                                    <SwitchableOption
+                                        checked={settings.skipAdErrors}
+                                        onChange={(checked) => bMessage('set', 'skip-ad-errors', checked)}
+                                        text={i18n('adErrorsOption')}
+                                        tooltip={i18n('adErrorsOptionTooltip')}
+                                    />
+                                    <SwitchableOption
+                                        checked={settings.skipOverlays}
+                                        onChange={(checked) => bMessage('set', 'skip-overlays', checked)}
+                                        text={i18n('overlaysOption')}
+                                    />
                                 </ul>
                             </div>}
                             <div className='col-md-3'>
@@ -141,7 +141,27 @@ const Main: FunctionComponent<{
 
     </div >
 }
-
+const SwitchableOption: FunctionComponent<{
+    checked: boolean;
+    onChange: (checked: boolean) => any;
+    text: string;
+    tooltip?: string;
+}> = ({ checked, onChange, text, tooltip }) => {
+    return <li className='list-group-item list-group-option'>
+        <Switch
+            checked={checked}
+            onChange={onChange} />
+        <span className='ml-2 flex-grow-1'>
+            {text}
+        </span>
+        {tooltip && <div className='tooltip-parent'>
+            <i className='far fa-question-circle' />
+            <div className='tooltip'>
+                <div className='tooltip-inner'>{tooltip}</div>
+            </div>
+        </div>}
+    </li>
+}
 const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm, onCancel, show }) => {
     const alertRef = useRef(null as HTMLDivElement);
     useLayoutEffect(() => {

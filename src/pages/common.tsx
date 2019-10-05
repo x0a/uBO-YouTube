@@ -2,8 +2,10 @@ import * as React from 'react';
 import browser from '../browser';
 import { HostMessage, ClientMessage, Settings, Channel, ChannelList } from '../typings';
 
-let settingsListener: (settings: Settings) => any = () => { };
 type SettingsFn = (settings: Settings) => any;
+type Confirm = (text: string, confirm?: boolean, danger?: boolean) => Promise<void>
+
+let settingsListener: (settings: Settings) => any = () => { }; // basically a gloval variable since it will be available wherever imported
 
 const isPopup = browser.tabs.getCurrent().then(tab => tab === undefined);
 const checkDev = browser.management.getSelf().then(self => self.installType === 'development');
@@ -68,20 +70,22 @@ const isChannel = (prospect: any): prospect is Channel => {
         && typeof prospect.username === 'string'
         && typeof prospect.display === 'string';
 }
-const cleanChannelList = (list?: ChannelList): ChannelList => {
+const canonicalizeChannels = (list?: ChannelList): ChannelList => {
     return list instanceof Array
-        ? list.filter(channel => isChannel(channel))
+        ? list
+            .filter(channel => isChannel(channel))
             .map(({ id, username, display }) => ({ id, username, display }))
         : []
 }
-const cleanSettings = (prospect: Settings): Settings => {
+const canonicalizeSettings = (prospect: Settings): Settings => {
     return {
-        whitelisted: cleanChannelList(prospect.whitelisted),
-        blacklisted: cleanChannelList(prospect.blacklisted),
-        muted: cleanChannelList(prospect.muted),
+        whitelisted: canonicalizeChannels(prospect.whitelisted),
+        blacklisted: canonicalizeChannels(prospect.blacklisted),
+        muted: canonicalizeChannels(prospect.muted),
         muteAll: prospect.muteAll === undefined ? false : prospect.muteAll,
         skipOverlays: prospect.skipOverlays === undefined ? true : prospect.skipOverlays,
-        skipAdErrors: prospect.skipAdErrors === undefined ? true : prospect.skipAdErrors
+        skipAdErrors: prospect.skipAdErrors === undefined ? true : prospect.skipAdErrors,
+        pauseAfterAd: prospect.pauseAfterAd === undefined ? false : prospect.pauseAfterAd
     }
 }
 
@@ -95,7 +99,8 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         muted: diffList(current.muted, next.muted),
         muteAll: next.muteAll,
         skipOverlays: next.skipOverlays,
-        skipAdErrors: next.skipAdErrors
+        skipAdErrors: next.skipAdErrors,
+        pauseAfterAd: next.pauseAfterAd
     }
 }
 const mergeSettings = (current: Settings, next: Settings): Settings => {
@@ -105,17 +110,16 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         muted: current.muted.concat(next.muted),
         muteAll: next.muteAll,
         skipOverlays: next.skipOverlays,
-        skipAdErrors: next.skipAdErrors
+        skipAdErrors: next.skipAdErrors,
+        pauseAfterAd: next.pauseAfterAd,
     }
 }
 const fullHeader = (text: string) => <h4>{text}</h4>;
 const popupHeader = (text: string) => <p className='font-weight-bold-sm font-size-6 text-center'>{text}</p>;
 const i18n = (messageName: string, substitutions?: any | Array<any>) =>
     browser.i18n.getMessage(messageName, substitutions instanceof Array ? substitutions.map(i => i + '') : substitutions + '');
-
-type Confirm = (text: string, confirm?: boolean, danger?: boolean) => Promise<void>
 export {
-    bMessage, Confirm, isSettings, cleanSettings,
+    bMessage, Confirm, isSettings, canonicalizeSettings,
     diffSettings, diffList, readJSONFile, mergeSettings,
     fullHeader, popupHeader, onSettings, openTab, getExtURL,
     requestGooglePermission, i18n, getManifest, checkDev

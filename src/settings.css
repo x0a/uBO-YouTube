@@ -2,9 +2,11 @@ body {
     background-color: #f8f9fa !important;
     margin-top: 10px;
 }
-.cursor-pointer{
+
+.cursor-pointer {
     cursor: pointer !important;
 }
+
 .alert {
     position: fixed;
     max-width: 350px;
@@ -123,6 +125,7 @@ button {
     display: inline-block;
     width: 60px;
     height: 34px;
+    flex-shrink: 0;
 }
 
 /* Hide default HTML checkbox */
@@ -179,6 +182,31 @@ input:checked+.slider:before {
 .list-group-option {
     display: flex;
     align-items: center;
+}
+
+.flex-grow-1 {
+    flex-grow: 1 !important;
+}
+
+.tooltip-parent {
+    display: inline-block;
+    position: relative;
+}
+
+.tooltip {
+    display: none;
+    white-space: nowrap;
+    left: 25px;
+    top: -2px;
+}
+
+.tooltip-inner {
+    max-width: none !important;
+}
+
+.tooltip-parent:hover .tooltip {
+    display: block;
+    opacity: 0.9;
 }
 
 @media (min-width: 768px) {

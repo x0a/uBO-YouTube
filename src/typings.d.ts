@@ -23,6 +23,7 @@ interface Settings {
     muteAll: boolean;
     skipOverlays: boolean;
     skipAdErrors: boolean;
+    pauseAfterAd: boolean;
 }
 
 interface AccessURL {

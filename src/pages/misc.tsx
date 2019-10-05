@@ -2,7 +2,7 @@ import * as React from 'react';
 import { FunctionComponent, useState, useCallback, useEffect, FormEvent } from 'react';
 import { Settings } from '../typings';
 import {
-    Confirm, isSettings, cleanSettings, diffSettings,
+    Confirm, isSettings, canonicalizeSettings, diffSettings,
     mergeSettings, readJSONFile, bMessage, openTab,
     getExtURL, i18n, getManifest, checkDev
 } from './common';
@@ -29,7 +29,7 @@ const Import: FunctionComponent<{
                 inputEl.value = '';
                 if (!isSettings(json))
                     throw 'Invalid settings';
-                const nextSettings = diffSettings(settings, cleanSettings(json));
+                const nextSettings = diffSettings(settings, canonicalizeSettings(json));
 
                 if (!nextSettings.whitelisted.length && !nextSettings.blacklisted.length && !nextSettings.muted.length)
                     return alert(i18n('noNew'));
