@@ -9,9 +9,13 @@
 .UBO-menu.hidden {
     display: none;
 }
-
+.UBO-wl-container {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin-right: 2px;
+}
 .UBO-wl-btn.UBO-wl-poly {
-    margin-top: 7px;
     color: rgba(17, 17, 17, 0.298);
     outline: none;
     background: transparent;
