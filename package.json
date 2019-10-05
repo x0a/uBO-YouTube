@@ -55,6 +55,7 @@
     "typescript": "^3.5.3",
     "web-ext-types": "^3.2.1",
     "webpack-stream": "^5.2.1",
+    "webpack": "^4.39.1",
     "websocket": "^1.0.29"
   },
   "dependencies": {}
