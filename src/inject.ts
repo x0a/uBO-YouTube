@@ -147,20 +147,29 @@ class MutationWatcher {
             && mutation.addedNodes.length
             && mutation.target.querySelector('button.ytp-ad-overlay-close-button')
     }
-
+    fixOverlayVideoAd(element: HTMLElement): boolean {
+        if (element.classList.contains('video-ads')) {
+            if (element.classList.contains('ytp-ad-module')) {
+                console.log('Found .video-ads.ytp-ad-module,removing .video-ads');
+                element.classList.remove('video-ads');
+            }
+            return true;
+        }
+        return false;
+    }
     isAdSkipContainer(mutation: MutationElement): HTMLElement {
         return (
             mutation.target.classList.contains('ytp-ad-skip-button-container')
             && mutation.target
         ) || (
                 mutation.type === 'childList'
-                && mutation.target.classList.contains('video-ads')
+                && this.fixOverlayVideoAd(mutation.target)
                 && mutation.addedNodes.length
                 && mutation.target.querySelector('.ytp-ad-skip-button-container')
             );
     }
 
-    adSkipButton(container: HTMLElement): HTMLButtonElement {
+    static adSkipButton(container: HTMLElement): HTMLButtonElement {
         return container.style.display !== 'none'
             && container.querySelector('button');
     }
@@ -281,7 +290,7 @@ class MutationWatcher {
                         pages.video.onVideoError(errorState);
                     }
                 } else if (skipContainer = this.isAdSkipContainer(mutation)) {
-                    pages.video.skipButtonUpdate(this.adSkipButton(skipContainer));
+                    pages.video.skipButtonUpdate(MutationWatcher.adSkipButton(skipContainer));
                 } else if (overlaySkipButton = this.isOverlayAd(mutation)) {
                     if (settings.skipOverlays)
                         overlaySkipButton.click();
@@ -296,7 +305,7 @@ class MutationWatcher {
                             pages.channel.onVideoError(errorState);
                         }
                     } else if (skipContainer = this.isAdSkipContainer(mutation)) {
-                        pages.channel.skipButtonUpdate(this.adSkipButton(skipContainer));
+                        pages.channel.skipButtonUpdate(MutationWatcher.adSkipButton(skipContainer));
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
@@ -716,6 +725,18 @@ class SingleChannelPage {
                     this.currentAd = message.response as Ad;
                     this.updateAdButton();
                 })
+                const skipContainer = player.querySelector(".ytp-ad-skip-button-container") as HTMLElement;
+                if (skipContainer) {
+                    const skipButton = MutationWatcher.adSkipButton(skipContainer);
+                    if (skipButton)
+                        this.skipButtonUpdate(skipButton);
+                    const adContainer = skipContainer.closest('.ytp-ad-module.video-ads');
+                    
+                    if (adContainer) {
+                        console.log('Found .video-ads.ytp-ad-module,removing .video-ads');
+                        adContainer.classList.remove('video-ads');
+                    }
+                }
             }
 
             this.adPlaying = true;
@@ -1611,7 +1632,7 @@ agent
         settings = response.settings;
         accessURLs = response.accessURLs;
         locale = response.i18n;
-        
+
         let load = new LoadHastener();
         load.getDesign().then(design => init(design));
     });
