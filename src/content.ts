@@ -1,8 +1,9 @@
+import browser from './browser';
+import MessageAgent from './agent';
+
 // This content script is to act as a messaging bus between
 // the locally-injected script which contains the main code
 // and the background script.
-import browser from './browser';
-import MessageAgent from './agent'
 
 class InitManager {
     queue: Array<any>;
@@ -102,11 +103,11 @@ class InitManager {
         }
     }
     inject() {
-        // styling for whitelist button, blacklist button, etc.
-        this.head.appendChild(this.jsFile);
-
         // inject main script
         this.head.appendChild(this.cssFile);
+
+        // styling for whitelist button, blacklist button, etc.
+        this.head.appendChild(this.jsFile);
     }
     destroy() {
         this.cssFile.disabled = true;
@@ -145,11 +146,11 @@ class AdWatcher {
             event.preventDefault();
 
             if (videoData) {
-                if (videoData.args && videoData.args.vmap) {
+                if (videoData.args && videoData.args.fflags) {
                     let payload = this.onReceiveSettings(videoData);
                     this.insertReplacement(parent, this.compilePayload(payload))
                 } else {
-                    console.log('Object missing data');
+                    console.log('Object missing data', videoData);
                 }
             } else {
                 console.log('Trouble parsing inline script tag:', event)
@@ -157,7 +158,7 @@ class AdWatcher {
         }
     }
     isCorrectScript(el: HTMLScriptElement) {
-        const search = "\\u003c?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?\\u003e\\n\\u003cvmap:VMAP";
+        const search = "skip";
 
         return el.parentElement && el.parentElement.id === 'player-wrap' &&
             el.id !== 'replacement' &&
@@ -249,8 +250,10 @@ const agent = new MessageAgent('uBOWL-message', true); // My postMessage wrapper
 const init = new InitManager(document.documentElement);
 /*const adwatcher = new AdWatcher(payload => {
     console.log("Received args:", payload);
-    console.log(adwatcher.parseVMAP(payload.args.vmap));
-    payload.args.cbr = "fuccboi";
+    const nextFlags = payload.args.fflags
+        .replace(/&midroll_notify_time_seconds=[0-9]+&/g, "&midroll_notify_time_seconds=2&")
+        .replace(/&postroll_notify_time_seconds-=[0-9]+&/g, "&postroll_notify_time_seconds=2&")
+    payload.args.fflags = nextFlags;
     return payload;
 });*/
 const intermediary = (message: any) => browser.runtime.sendMessage(message).then((response: any) => {
@@ -280,7 +283,7 @@ agent
 init.inject();
 
 let dejector: (event: CustomEvent) => void;
-window.addEventListener('uBOWL-destroy', dejector = (event) => {
+window.addEventListener('uBOWL-destroy', dejector = event => {
     if (event.detail === instance) return;
     console.log('Unloading uBOWL..');
 
