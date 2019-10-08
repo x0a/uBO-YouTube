@@ -148,14 +148,13 @@ class MutationWatcher {
             && mutation.target.querySelector('button.ytp-ad-overlay-close-button')
     }
     fixOverlayVideoAd(element: HTMLElement): boolean {
-        if (element.classList.contains('video-ads')) {
-            if (element.classList.contains('ytp-ad-module')) {
-                console.log('Found .video-ads.ytp-ad-module,removing .video-ads');
+        if (element.classList.contains('ytp-ad-module')) {
+            if (element.classList.contains('video-ads')) { // if .ytp-ad-module & .video-ads
                 element.classList.remove('video-ads');
             }
             return true;
         }
-        return false;
+        return element.classList.contains('video-ads'); // otherwise check if just .video-ads
     }
     isAdSkipContainer(mutation: MutationElement): HTMLElement {
         return (
@@ -731,11 +730,10 @@ class SingleChannelPage {
                     if (skipButton)
                         this.skipButtonUpdate(skipButton);
                     const adContainer = skipContainer.closest('.ytp-ad-module.video-ads');
-                    
-                    if (adContainer) {
-                        console.log('Found .video-ads.ytp-ad-module,removing .video-ads');
+
+                    if (adContainer) 
                         adContainer.classList.remove('video-ads');
-                    }
+                    
                 }
             }
 
@@ -832,6 +830,7 @@ class SingleChannelPage {
     }
     attemptSkip() {
         if (!this.currentPlayer || !this.adPlaying) return;
+
         if (this.skipButton) {
             return this.skipButton.click();
         }
@@ -851,7 +850,7 @@ class SingleChannelPage {
     }
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
-
+        
         if (this.skipButton && (this.awaitingSkip || this.videoError)) {
             this.skipButton.click();
         }
