@@ -371,15 +371,15 @@ SettingsManager.getSettings().then((_settings: Settings) => {
         .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
         .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
         .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
-        .onAll((sender) => {
+        .onAll(sender => {
             settings.save();
             settings.updateAll(sender.tab);
             return settings.get();
         });
 
     listener.onAction('get')
-        .on('settings', (_, __) => settings.get())
-        .on('ads', (_, __) => ads.get());
+        .on('settings', () => settings.get())
+        .on('ads', () => ads.get());
 
     listener.onAction('tab')
         .on('settings', (sender, tab) =>
@@ -389,7 +389,7 @@ SettingsManager.getSettings().then((_settings: Settings) => {
             })
                 .then(() => browser.tabs.remove(sender.tab.id)))
         .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
-        .on('last-ad', (sender, _) => ads.getLastAdFromTab(sender.tab.id))
+        .on('last-ad', sender => ads.getLastAdFromTab(sender.tab.id))
         .on('highlight', sender => settings.highlightTab(sender.tab));
 
     listener.onAction('permission')
