@@ -1,10 +1,9 @@
-'use strict';
 import MessageAgent from './agent';
 import hookEvents from "./events";
 import icons from './icons';
 
 import {
-    Channel, Settings, AccessURL,
+    Channel, ReadonlySettings, AccessURL,
     Action, MutationElement, ChannelList,
     MenuItem, InfoLink, VideoPoly, VideoBasic, Ad
 } from './typings';
@@ -32,7 +31,7 @@ interface LocaleMessages {
 }
 /* ---------------------------- */
 
-let settings: Settings;
+let settings: ReadonlySettings;
 let locale: LocaleMessages;
 let accessURLs: AccessURL;
 let pages: Page, watcher: MutationWatcher, agent: MessageAgent;
@@ -542,7 +541,7 @@ class AdOptions {
     set muteTab(shouldMute: boolean) {
         if (shouldMute) {
 
-            agent.send('mute', true)
+            agent.send('mute-tab', true)
                 .then(resp => {
                     this.muted = true;
                     this.muteButton.setIcon(this.unMuteIcon);
@@ -558,7 +557,7 @@ class AdOptions {
                 this.muted = false;
                 this.muteButton.setDefaults();
             }
-            agent.send('mute', false).then(done).catch(done); // replicate .finally
+            agent.send('mute-tab', false).then(done).catch(done); // replicate .finally
         }
     }
 
@@ -594,11 +593,11 @@ class AdOptions {
     }
 
     lostFocus() {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             if (!this.menuFocused && !this.buttonFocused) {
                 this.closeMenu();
             }
-        }, 0)
+        })
 
         return false;
     }
@@ -731,9 +730,9 @@ class SingleChannelPage {
                         this.skipButtonUpdate(skipButton);
                     const adContainer = skipContainer.closest('.ytp-ad-module.video-ads');
 
-                    if (adContainer) 
+                    if (adContainer)
                         adContainer.classList.remove('video-ads');
-                    
+
                 }
             }
 
@@ -792,7 +791,7 @@ class SingleChannelPage {
                 }, 800);
 
                 agent.send('highlight-tab');
-                return this.onPageFocus();
+                return pages.onPageFocus();
             })
             .then(() => {
                 clearInterval(intervalId);
@@ -850,7 +849,7 @@ class SingleChannelPage {
     }
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
-        
+
         if (this.skipButton && (this.awaitingSkip || this.videoError)) {
             this.skipButton.click();
         }
@@ -880,18 +879,6 @@ class SingleChannelPage {
             }, 4000);
         })
     }
-    onPageFocus() {
-        if (!document.hidden) return Promise.resolve();
-        return new Promise(resolve => {
-            const listener = () => {
-                if (!document.hidden) {
-                    document.removeEventListener("visibilitychange", listener);
-                    resolve();
-                }
-            };
-            document.addEventListener("visibilitychange", listener);
-        })
-    }
     matchAdCompanion() {
         const companion = document.querySelector('ytd-companion-slot-renderer');
 
@@ -912,7 +899,7 @@ class SingleChannelPage {
         let action = shouldMute ? 'add-mute' : 'remove-mute';
 
         agent.send('set-settings', { param: this.currentAd.channelId, type: action })
-            .then(() => agent.send('mute', shouldMute))
+            .then(() => agent.send('mute-tab', shouldMute))
             .catch(error => console.error('Error setting settings', error));
     }
     toggleWhitelist() {
@@ -1273,6 +1260,7 @@ class Page {
     search: SearchPagePoly | SearchPageBasic;
     currentURL: string;
     mode: number;
+    eventExemptions: Array<EventListener>;
 
     constructor(design: Layout) {
         if (design === Layout.Polymer) {
@@ -1286,6 +1274,7 @@ class Page {
         }
 
         this.currentURL = '';
+        this.eventExemptions = [];
         this.updateAllVideos = this.updateAllVideos.bind(this);
     }
     static getDesign() {
@@ -1479,6 +1468,27 @@ class Page {
             )
             , 300);
     }
+    onPageFocus(): Promise<void> {
+        if (!document.hidden) return Promise.resolve();
+        return new Promise(resolve => {
+            const listener = () => {
+                if (!document.hidden) {
+                    document.removeEventListener("visibilitychange", listener);
+                    this.eventExemptions = this.eventExemptions.filter(fn => fn !== listener);
+                    resolve();
+                }
+            };
+            this.eventExemptions = this.eventExemptions.concat(listener);
+            document.addEventListener("visibilitychange", listener);
+        })
+    }
+    destroy() {
+        let nodes = document.querySelectorAll('.UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu');
+
+        for (let node of nodes) {
+            node.remove();
+        }
+    }
 }
 
 
@@ -1557,7 +1567,7 @@ class LoadHastener {
 
 }
 
-const i18n = (messageName: string, substitutions?: any | Array<any>): string => {
+const i18n = (messageName: string, substitutions?: string | number | Array<string | number>): string => {
     const message = locale[messageName];
     if (!message) {
         console.error('No i18n message found for', messageName);
@@ -1584,13 +1594,6 @@ const init = (design: Layout) => {
     pages.update(true);
     watcher.start();
 
-    document.awaitEventListener("visibilitychange", 30000)
-        .then(event => {
-            document.removeEventListener("visibilitychange", event.fn, event.capture);
-            unhookEvents();
-        })
-        .catch(() => unhookEvents());
-
     agent
         .on('settings-update', (updated: any) => {
             settings = updated.settings;
@@ -1602,23 +1605,21 @@ const init = (design: Layout) => {
         .on('destroy', () => {
             console.log('Detaching inject script..');
             watcher.destroy();
-            domCleanup();
+            pages.destroy();
             agent = null;
             watcher = null;
             pages = null;
         })
         .send('ready');
-
-    function domCleanup() {
-        let nodes = document.querySelectorAll('.UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu');
-
-        for (let node of nodes) {
-            node.remove();
-        }
-    }
 }
 
-const unhookEvents = hookEvents();
+
+const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
+(window as any).gev = getEventListeners; // delete me
+
+filterEventListeners("visibilitychange", (target, { fn }) => pages
+    ? pages.eventExemptions.indexOf(fn) !== -1
+    : false);
 
 agent = new MessageAgent('uBOWL-message', true);
 agent
