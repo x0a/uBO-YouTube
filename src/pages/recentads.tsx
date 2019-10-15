@@ -3,27 +3,14 @@ import { FunctionComponent, useEffect, useState } from 'react';
 import { bMessage, popupHeader, fullHeader, i18n } from './common';
 import { Ad, Settings, Channel } from '../typings';
 import Link from './link';
-const getTitleFromAd = (ad: Ad): string => {
-    if(!ad.player_response) return '';
-    const playerInfo = JSON.parse(ad.player_response);
-    if(playerInfo.videoDetails && playerInfo.videoDetails.title)
-        return playerInfo.videoDetails.title;
-    return '';
-}
 const AdItem: FunctionComponent<{
     ad: Ad;
     muted: boolean;
     blocked: boolean;
     full: boolean;
 }> = ({ ad, muted, blocked, full }) => {
-    let url = '';
-    const matches = ad.details.url.match(/\&video_id=([A-Za-z_\-0-9]+)\&/);
-    
-    if (matches && matches.length > 1) {
-        const videoId = matches[1];
-        url = 'http://www.youtube.com/watch?v=' + videoId;
-    }
 
+    const url = 'http://www.youtube.com/watch?v=' + ad.video_id;
     const channelURL = 'http://www.youtube.com/channel/' + ad.channelId.id;
 
     const onMute = () => {
@@ -33,7 +20,7 @@ const AdItem: FunctionComponent<{
         bMessage('set', 'add-black', ad.channelId)
     }
 
-    ad.title = ad.title || getTitleFromAd(ad) || 'Link';
+    ad.title = ad.title || 'Link';
 
     return <tr>
         <td>
