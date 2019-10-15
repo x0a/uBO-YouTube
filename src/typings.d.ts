@@ -25,7 +25,7 @@ interface Settings {
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
 }
-
+type ReadonlySettings = Readonly<Settings>;
 interface AccessURL {
     ICO: string;
 }
@@ -135,32 +135,12 @@ interface PolyData {
 
 interface ParsedURL {
     pathname: string;
-    params: Ad | Video;
+    params: any;
 }
-
-interface InterceptedEvent {
-    name: string;
-    fn: EventListener,
-    capture: boolean
-}
-interface EventRequest{
-    eventName: string,
-    resolve: (event: InterceptedEvent) => any
-}
-
-declare global {
-    interface EventTarget {
-        awaiting: Array<EventRequest>;
-        eventListeners: Array<InterceptedEvent>;
-        getEventListeners(eventName: string): Array<InterceptedEvent>;
-        awaitEventListener(eventName: string, expiresMs?: number): Promise<InterceptedEvent>
-    }
-}
-
 
 export {
     Channel, ChannelList, MutationElement,
-    Settings, Action, AccessURL,
+    Settings, ReadonlySettings, Action, AccessURL,
     MenuItem, InfoLink, VideoBasic, VideoPoly,
     Ad, PendingItem, ParsedURL, HostMessage, ClientMessage
 }
