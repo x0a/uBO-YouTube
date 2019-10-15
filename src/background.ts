@@ -18,6 +18,7 @@ class SettingsManager {
     skipOverlays: boolean;
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
+
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
@@ -70,17 +71,14 @@ class SettingsManager {
     }
     updateAll(originTab: browser.tabs.Tab) {
         browser.tabs.query({})
-            .then((tabs: Array<browser.tabs.Tab>) => {
-                for (let tab of tabs) {
-                    if (tab.id === undefined) continue;
-                    const origin = (originTab && originTab.id === tab.id) || false;
-                    browser.tabs.sendMessage(tab.id, { action: 'update', settings: settings.get(), initiator: origin })
-                        .then((response?: any) => {
-                            //console.log(response);
-                        })
+            .then(tabs => tabs
+                .filter(({ id }) => id !== undefined) // we don't want popup.html
+                .forEach(({ id }) => {
+                    const isOrigin: boolean = !!(originTab && originTab.id === id);
+                    browser.tabs.sendMessage(id, { action: 'update', settings: settings.get(), initiator: isOrigin })
                         .catch(() => { });
-                }
-            });
+                })
+            );
     }
     highlightTab(originTab: browser.tabs.Tab) {
         browser.tabs.query({})
@@ -92,11 +90,10 @@ class SettingsManager {
             .catch(error => console.error("Unable to highlight tab:", error));
     }
     static injectAll() {
-        browser.tabs.query({}).then((tabs: any) => {
-            for (let tab of tabs) {
-                browser.tabs.executeScript(tab.id, { file: 'content.js' }).then(result => { }).catch(err => { })
-            }
-        });
+        browser.tabs.query({})
+            .then(tabs => tabs
+                .forEach(tab => browser.tabs.executeScript(tab.id, { file: 'content.js' })
+                    .catch(err => { })));
     }
 
     toggleMuteAll(on: boolean) {
@@ -152,40 +149,30 @@ class SettingsManager {
 }
 
 class Channels {
-    list: ChannelList;
+    private list: ChannelList;
     constructor(list: ChannelList) {
         this.list = list;
     }
-    has(id: string): number {
-        for (let index in this.list) {
-            if (this.list[index].id === id)
-                return ~~index;
-        }
-        return -1;
+    contains(id: string): boolean {
+        return this.list.findIndex(channel => channel.id === id) !== -1;
+    }
+    is(channel: Channel): channel is Channel {
+        return typeof channel === 'object'
+            && typeof channel.id === 'string'
+            && typeof channel.username === 'string'
+            && typeof channel.display === 'string'
     }
     remove(channels: Array<string> | string): number {
-        if (channels instanceof Array) {
-            let i = -1;
-            channels.forEach(id => i = i + this._remove(id));
-            return i
-        } else {
-            return this._remove(channels);
-        }
+        const curCount = this.list.length;
+        const nextList = this.list.filter(({ id }) => channels instanceof Array
+            ? channels.indexOf(id) === -1
+            : id !== channels);
+        this.list = nextList;
+        return nextList.length - curCount;
     }
-    private _remove(id: string): number {
-        let i = -1;
-        let removeCount = 0;
-
-        while ((i = this.has(id)) !== -1) {
-            this.list.splice(i, 1);
-            removeCount++;
-        }
-        return removeCount;
-    }
-
     add(channelId: Channel): boolean {
-        if (this.has(channelId.id) === -1) {
-            this.list.push(channelId);
+        if (this.is(channelId) && !this.contains(channelId.id)) {
+            this.list = this.list.concat(channelId);
             return true;
         }
         return false;
@@ -208,27 +195,60 @@ class AdManager {
     }
 
     push(ad: Ad) {
-        this.ads = pushTrim(this.ads, ad, 20);
+        ad.title = typeof ad.title === 'string'
+            ? ad.title
+            : this.extractTitle(ad.player_response);
+        // minimize memory consumption by removing unneeded data for all but most recent ad
+        this.ads = arrayTrim(this.ads, 20)
+            .map(oldAd => this.trim(oldAd)) 
+            .concat(ad);
     }
+    trim(ad: Ad): Ad {
+        const nextAd = cloneObject(ad);
+        const filter = ["details",
+            "channelId",
+            "video_id",
+            "channel_url",
+            "length_seconds",
+            "ucid",
+            "author",
+            "blocked",
+            "title",
+            "timestamp"];
 
+        Object.keys(nextAd)
+            .forEach(key => filter.indexOf(key) === -1 && delete nextAd[key]);
+        return nextAd;
+    }
+    private extractTitle(playerResponse: string): string {
+        if (!playerResponse) return '';
+        try {
+            const response = JSON.parse(playerResponse);
+            if (response.videoDetails && response.videoDetails.title)
+                return response.videoDetails.title;
+            return '';
+        } catch (e) {
+            return '';
+        }
+    }
     queue(details: any): [(ad: Ad) => any, (error: any) => any] {
         let resolver, rejector;
 
-        let promise = new Promise<Ad>((resolve, reject) => {
+        const promise = new Promise<Ad>((resolve, reject) => {
             resolver = resolve;
             rejector = reject;
         });
 
-        this.pending.push({ details: details, promise: promise });
+        this.pending = this.pending.concat({ details, promise });
 
         promise
             .then((ad: Ad) => {
-                this.pending.splice(this.pending.findIndex(item => promise === item.promise), 1)
+                this.pending = this.pending.filter(item => promise !== item.promise);
                 this.push(ad);
                 this.sendToTab(ad.details.tabId, ad);
             })
             .catch(ad => {
-                this.pending.splice(this.pending.findIndex(item => promise === item.promise), 1);
+                this.pending = this.pending.filter(item => promise !== item.promise);
                 console.error('No UCID available', ad);
             });
 
@@ -236,39 +256,30 @@ class AdManager {
     }
 
     get(): Promise<Array<Ad>> {
-        const promises = this.pending.map(ad => ad.promise);
-        return Promise.all(promises).then(() => this.ads);
+        const pending = this.pending.map(({ promise }) => promise);
+
+        return Promise.all(pending)
+            .then(() => this.ads);
     }
 
     sendToTab(tabId: number, ad: Ad) {
-        browser.tabs.query({}).then((tabs: Array<browser.tabs.Tab>) => {
-            for (let tab of tabs) {
-                if (tab.id !== tabId) continue;
-                browser.tabs.sendMessage(tab.id, { action: 'ad-update', ad: ad })
-                    .then((response?: any) => { });
-                return;
-            }
-        });
+        browser.tabs.query({})
+            .then(tabs => tabs.some(({ id }) => id === tabId
+                && browser.tabs.sendMessage(id, { action: 'ad-update', ad: ad })));
     }
 
     getLastAdFromTab(tabId: number): Promise<Ad> {
-        for (let i = this.pending.length - 1; i > -1; i--) {
-            if (this.pending[i].details.tabId === tabId) {
-                return this.pending[i].promise;
-            }
-        }
+        const pending = this.pending.find(({ details }) => details.tabId === tabId);
+        if (pending) return pending.promise;
 
-        for (let i = this.ads.length - 1; i > -1; i--) {
-            if (this.ads[i].details.tabId === tabId) {
-                return Promise.resolve(this.ads[i]);
-            }
-        }
+        const ad = this.ads.find(({ details }) => details.tabId === tabId);
+        if (ad) return Promise.resolve(ad);
 
         return Promise.reject();
     }
 
     findChannelFromPreviousAd(id: string): Channel {
-        let ad = this.ads.find(item => item.channelId.id === id);
+        const ad = this.ads.find(item => item.channelId.id === id);
 
         if (ad) {
             return ad.channelId;
@@ -276,20 +287,24 @@ class AdManager {
     }
 
     findPrevAdByVideoId(videoId: string): Ad {
-        for (let ad of this.ads) {
-            if (ad.video_id === videoId) {
-                return ad;
-            }
-        }
+        return this.ads.find(({ video_id }) => video_id === videoId);
     }
 
     fetchChannelTitle(id: string): Promise<string> {
         if (this.apiAvailable) {
             // if user enabled the gAPI permission, use it because its 80% faster
-            return fetch('https://content.googleapis.com/youtube/v3/channels?part=snippet&id=' + id + '&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo')
+            const url = 'https://content.googleapis.com'
+                + '/youtube/v3/channels?part=snippet&id='
+                + id
+                + '&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo';
+            return fetch(url)
                 .then(response => response.json())
                 .then(json => {
-                    if (json && json.items && json.items.length && json.items[0].snippet && json.items[0].snippet.title) {
+                    if (json
+                        && json.items
+                        && json.items.length
+                        && json.items[0].snippet
+                        && json.items[0].snippet.title) {
                         return json.items[0].snippet.title;
                     } else {
                         return id;
@@ -328,7 +343,7 @@ class AdManager {
     }
 
     parseURL(url: string): ParsedURL {
-        const params = {} as Ad;
+        const params = {} as any;
         const queryStart = url.indexOf('?');
         // read from the last instance of "/" until the "?" query marker
         const pathname = url.substring(url.lastIndexOf('/', queryStart), queryStart)
@@ -350,134 +365,135 @@ class AdManager {
     }
 }
 
-SettingsManager.getSettings().then((_settings: Settings) => {
-    settings = new SettingsManager(_settings);
-    ads = new AdManager();
-    const listener = new MessageListener();
+SettingsManager.getSettings()
+    .then((_settings: Settings) => {
+        settings = new SettingsManager(_settings);
+        ads = new AdManager();
+        const listener = new MessageListener();
 
-    listener.onAction('set')
-        .on('add-white', (_, channelId: Channel) => settings.whitelist.add(channelId))
-        .on('add-black', (_, channelId: Channel) => settings.blacklist.add(channelId))
-        .on('add-mute', (_, channelId: Channel) => settings.mutelist.add(channelId))
-        .on('remove-mute', (_, channel: Channel | Array<string>) =>
-            settings.mutelist.remove(channel instanceof Array ? channel : channel.id))
-        .on('remove-white', (_, channel: Channel | Array<string>) =>
-            settings.whitelist.remove(channel instanceof Array ? channel : channel.id))
-        .on('remove-black', (_, channel: Channel | Array<string>) =>
-            settings.blacklist.remove(channel instanceof Array ? channel : channel.id))
-        .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
-        .on('reset', () => settings = new SettingsManager({} as Settings))
-        .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))
-        .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
-        .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
-        .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
-        .onAll(sender => {
-            settings.save();
-            settings.updateAll(sender.tab);
-            return settings.get();
-        });
+        listener.onAction('set')
+            .on('add-white', (_, channelId: Channel) => settings.whitelist.add(channelId))
+            .on('add-black', (_, channelId: Channel) => settings.blacklist.add(channelId))
+            .on('add-mute', (_, channelId: Channel) => settings.mutelist.add(channelId))
+            .on('remove-mute', (_, channel: Channel | Array<string>) =>
+                settings.mutelist.remove(channel instanceof Array ? channel : channel.id))
+            .on('remove-white', (_, channel: Channel | Array<string>) =>
+                settings.whitelist.remove(channel instanceof Array ? channel : channel.id))
+            .on('remove-black', (_, channel: Channel | Array<string>) =>
+                settings.blacklist.remove(channel instanceof Array ? channel : channel.id))
+            .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
+            .on('reset', () => settings = new SettingsManager({} as Settings))
+            .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))
+            .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
+            .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
+            .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
+            .onAll(sender => {
+                settings.save();
+                settings.updateAll(sender.tab);
+                return settings.get();
+            });
 
-    listener.onAction('get')
-        .on('settings', () => settings.get())
-        .on('ads', () => ads.get());
+        listener.onAction('get')
+            .on('settings', () => settings.get())
+            .on('ads', () => ads.get());
 
-    listener.onAction('tab')
-        .on('settings', (sender, tab) =>
-            browser.tabs.create({
-                url: browser.runtime.getURL('settings.html') + (tab ? '#' + tab : ''),
-                active: true
-            })
-                .then(() => browser.tabs.remove(sender.tab.id)))
-        .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
-        .on('last-ad', sender => ads.getLastAdFromTab(sender.tab.id))
-        .on('highlight', sender => settings.highlightTab(sender.tab));
+        listener.onAction('tab')
+            .on('settings', (sender, tab) =>
+                browser.tabs.create({
+                    url: browser.runtime.getURL('settings.html') + (tab ? '#' + tab : ''),
+                    active: true
+                })
+                    .then(() => browser.tabs.remove(sender.tab.id)))
+            .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
+            .on('last-ad', sender => ads.getLastAdFromTab(sender.tab.id))
+            .on('highlight', sender => settings.highlightTab(sender.tab));
 
-    listener.onAction('permission')
-        .on('google-api', () => ads.checkPermissions());
+        listener.onAction('permission')
+            .on('google-api', () => ads.checkPermissions());
 
-    listener.start();
+        listener.start();
 
-    browser.webRequest.onBeforeSendHeaders.addListener(details => {
-        if (details.tabId === -1) return; //probably came from an extension, which we don't want to process
+        browser.webRequest.onBeforeSendHeaders.addListener(details => {
+            if (details.tabId === -1) return; //probably came from an extension, which we don't want to process
 
-        let request = new XMLHttpRequest();
-        let url = ads.parseURL(details.url);
-        let ad: Ad = {};
-        let [done, failed] = ads.queue(details);
-        let shouldCancel = false;
-        let gotChannelTitle;
+            let request = new XMLHttpRequest();
+            let url = ads.parseURL(details.url);
+            let ad: Ad = {};
+            let [done, failed] = ads.queue(details);
+            let shouldCancel = false;
+            let gotChannelTitle;
 
-        if (url.pathname === '/get_video_info' && url.params.video_id) {
-            let prevAd = ads.findPrevAdByVideoId(url.params.video_id);
+            if (url.pathname === '/get_video_info' && url.params.video_id) {
+                let prevAd = ads.findPrevAdByVideoId(url.params.video_id);
 
-            if (prevAd) { // at this point, all we have is the vID, no channel information, unless we've seen this specific vid before
-                if (settings.blacklist.has(prevAd.channelId.id) !== -1) {
-                    shouldCancel = true;
-                }
+                if (prevAd) { // at this point, all we have is the vID, no channel information, unless we've seen this specific vid before
+                    if (settings.blacklist.contains(prevAd.channelId.id)) {
+                        shouldCancel = true;
+                    }
 
-                ad = cloneObject(prevAd);
-                ad.timestamp = Date.now() + '';
-                gotChannelTitle = Promise.resolve();
-            } else { //get more information by accessing the url ourselves
-                request.open('GET', details.url, false);  // `false` makes the request synchronous
-                request.send(null);
+                    ad = cloneObject(prevAd);
+                    ad.timestamp = Date.now() + '';
+                    gotChannelTitle = Promise.resolve();
+                } else { //get more information by accessing the url ourselves
+                    request.open('GET', details.url, false);  // `false` makes the request synchronous
+                    request.send(null);
 
-                if (request.status === 200) {
-                    ad = ads.parseURL('?' + request.responseText).params;
+                    if (request.status === 200) {
+                        ad = ads.parseURL('?' + request.responseText).params;
 
-                    ad.channelId = {
-                        id: ad.ucid || ads.getChannelFromURL(ad.channel_url),
-                        display: '',
-                        username: ''
-                    };
+                        ad.channelId = {
+                            id: ad.ucid || ads.getChannelFromURL(ad.channel_url),
+                            display: '',
+                            username: ''
+                        };
 
-                    if (ad.channelId.id) {
-                        if (settings.blacklist.has(ad.channelId.id) !== -1) {
-                            shouldCancel = true;
-                        }
+                        if (ad.channelId.id) {
+                            if (settings.blacklist.contains(ad.channelId.id)) {
+                                shouldCancel = true;
+                            }
 
-                        if (ad.author) {
-                            ad.channelId.display = ad.author;
-                            gotChannelTitle = Promise.resolve();
-                        } else {
-                            let prevChannel = ads.findChannelFromPreviousAd(ad.channelId.id);
-                            if (prevChannel && prevChannel.display !== prevChannel.id) {
-                                //found a recent ad where we already got the display title
-                                ad.channelId.display = prevChannel.display
+                            if (ad.author) {
+                                ad.channelId.display = ad.author;
                                 gotChannelTitle = Promise.resolve();
-                            } else {
-                                //asynchrously get the author title, very messy but it's the best way 
-                                //the json method requires sending special headers
-                                ad.channelId.display = ad.channelId.id;
+                            } else { // sometimes channel name is not available with request, and we need to fetch ourselves
+                                let prevChannel = ads.findChannelFromPreviousAd(ad.channelId.id);
+                                if (prevChannel && prevChannel.display !== prevChannel.id) {
+                                    //found a recent ad where we already got the display title
+                                    ad.channelId.display = prevChannel.display
+                                    gotChannelTitle = Promise.resolve();
+                                } else {
+                                    //asynchrously get the author title, very messy but it's the best way 
+                                    //the json method requires sending special headers
+                                    ad.channelId.display = ad.channelId.id;
 
-                                gotChannelTitle = ads.fetchChannelTitle(ad.channelId.id)
-                                    .then(title => ad.channelId.display = title)
-                                    .catch(title => ad.channelId.display = title);
+                                    gotChannelTitle = ads.fetchChannelTitle(ad.channelId.id)
+                                        .then(title => ad.channelId.display = title)
+                                        .catch(title => ad.channelId.display = title);
+                                }
                             }
                         }
                     }
                 }
-            }
-            ad.video_id = url.params.video_id;
-            ad.details = details;
-            ad.blocked = shouldCancel;
+                ad.video_id = url.params.video_id;
+                ad.details = details;
+                ad.blocked = shouldCancel;
 
-            if (ad.channelId.id) {
-                gotChannelTitle
-                    .then(() => done(ad))
-                    .catch(() => done(ad));
+                if (ad.channelId.id) {
+                    gotChannelTitle
+                        .then(() => done(ad))
+                        .catch(() => done(ad));
+                } else {
+                    failed(ad);
+                }
+
             } else {
-                failed(ad);
+                failed('Invalid request: ' + url);
             }
 
-        } else {
-            failed('Invalid request: ' + url);
-        }
+            return { cancel: shouldCancel };
 
-        return { cancel: shouldCancel };
-
-    }, { urls: ['*://www.youtube.com/get_video_info?*'] }, ['blocking'])
-});
+        }, { urls: ['*://www.youtube.com/get_video_info?*'] }, ['blocking'])
+    });
 
 SettingsManager.injectAll();
 
@@ -504,11 +520,11 @@ function cloneObject<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
 }
 
-function arrayTrim(array: Array<any>, max: number) {
+function arrayTrim<T>(array: Array<T>, max: number): Array<T> {
     return array.slice(Math.max(array.length - max, 0), array.length)
 }
 
-function pushTrim<T>(array: T[], item: any, max: number): T[] {
+function pushTrim<T>(array: T[], item: T, max: number): T[] {
     const arr = arrayTrim(array, max - 1);
     arr.push(item);
     return arr;
