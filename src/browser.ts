@@ -1,15 +1,13 @@
 declare var chrome: any;
 
-function getWebExtensionsAPI(): typeof browser {
-    let api: any;
-
+const getWebExtensionsAPI = (): typeof browser => {
     try {
-        api = browser;
-        if (!api) throw 'chrome';
+        if (!browser) throw 'chrome';
+        return browser;
     } catch (e) {
-        if (chrome.promisified) return chrome;
-        api = chrome;
-        let promisify = (context: any, method: string) => {
+        const nextAPI = {} as typeof browser;
+
+        const promisify = (context: any, method: string): any => {
             // when called, adds a callback;
             const original = context[method] as Function;
             return function () {
@@ -17,47 +15,66 @@ function getWebExtensionsAPI(): typeof browser {
                     let args = [].slice.call(arguments);
 
                     args.push(function () {
-                        const err = api.runtime.lastError
+                        const err = chrome.runtime.lastError
                         if (err) {
                             return reject(err);
                         }
 
                         let args = [].slice.call(arguments);
-                        if (args.length > 1) {
-                            resolve(args);
-                        } else {
-                            resolve(args[0])
-                        }
+                        resolve(args.length > 1 ? args : args[0]);
                     });
 
                     original.apply(context, args)
                 });
             }
         }
-        if (api.tabs) {
-            api.tabs.query = promisify(api.tabs, 'query');
-            api.tabs.executeScript = promisify(api.tabs, 'executeScript');
-            api.tabs.sendMessage = promisify(api.tabs, 'sendMessage');
-            api.tabs.update = promisify(api.tabs, 'update');
-            api.tabs.create = promisify(api.tabs, 'create');
-            api.tabs.remove = promisify(api.tabs, 'remove');
-            api.tabs.getCurrent = promisify(api.tabs, 'getCurrent');
-            api.tabs.highlight = promisify(api.tabs, 'highlight');
+        if (chrome.tabs) {
+            nextAPI.tabs = {
+                ...chrome.tabs,
+                query: promisify(chrome.tabs, 'query'),
+                executeScript: promisify(chrome.tabs, 'executeScript'),
+                sendMessage: promisify(chrome.tabs, 'sendMessage'),
+                update: promisify(chrome.tabs, 'update'),
+                create: promisify(chrome.tabs, 'create'),
+                remove: promisify(chrome.tabs, 'remove'),
+                getCurrent: promisify(chrome.tabs, 'getCurrent'),
+                highlight: promisify(chrome.tabs, 'highlight')
+            } as typeof browser.tabs
         }
-        if (api.permissions) {
-            api.permissions.contains = promisify(api.permissions, 'contains');
-            api.permissions.request = promisify(api.permissions, 'request');
+        if (chrome.permissions) {
+            nextAPI.permissions = {
+                ...chrome.permissions,
+                contains: promisify(chrome.permissions, 'contains'),
+                request: promisify(chrome.permissions, 'request')
+            } as typeof browser.permissions
         }
-        if (api.management) {
-            api.management.getSelf = promisify(api.management, 'getSelf');
+        if (chrome.management) {
+            nextAPI.management = {
+                ...chrome.management,
+                getSelf: promisify(chrome.management, 'getSelf')
+            } as typeof browser.management
         }
-        api.storage.sync.get = promisify(api.storage.sync, 'get');
-        api.storage.sync.set = promisify(api.storage.sync, 'set');
-        api.storage.sync.clear = promisify(api.storage.sync, 'clear');
-        api.runtime.sendMessage = promisify(api.runtime, 'sendMessage');
-        api.promisified = true;
+        if (chrome.storage) {
+            nextAPI.storage = {
+                sync: {
+                    ...chrome.storage.sync,
+                    get: promisify(chrome.storage.sync, 'get'),
+                    set: promisify(chrome.storage.sync, 'set'),
+                    clear: promisify(chrome.storage.sync, 'clear')
+                }
+            } as typeof browser.storage
+        }
+        nextAPI.webRequest = { ...chrome.webRequest };
+        nextAPI.i18n = {
+            ...chrome.i18n
+        } as typeof browser.i18n
+        nextAPI.runtime = {
+            ...chrome.runtime,
+            sendMessage: promisify(chrome.runtime, 'sendMessage')
+        } as typeof browser.runtime;
+
+        return nextAPI;
     };
-    return api;
 }
 
 export default getWebExtensionsAPI() as typeof browser;
