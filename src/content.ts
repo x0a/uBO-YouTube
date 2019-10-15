@@ -5,7 +5,7 @@ import MessageAgent from './agent';
 // the locally-injected script which contains the main code
 // and the background script.
 
-class InitManager {
+class InjectHook {
     queue: Array<any>;
     firstRun: Promise<any>;
 
@@ -113,7 +113,7 @@ class InitManager {
         this.cssFile.disabled = true;
         this.head.removeChild(this.cssFile);
         this.head.removeChild(this.jsFile);
-        browser.runtime.onMessage.removeListener(init.onBrowserMessage);
+        browser.runtime.onMessage.removeListener(hook.onBrowserMessage);
     }
 }
 
@@ -210,7 +210,7 @@ class AdWatcher {
             for (let mutation of mutations) {
                 for (let node of mutation.addedNodes as NodeListOf<HTMLElement>) {
                     if (node.tagName === 'SCRIPT') {
-                        let syntheticEvent = new CustomEvent('beforescriptexecute', {
+                        const syntheticEvent = new CustomEvent('beforescriptexecute', {
                             detail: node,
                             cancelable: true
                         })
@@ -236,6 +236,23 @@ class AdWatcher {
         document.removeEventListener('beforescriptexecute', this.onScript);
     }
 }
+const hookReload = () => {
+    const instance = Math.random();
+    window.dispatchEvent(new CustomEvent('uBOWL-destroy', { detail: instance })); // signal to any pre-existing instances that they should unload
+
+    const unloader = (event: CustomEvent) => {
+        if (event.detail === instance) return;
+        console.log('Unloading uBOWL..');
+
+        window.removeEventListener('uBOWL-destroy', unloader);
+        agent.send('destroy');
+        hook.destroy();
+        agent.destroy();
+
+        // adwatcher.destroy();
+    }
+    window.addEventListener('uBOWL-destroy', unloader);
+}
 
 if (location.pathname === "/ubo-yt") {
     const allowed = ['whitelist', 'ads', 'misc'];
@@ -243,11 +260,9 @@ if (location.pathname === "/ubo-yt") {
 
     browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
 }
-const instance = Math.random();
-window.dispatchEvent(new CustomEvent('uBOWL-destroy', { detail: instance })); // signal to any pre-existing instances that they should unload
 
-const agent = new MessageAgent('uBOWL-message', true); // My postMessage wrapper, to communicate with our injected script
-const init = new InitManager(document.documentElement);
+
+
 /*const adwatcher = new AdWatcher(payload => {
     console.log("Received args:", payload);
     const nextFlags = payload.args.fflags
@@ -256,40 +271,30 @@ const init = new InitManager(document.documentElement);
     payload.args.fflags = nextFlags;
     return payload;
 });*/
-const intermediary = (message: any) => browser.runtime.sendMessage(message).then((response: any) => {
-    if (response.error) throw response.error;
-    delete response.error;
-    return response;
-})
+
+const agent = new MessageAgent('uBOWL-message', true); // My postMessage wrapper, to communicate with our injected script
+const hook = new InjectHook(document.documentElement);
+
+const intermediary = (
+    action: string,
+    subaction: string,
+    param?: any) => browser.runtime.sendMessage({ action, subaction, param })
+        .then((response: any) => {
+            if (response.error) throw response.error;
+            delete response.error;
+            return response;
+        });
+
 agent
     .on('ready', () => {
-        init.ready = true;
-        init.pushPending();
+        hook.ready = true;
+        hook.pushPending();
     })
-    .on('get-settings', () => init.getSettings())
-    .on('set-settings', (changes: any) => {
-        return intermediary({ action: 'set', subaction: changes.type, param: changes.param });
-    })
-    .on('recent-ad', () => {
-        return intermediary({ action: 'tab', subaction: 'last-ad' })
-    })
-    .on('mute', (shouldMute: boolean) => {
-        return intermediary({ action: 'tab', subaction: 'mute', param: shouldMute || false })
-    })
-    .on('highlight-tab', () => {
-        return intermediary({ action: 'tab', subaction: 'highlight' });
-    });
+    .on('get-settings', () => hook.getSettings())
+    .on('set-settings', ({ type, param }) => intermediary('set', type, param))
+    .on('recent-ad', () => intermediary('tab', 'last-ad'))
+    .on('mute-tab', (shouldMute: boolean) => intermediary('tab', 'mute', shouldMute || false))
+    .on('highlight-tab', () => intermediary('tab', 'highlight'));
 
-init.inject();
-
-let dejector: (event: CustomEvent) => void;
-window.addEventListener('uBOWL-destroy', dejector = event => {
-    if (event.detail === instance) return;
-    console.log('Unloading uBOWL..');
-
-    window.removeEventListener('uBOWL-destroy', dejector);
-    agent.send('destroy');
-    init.destroy();
-    // adwatcher.destroy();
-    agent.destroy();
-});
+hookReload();
+hook.inject();

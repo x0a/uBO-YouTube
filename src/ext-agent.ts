@@ -11,6 +11,7 @@ class MessageListener {
     events: Array<ExtEvent>;
     on: (subaction: string, fn: ExtEvent['fn']) => this;
     onAll: (fn: ExtEvent['fn']) => this;
+
     constructor() {
         this.events = [];
     }
@@ -27,20 +28,18 @@ class MessageListener {
         browser.runtime.onMessage.addListener((message: HostMessage, sender: browser.runtime.MessageSender, sendResponse: any) => {
             const events = this.events.filter(({ action, subaction }) => message.action === action
                 && (!subaction || message.subaction === subaction));
+
             if (events.length) {
                 let ret: any | Promise<any>;
                 try {
-                    ret = message.param;
-                    for (const event of events) {
-                        ret = event.fn(sender, ret);
-                    }
+                    ret = events.reduce((prevRet, { fn }) => fn(sender, prevRet), message.param);
                 } catch (error) {
                     sendResponse({ error });
                 }
 
                 if (ret instanceof Promise) {
                     ret
-                        .then(resp => sendResponse({ error: '', response: resp }))
+                        .then(response => sendResponse({ error: '', response }))
                         .catch(error => sendResponse({ error }));
                     return true;
                 } else {
