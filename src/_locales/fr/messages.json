@@ -1,0 +1,331 @@
+{
+    "okBtn": {
+        "message": "OK",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Annuler",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Options",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "Options pour cet annonceur"
+    },
+    "adOptionsTooltip": {
+        "message": "Gérer les annonces provenant de \"$title$\"",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "Restaurer les paramètres par défaut"
+    },
+    "import": {
+        "message": "Importer les réglages depuis un fichier"
+    },
+    "export": {
+        "message": "Exporter les réglages vers un fichier"
+    },
+    "resetConfirm": {
+        "message": "Ceci effacera tous les éléments de la liste blanche, les options d'annonce et les préférences. Si vous ne voulez pas perdre vos paramètres, annulez et cliquez d'abord sur Exporter."
+    },
+    "whitelistTabTitle": {
+        "message": "Liste blanche",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "Activer les annonces pour cette chaîne"
+    },
+    "whitelistedTooltip": {
+        "message": "Annonces activées pour cette chaîne"
+    },
+    "adsTabTitle": {
+        "message": "Annonces",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "Annonces",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "Divers",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "Chaîne",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Annonceur",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Vidéo",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "État",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "Action",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "Ajouter",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "removeBtn": {
+        "message": "Supprimer"
+    },
+    "bulkRemoveBtn": {
+        "message": "Supprimer les éléments sélectionnés"
+    },
+    "adsStillBlocked": {
+        "message": "Les annonces peuvent toujours être bloquées, assurez-vous d'avoir ajouté la règle suivante à votre liste blanche d'uBlock Origin"
+    },
+    "adsHeaderLong": {
+        "message": "Annonceurs récemment détectés"
+    },
+    "adsHeaderShort": {
+        "message": "Annonces récentes"
+    },
+    "whitelistHeader": {
+        "message": "Chaînes dans la Liste Blanche"
+    },
+    "removeWhitelistTooltip": {
+        "message": "Enlever la chaîne de la liste blanche"
+    },
+    "removeFailed": {
+        "message": "Impossible de supprimer les éléments demandés : $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "Liste noire d'Annonceurs"
+    },
+    "removeBlacklistTooltip": {
+        "message": "Enlever la chaîne de la liste noire"
+    },
+    "removeBlacklistConfirm": {
+        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "Annonceurs non mutés"
+    },
+    "muteBtn": {
+        "message": "Muter l'annonceur"
+    },
+    "removeUnmuteConfirm": {
+        "message": "Êtes-vous sûr de vouloir ré-activer le son pour \"$channelName$\" ?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "Êtes-vous sûr de vouloir ré-activer le son pour $count$ éléments ?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "Annonceurs mutés"
+    },
+    "removeMuteBtn": {
+        "message": "Dé-muter l'annonceur"
+    },
+    "removeMuteTooltip": {
+        "message": "Supprimer l'annonceur de la liste des annonceurs muets"
+    },
+    "removeMuteConfirm": {
+        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste des annonceurs mutées ?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste des annonceurs mutées ?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "Réinitialiser"
+    },
+    "resetTooltip": {
+        "message": "Effacer tous les paramètres"
+    },
+    "emptyList": {
+        "message": "Vide"
+    },
+    "importBtn": {
+        "message": "Sélectionner un fichier..."
+    },
+    "exportBtn": {
+        "message": "Télécharger"
+    },
+    "channelSearchHeader": {
+        "message": "Trouver des chaînes"
+    },
+    "adOptionsHeader": {
+        "message": "Options d'annonce"
+    },
+    "muteOption": {
+        "message": "Muter les annonces par défaut"
+    },
+    "overlaysOption": {
+        "message": "Masquer les annonces superposées"
+    },
+    "adErrorsOption": {
+        "message": "Ignorer les erreurs de lecture des annonces"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "Passe à la vidéo si l'annonce ne fonctionne pas, plutôt que d'afficher l'erreur \"Une erreur s'est produite\" avec l'animation de TV statique"
+    },
+    "adBlocked": {
+        "message": "Bloqué",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "Autorisé",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "Muter automatiquement toutes les annonces de cet annonceur"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "Bloquer toutes les annonces de cet annonceur"
+    },
+    "blacklistBtn": {
+        "message": "Bloquer cet annonceur"
+    },
+    "skipBtn": {
+        "message": "Passer l'annonce"
+    },
+    "skipTooltip": {
+        "message": "Tente de forcer le passage de l'annonce"
+    },
+    "pauseAfterAdOption": {
+        "message": "Mode Anti-Sursaut"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "Si une annonce muette se termine, et que l'onglet n'est pas actuellement affiché, la vidéo est discrètement mise en pause jusqu'à ce que l'utilisateur y retourne"
+    },
+    "permissionDesc": {
+        "message": "Une permission unique est nécessaire pour rechercher des chaînes YouTube"
+    },
+    "permissionBtn": {
+        "message": "Accorder l’autorisation"
+    },
+    "searchDesc": {
+        "message": "Entrez du texte pour rechercher une chaîne ou",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searching": {
+        "message": "Recherche en cours..."
+    },
+    "searchFailed": {
+        "message": "Impossible de charger les résultats. Hors ligne ?"
+    },
+    "importSubsBtn": {
+        "message": "Importer depuis les Abonnements"
+    },
+    "importSubsFailed": {
+        "message": "Impossible de récupérer les abonnements. Assurez-vous d'être connecté à YouTube."
+    },
+    "importSubsConfirm": {
+        "message": "$total$ abonnements trouvés, dont $new$ ne sont pas dans la liste. Ajouter ces $new$ éléments à la liste blanche ?",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "Impossible de définir les paramètres, erreur rencontrée : $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "Le fichier doit être de type \"$expected$\", mais un fichier \"$encountered$\" a été détecté",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "Impossible d'analyser en tant que JSON. Le fichier n'est probablement pas en JSON, ou il est corrompu."
+    },
+    "noNew": {
+        "message": "Aucun nouvel élément à ajouter"
+    },
+    "confirmImport": {
+        "message": "Ajouter $whitelisted$ éléments à la liste blanche, $blacklisted$ éléments à la liste noire, et $muted$ éléments à la liste des annonceurs mutés ?",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    }
+}
