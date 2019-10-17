@@ -32,7 +32,7 @@
         "message": "Export settings to file"
     },
     "resetConfirm": {
-        "message": "This will erase all whitelisted items, ad options and preferences. If you don't want to lose your settings, cancel and click export first."
+        "message": "This will erase all whitelisted items, ad options and preferences. If you don't want to lose your settings, cancel and click \"Download\" first."
     },
     "whitelistTabTitle": {
         "message": "Whitelist",
@@ -265,6 +265,10 @@
     "searchDesc": {
         "message": "Type to search for a youtube channel or",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder":{
+        "message": "Channel name..",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },
     "searching": {
         "message": "Searching..."

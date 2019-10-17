@@ -71,7 +71,7 @@ const ChannelSearch: FunctionComponent<{
                 type='text'
                 onChange={onChange}
                 value={search}
-                placeholder='Channel name..'
+                placeholder={i18n('searchPlaceholder')}
                 className='form-control form-control-sm'
                 disabled={!permission} />
             <i className={'fas search-feedback ' + searchIcon} />
