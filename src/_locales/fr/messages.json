@@ -32,7 +32,7 @@
         "message": "Exporter les réglages vers un fichier"
     },
     "resetConfirm": {
-        "message": "Ceci effacera tous les éléments de la liste blanche, les options d'annonce et les préférences. Si vous ne voulez pas perdre vos paramètres, annulez et cliquez d'abord sur Exporter."
+        "message": "Ceci effacera tous les éléments de la liste blanche, les options d'annonce et les préférences. Si vous ne voulez pas perdre vos paramètres, annulez et cliquez d'abord sur \"Télécharger\"."
     },
     "whitelistTabTitle": {
         "message": "Liste blanche",
@@ -148,7 +148,7 @@
         }
     },
     "unmutedHeader": {
-        "message": "Annonceurs non mutés"
+        "message": "Annonceurs non muets"
     },
     "muteBtn": {
         "message": "Muter l'annonceur"
@@ -170,7 +170,7 @@
         }
     },
     "mutelistHeader": {
-        "message": "Annonceurs mutés"
+        "message": "Annonceurs muets"
     },
     "removeMuteBtn": {
         "message": "Dé-muter l'annonceur"
@@ -179,7 +179,7 @@
         "message": "Supprimer l'annonceur de la liste des annonceurs muets"
     },
     "removeMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste des annonceurs mutées ?",
+        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste des annonceurs muets ?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -187,7 +187,7 @@
         }
     },
     "bulkRemoveMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste des annonceurs mutées ?",
+        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste des annonceurs muets ?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -265,6 +265,10 @@
     "searchDesc": {
         "message": "Entrez du texte pour rechercher une chaîne ou",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "Rechercher une chaîne...",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },
     "searching": {
         "message": "Recherche en cours..."
