@@ -17,7 +17,7 @@ const TabContainer: FunctionComponent<{
     return <>
         <ul className='nav nav-tabs d-sm-none d-md-flex'>
             <li className='nav-item'>
-                <a className='nav-link'>
+                <a className='nav-link border-0'>
                     <img src='/img/icon_16.png' />
                 </a>
             </li>
