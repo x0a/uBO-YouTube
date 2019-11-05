@@ -34,7 +34,7 @@ interface LocaleMessages {
 let settings: ReadonlySettings;
 let locale: LocaleMessages;
 let accessURLs: AccessURL;
-let pages: Page, watcher: MutationWatcher, agent: MessageAgent;
+let pages: Page, watcher: MutationWatcher, agent: MessageAgent, toast: (text: string) => void;
 
 class MutationWatcher {
 
@@ -365,7 +365,8 @@ class WhitelistButtonPoly extends WhitelistButton {
     constructor(onClick: EventListener, toggled: boolean) {
         super(onClick, toggled);
         this.button.className += ' UBO-wl-poly ' + (toggled ? ' yt-uix-button-toggled' : '');
-        this.button.innerHTML = i18n('adsEnableBtn').toUpperCase();
+        this.button.appendChild(AdOptions.generateIcon(icons.checkcircle))
+        this.button.appendChild(document.createTextNode(i18n('adsEnableBtn').toUpperCase()));
         this.buttonContainer.appendChild(this.button);
     }
     exists() {
@@ -409,9 +410,9 @@ class AdOptions {
     constructor(onBlacklist: EventListener, onMute: EventListener, onSkip: () => {}) {
         this.toggleMenu = this.toggleMenu.bind(this);
         this.lostFocus = this.lostFocus.bind(this);
-        this.unMuteIcon = this.generateIcon(icons.unMute);
-        this.muteIcon = this.generateIcon(icons.mute);
-        this.playIcon = this.generateIcon(icons.play);
+        this.unMuteIcon = AdOptions.generateIcon(icons.unMute);
+        this.muteIcon = AdOptions.generateIcon(icons.mute);
+        this.playIcon = AdOptions.generateIcon(icons.play);
         this.muteButton = this.generateMenuItem(
             i18n('muteBtn'),
             i18n('muteAdvertiserTooltip'),
@@ -488,7 +489,7 @@ class AdOptions {
     }
 
     generateMenuItem(text: string, description: string, iconVector: string | Element, onClick: EventListener): MenuItem {
-        const defaultIcon = iconVector instanceof Element ? iconVector : this.generateIcon(iconVector);
+        const defaultIcon = iconVector instanceof Element ? iconVector : AdOptions.generateIcon(iconVector);
 
         let el: MenuItem = document.createElement('button') as MenuItem;
         let currentIcon = defaultIcon;
@@ -524,19 +525,17 @@ class AdOptions {
         return el;
     }
 
-    generateIcon(iconVector: string): Element {
-        return (() => {
-            let el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            el.setAttribute('viewBox', '0 0 512 512');
-            el.setAttribute('class', 'UBO-icon');
-            el.appendChild((() => {
-                let el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                el.setAttributeNS(null, 'fill', 'currentColor');
-                el.setAttributeNS(null, 'd', iconVector);
-                return el;
-            })());
-            return el;
-        })()
+    static generateIcon(iconVector: string): Element {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 512 512');
+        svg.setAttribute('class', 'UBO-icon');
+        
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttributeNS(null, 'fill', 'currentColor');
+        path.setAttributeNS(null, 'd', iconVector);
+
+        svg.appendChild(path);
+        return svg;
     }
     set muteTab(shouldMute: boolean) {
         if (shouldMute) {
@@ -679,6 +678,10 @@ class SingleChannelPage {
         let whitelisted = pages.updateURL(this.channelId, verify);
 
         whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
+        
+        if (verify && whitelisted) {
+            // toast("Channel added to whitelist");
+        }
 
         if (!this.whitelistButton.exists()) {
             this.insertButton(this.whitelistButton);
@@ -740,8 +743,9 @@ class SingleChannelPage {
         } else if (!playing && this.adPlaying) {
             if (this.shouldPause()) {
                 this.schedulePause()
+            } else {
+                this.adOptions.muteTab = false;
             }
-            this.adOptions.muteTab = false;
             this.adOptions.hide();
             this.adOptions.reset();
             this.adPlaying = false;
@@ -783,6 +787,7 @@ class SingleChannelPage {
         this.onVideoPlayable(this.currentPlayer)
             .then(() => {
                 this.currentPlayer.pause();
+                this.adOptions.muteTab = false;
                 this.pauseOrigin = true;
 
                 pageTitle = document.title;
@@ -1491,6 +1496,22 @@ class Page {
     }
 }
 
+const hookToast = () => {
+    const toast = document.querySelector("ytd-popup-container paper-toast.yt-notification-action-renderer") as HTMLElement;
+    if (!toast) return () => { };
+    const label = toast.querySelector("span#label");
+
+    return (text: string) => {
+        label.textContent = text;
+        toast.style.display = "";
+        toast.classList.add('paper-toast-open');
+
+        setTimeout(() => {
+            toast.style.display = "none";
+            toast.classList.remove('paper-toast-open');
+        }, 3000);
+    }
+}
 
 /**
  * Access deeply nested objects without throwing errors
@@ -1591,6 +1612,7 @@ const i18n = (messageName: string, substitutions?: string | number | Array<strin
 const init = (design: Layout) => {
     pages = new Page(design || Page.getDesign());
     watcher = new MutationWatcher();
+    // toast = hookToast();
     pages.update(true);
     watcher.start();
 

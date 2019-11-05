@@ -2,11 +2,13 @@ declare var chrome: any;
 
 const getWebExtensionsAPI = (): typeof browser => {
     try {
-        if (!browser) throw 'chrome';
+        if (!browser || navigator.userAgent.indexOf("Edge") !== -1) throw 'chrome';
         return browser;
     } catch (e) {
         const nextAPI = {} as typeof browser;
-
+        if(navigator.userAgent.indexOf("Edge") !== -1){
+            chrome = browser;
+        }
         const promisify = (context: any, method: string): any => {
             // when called, adds a callback;
             const original = context[method] as Function;
@@ -52,6 +54,10 @@ const getWebExtensionsAPI = (): typeof browser => {
             nextAPI.management = {
                 ...chrome.management,
                 getSelf: promisify(chrome.management, 'getSelf')
+            } as typeof browser.management
+        }else{
+            nextAPI.management = {
+                getSelf: () => Promise.resolve({installType: "development"} as any)
             } as typeof browser.management
         }
         if (chrome.storage) {
