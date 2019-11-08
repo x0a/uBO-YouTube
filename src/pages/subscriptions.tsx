@@ -41,7 +41,9 @@ const ImportSubscriptions: FunctionComponent<{
                             blacklisted: [],
                             muted: [],
                             muteAll: settings.muteAll,
-                            skipOverlays: settings.skipOverlays
+                            skipOverlays: settings.skipOverlays,
+                            skipAdErrors: settings.skipAdErrors,
+                            pauseAfterAd: settings.pauseAfterAd
                         })
                         bMessage('set', 'bulk', nextSettings);
                     })
