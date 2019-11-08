@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus, faMinus, faSearch, faSpinner, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { ChannelList, Channel } from '../typings';
 import { bMessage, requestGooglePermission, Confirm, i18n } from './common';
 
@@ -48,14 +50,16 @@ const ChannelSearch: FunctionComponent<{
         }
         return () => clearTimeout(int);
     }, [search])
-    let searchIcon = '';
+    let searchIcon;
+    let spin = false;
 
     if (!searching && !error) {
-        searchIcon = 'fa-search';
+        searchIcon = faSearch;
     } else if (searching) {
-        searchIcon = 'fa-spinner fa-spin';
+        searchIcon = faSpinner;
+        spin = true;
     } else if (error) {
-        searchIcon = 'fa-exclamation-circle';
+        searchIcon = faExclamationCircle;
     }
     const toggleWhitelist = (channel: Channel, whitelist: boolean) => {
         if (whitelist) {
@@ -74,7 +78,7 @@ const ChannelSearch: FunctionComponent<{
                 placeholder={i18n('searchPlaceholder')}
                 className='form-control form-control-sm'
                 disabled={!permission} />
-            <i className={'fas search-feedback ' + searchIcon} />
+            <FontAwesomeIcon icon={searchIcon} className="search-feedback" spin={spin}/>
         </div>
         <hr />
         {!permission && <div>
@@ -146,11 +150,11 @@ const ChannelItem: FunctionComponent<{
                 disabled={added && !hovering}
                 onClick={toggle}>
 
-                {!added && <><i className='fas fa-plus mr-1' /><span>
+                {!added && <><FontAwesomeIcon icon={faPlus} className="mr-1" /><span>
                     {i18n('addBtn')}
                 </span></>}
                 {added && !hovering && 'Added'}
-                {added && hovering && <><i className='fas fas-minus mr-1' /><span>
+                {added && hovering && <><FontAwesomeIcon icon={faMinus} className="mr-2" /><span>
                     {i18n('removeBtn')}
                 </span> </>}
             </button>

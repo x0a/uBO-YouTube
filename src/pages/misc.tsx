@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useState, useCallback, useEffect, FormEvent } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDownload, faFileImport, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { Settings } from '../typings';
 import {
     Confirm, isSettings, canonicalizeSettings, diffSettings,
@@ -52,7 +54,7 @@ const Import: FunctionComponent<{
     return <>
         <input type='file' ref={inputRef} onChange={onFile} className='d-none' />
         <button type='button' className='btn btn-primary' onClick={() => inputEl.click()}>
-            <i className='fas fa-file-import' /> {i18n('importBtn')}
+            <FontAwesomeIcon icon={faFileImport} /> {i18n('importBtn')}
         </button>
     </>
 }
@@ -73,7 +75,7 @@ const Export: FunctionComponent<{
     return <>
         <a download='ublock-youtube.json' href={blobURL} ref={linkRef} className='d-none' />
         <button type='button' className='btn btn-primary' onClick={() => linkEl.click()}>
-            <i className='fas fa-download' /> {i18n('exportBtn')}
+            <FontAwesomeIcon icon={faDownload} /> {i18n('exportBtn')}
         </button>
     </>
 }
@@ -89,7 +91,7 @@ const Reset: FunctionComponent<{
         className={'btn btn-danger ' + className}
         title={i18n('resetTooltip')}
         onClick={reset}>
-        <i className='fas fa-trash' /> {i18n('resetBtn')}
+        <FontAwesomeIcon icon={faTrash} /> {i18n('resetBtn')}
     </button>
 }
 const ListGroupItem: FunctionComponent<{
@@ -104,7 +106,7 @@ const SettingsPage = () => <button
         openTab(getExtURL('settings.html'))
             .then(() => window.close())
     }}>
-    <i className='fas fa-cog mr-1' /> {i18n('optionsBtn')}
+    <FontAwesomeIcon icon={faTrash} /> {i18n('optionsBtn')}
 </button>
 
 const Options: FunctionComponent<{

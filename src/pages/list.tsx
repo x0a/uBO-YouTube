@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMinusCircle } from '@fortawesome/free-solid-svg-icons'
 import { bMessage, Confirm, fullHeader, popupHeader, i18n } from './common';
 import { ChannelList, Channel } from '../typings';
 import Link from './link';
@@ -21,13 +23,13 @@ const ChannelTable: FunctionComponent<{
     const [checkAll, toggleCheckAll] = useState(false);
     const getURL = (id: string) => 'https://youtube.com/channel/' + id;
     const toggleCheck = (_id: string) => {
-        if(enableBulk) setChannels(channels
-        .map(({ checked, id, display, username }) => ({
-            checked: _id === id ? !checked : checked,
-            id,
-            display,
-            username
-        })))
+        if (enableBulk) setChannels(channels
+            .map(({ checked, id, display, username }) => ({
+                checked: _id === id ? !checked : checked,
+                id,
+                display,
+                username
+            })))
         toggleCheckAll(false);
     }
     const toggleAll = () => {
@@ -98,7 +100,7 @@ const ChannelTable: FunctionComponent<{
                             className='btn btn-link text-danger float-right m-0 p-0'
                             onClick={event => onSingleAction(channel, event)}
                             title={actionDesc}>
-                            <i className='fas fa-minus-circle' />
+                            <FontAwesomeIcon icon={faMinusCircle} />
                         </button>
                     </td>
                 </tr>)}

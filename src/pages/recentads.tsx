@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faLink, faVideo, faVideoSlash, faVolumeMute, faBan } from '@fortawesome/free-solid-svg-icons'
 import { bMessage, popupHeader, fullHeader, i18n } from './common';
 import { Ad, Settings, Channel } from '../typings';
 import Link from './link';
@@ -28,15 +30,21 @@ const AdItem: FunctionComponent<{
         </td>
         {full && <td>
             <Link href={url}>
-                <i className="fas fa-link mr-1" />
+                <FontAwesomeIcon icon={faLink} className="mr-1" />
                 {ad.title}
             </Link>
         </td>}
         {full && <td>
             <div className='d-flex align-items-center'>
                 {ad.blocked
-                    ? <><i className='fas fa-video-slash mr-1' /><span className='d-inline-block'>{i18n('adBlocked')}</span></>
-                    : <><i className='fas fa-video mr-1' /><span className='d-inline-block'>{i18n('adAllowed')}</span></>}
+                    ? <>
+                        <FontAwesomeIcon icon={faVideoSlash} className="mr-1" />
+                        <span className='d-inline-block'>{i18n('adBlocked')}</span>
+                    </>
+                    : <>
+                        <FontAwesomeIcon icon={faVideo} className="mr-1" />
+                        <span className='d-inline-block'>{i18n('adAllowed')}</span>
+                    </>}
             </div>
         </td>}
         <td>
@@ -46,14 +54,14 @@ const AdItem: FunctionComponent<{
                     onClick={onMute}
                     disabled={muted}
                     title={i18n('muteAdvertiserTooltip')}>
-                    <i className='fas fa-volume-mute' />
+                    <FontAwesomeIcon icon={faVolumeMute} />
                 </button>
                 <button
                     className={'btn ' + (full ? 'btn-outline-danger' : 'btn-link text-danger float-right')}
                     onClick={onBlock}
                     disabled={blocked}
                     title={i18n('blockAdvertiserTooltip')}>
-                    <i className='fas fa-ban' />
+                    <FontAwesomeIcon icon={faBan} />
                 </button>
             </div>
         </td>

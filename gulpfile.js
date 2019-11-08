@@ -76,7 +76,7 @@ gulp.task('ts', () => {
             output: {
                 filename: '[name].js'
             },
-            devtool: 'cheap-module-source-map',
+            devtool: !build && !production ? 'cheap-module-source-map' : 'none',
             externals: {
                 'browser': 'browser',
                 'chrome': 'chrome'
