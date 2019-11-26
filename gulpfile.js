@@ -4,6 +4,7 @@ const gulp = require('gulp');
 const cleanCSS = require('gulp-clean-css');
 const uglify = require('gulp-uglify-es').default
 const jeditor = require('gulp-json-editor');
+const sass = require('gulp-sass');
 const del = require('del');
 const gulpif = require('gulp-if');
 const mergestream = require('merge-stream');
@@ -29,7 +30,17 @@ function sendToAll(message) {
 gulp.task('clean', () => {
     return del(['dist/chrome/debug/**/*', 'dist/webext/debug/**/*']);
 });
-
+gulp.task('sass', () => {
+    return gulp.src('src/sass/*.scss')
+        .pipe(sass({
+            includePaths: ['node_modules']
+        }))
+        .pipe(cleanCSS())
+        .pipe(gulp.dest('dist/chrome/debug/lib'))
+        .pipe(gulp.dest('dist/webext/debug/lib'))
+        .pipe(gulpif(build, webext.add('lib')))
+        .pipe(gulpif(build, chrome.add('lib')))
+})
 gulp.task('css', () => {
     return gulp.src('src/*.css')
         .pipe(gulpif(build, src.add('/src')))
@@ -201,7 +212,7 @@ gulp.task('done', cb => {
     cb();
 });
 
-gulp.task('default', gulp.series('clean', gulp.parallel('css', 'ts', 'lib', 'html', 'img', 'locales'), 'manifest', 'build-end', 'done'))
+gulp.task('default', gulp.series('clean', gulp.parallel('css', 'sass', 'ts', 'lib', 'html', 'img', 'locales'), 'manifest', 'build-end', 'done'))
 
 gulp.task('build', gulp.series('build-start', 'default'));
 
@@ -251,7 +262,7 @@ gulp.task('watch', gulp.series('default', () => {
     });
 
     gulp.watch('src/_locales/**/*', gulp.series('locales', 'fullreload'))
-    gulp.watch('src/*.css', gulp.series('css', 'partialreload'));
+    gulp.watch(['src/*.css', 'src/css/**/*'], gulp.series('css', 'sass', 'partialreload'));
     gulp.watch('src/pages/*.html', gulp.series('html'))
     gulp.watch('src/pages/*.[tj]sx', gulp.series('ts'));
     gulp.watch('shared/manifest.json', gulp.series('manifest', 'fullreload'));
