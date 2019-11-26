@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useEffect, useState, useLayoutEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable } from './list';
 import { bMessage, onSettings, i18n } from './common';
 import { Settings } from '../typings';
@@ -157,7 +157,7 @@ const SwitchableOption: FunctionComponent<{
             {text}
         </span>
         {tooltip && <div className='tooltip-parent'>
-            <FontAwesomeIcon icon={faQuestionCircle} />
+            <FontAwesomeIcon icon={faInfoCircle} />
             <div className='tooltip'>
                 <div className='tooltip-inner'>{tooltip}</div>
             </div>
