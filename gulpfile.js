@@ -32,6 +32,7 @@ gulp.task('clean', () => {
 });
 gulp.task('sass', () => {
     return gulp.src('src/sass/*.scss')
+        .pipe(gulpif(build, src.add('/src/sass')))
         .pipe(sass({
             includePaths: ['node_modules']
         }))
@@ -192,7 +193,7 @@ gulp.task('build-end', cb => {
                 .pipe(gulp.dest('dist/chrome/')),
             webext.close('latest' + codeVersion + '.zip')
                 .pipe(gulp.dest('dist/webext/')),
-            gulp.src(['gulpfile.js', 'package.json', 'tsconfig.json'])
+            gulp.src(['gulpfile.js', 'package.json', 'package-lock.json', 'tsconfig.json'])
                 .pipe(src.add())
                 .on('end', () =>
                     src.close('src.zip')

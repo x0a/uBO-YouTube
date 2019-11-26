@@ -60,10 +60,9 @@
     "web-ext-types": "^3.2.1",
     "webpack": "^4.39.1",
     "webpack-stream": "^5.2.1",
-    "websocket": "^1.0.29"
-  },
-  "dependencies": {
+    "websocket": "^1.0.29",
     "bootstrap": "^4.3.1",
     "materialize-css": "^1.0.0-rc.2"
-  }
+  },
+  "dependencies": {}
 }
