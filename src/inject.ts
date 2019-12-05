@@ -529,7 +529,7 @@ class AdOptions {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('viewBox', '0 0 512 512');
         svg.setAttribute('class', 'UBO-icon');
-        
+
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttributeNS(null, 'fill', 'currentColor');
         path.setAttributeNS(null, 'd', iconVector);
@@ -678,7 +678,7 @@ class SingleChannelPage {
         let whitelisted = pages.updateURL(this.channelId, verify);
 
         whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
-        
+
         if (verify && whitelisted) {
             // toast("Channel added to whitelist");
         }
@@ -855,11 +855,26 @@ class SingleChannelPage {
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
 
-        if (this.skipButton && (this.awaitingSkip || this.videoError)) {
-            this.skipButton.click();
+        if (this.skipButton) {
+            this.fixSkipButton(skipButton);
+            if(this.awaitingSkip || this.videoError){
+                this.skipButton.click();
+            }
         }
     }
-
+    fixSkipButton(skipButton: HTMLElement) {
+        let el = skipButton.querySelector('.ytp-ad-skip-button-text') as HTMLElement;
+        let ancestors = 0;
+        while (el && el !== document.body && ancestors < 15) {
+            const style = getComputedStyle(el);
+            if (style.display.indexOf('none') === 0) {
+                console.log("Unhiding", el.tagName, el.className, el.id, el.getAttribute('style'));
+                el.style.display = "block !important";
+            }
+            el = el.parentElement;
+            ancestors++;
+        }
+    }
     verifyAd() {
         //console.log(!!this.currentPlayer, typeof this.currentPlayer.src === 'string' && this.currentPlayer.src);
         return this.matchAdCompanion()
