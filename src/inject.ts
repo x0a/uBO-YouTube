@@ -142,7 +142,8 @@ class MutationWatcher {
 
     isOverlayAd(mutation: MutationElement): HTMLButtonElement {
         return mutation.type === 'childList'
-            && (mutation.target.classList.contains('ytp-ad-module') || mutation.target.classList.contains('ytp-ubo-ad-module'))
+            && (mutation.target.classList.contains('ytp-ad-module')
+                || mutation.target.classList.contains('ytp-ubo-ad-module'))
             && mutation.addedNodes.length
             && mutation.target.querySelector('button.ytp-ad-overlay-close-button')
     }
