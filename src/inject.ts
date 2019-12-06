@@ -142,15 +142,16 @@ class MutationWatcher {
 
     isOverlayAd(mutation: MutationElement): HTMLButtonElement {
         return mutation.type === 'childList'
-            && mutation.target.classList.contains('ytp-ad-module')
+            && (mutation.target.classList.contains('ytp-ad-module') || mutation.target.classList.contains('ytp-ubo-ad-module'))
             && mutation.addedNodes.length
             && mutation.target.querySelector('button.ytp-ad-overlay-close-button')
     }
     fixOverlayVideoAd(element: HTMLElement): boolean {
-        if (element.classList.contains('ytp-ad-module')) {
+        if (element.classList.contains('ytp-ad-module') || element.classList.contains('ytp-ubo-ad-module')) {
             if (element.classList.contains('video-ads')) { // if .ytp-ad-module & .video-ads
                 element.classList.remove('video-ads');
             }
+            element.classList.replace('ytp-ad-module', 'ytp-ubo-ad-module');
             return true;
         }
         return element.classList.contains('video-ads'); // otherwise check if just .video-ads
@@ -731,10 +732,12 @@ class SingleChannelPage {
                     const skipButton = MutationWatcher.adSkipButton(skipContainer);
                     if (skipButton)
                         this.skipButtonUpdate(skipButton);
-                    const adContainer = skipContainer.closest('.ytp-ad-module.video-ads');
+                    const adContainer = skipContainer.closest('.ytp-ad-module');
 
-                    if (adContainer)
+                    if (adContainer) {
                         adContainer.classList.remove('video-ads');
+                        adContainer.classList.replace('ytp-ad-module', 'ytp-ubo-ad-module');
+                    }
 
                 }
             }
@@ -855,24 +858,8 @@ class SingleChannelPage {
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
 
-        if (this.skipButton) {
-            this.fixSkipButton(skipButton);
-            if(this.awaitingSkip || this.videoError){
-                this.skipButton.click();
-            }
-        }
-    }
-    fixSkipButton(skipButton: HTMLElement) {
-        let el = skipButton.querySelector('.ytp-ad-skip-button-text') as HTMLElement;
-        let ancestors = 0;
-        while (el && el !== document.body && ancestors < 15) {
-            const style = getComputedStyle(el);
-            if (style.display.indexOf('none') === 0) {
-                console.log("Unhiding", el.tagName, el.className, el.id, el.getAttribute('style'));
-                el.style.display = "block !important";
-            }
-            el = el.parentElement;
-            ancestors++;
+        if (this.skipButton && (this.awaitingSkip || this.videoError)) {
+            this.skipButton.click();
         }
     }
     verifyAd() {

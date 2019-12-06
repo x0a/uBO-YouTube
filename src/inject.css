@@ -30,7 +30,8 @@
     border-style: solid;
     border-width: 1px;
 }
-.UBO-wl-btn.UBO-wl-poly:not(.yt-uix-button-toggled) .UBO-icon{
+
+.UBO-wl-btn.UBO-wl-poly:not(.yt-uix-button-toggled) .UBO-icon {
     display: none;
 }
 
@@ -44,7 +45,7 @@
     letter-spacing: .007px;
     text-decoration: none;
     text-transform: uppercase;
-    
+
     padding: 0 15px;
     display: -ms-inline-flexbox;
     display: inline-flex;
@@ -220,4 +221,10 @@ html[dark] .UBO-wl-btn.UBO-wl-poly.yt-uix-button-toggled {
     height: 50%;
     margin-right: 5px;
     vertical-align: -4px;
+}
+
+/* Replicate .ytp-ad-module */
+.ytp-ubo-ad-module {
+    height: 100%;
+    width: 100%;
 }
