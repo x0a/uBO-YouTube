@@ -31,7 +31,7 @@ const Import: FunctionComponent<{
                 inputEl.value = '';
                 if (!isSettings(json))
                     throw 'Invalid settings';
-                const nextSettings = diffSettings(settings, canonicalizeSettings(json));
+                const nextSettings = diffSettings(settings, canonicalizeSettings(json, settings));
 
                 if (!nextSettings.whitelisted.length && !nextSettings.blacklisted.length && !nextSettings.muted.length)
                     return alert(i18n('noNew'));
@@ -61,7 +61,8 @@ const Import: FunctionComponent<{
 
 const Export: FunctionComponent<{
     settings: Settings
-}> = ({ settings }) => {
+    className?: string;
+}> = ({ settings, className = '' }) => {
     const [linkEl, setLink] = useState(null as HTMLAnchorElement);
     const [blobURL, setBlobURL] = useState('');
     const linkRef = useCallback((el: HTMLAnchorElement) => el !== null && setLink(el), []);
@@ -74,7 +75,10 @@ const Export: FunctionComponent<{
 
     return <>
         <a download='ublock-youtube.json' href={blobURL} ref={linkRef} className='d-none' />
-        <button type='button' className='btn btn-primary' onClick={() => linkEl.click()}>
+        <button
+            type='button'
+            className={'btn btn-primary ' + className}
+            onClick={() => linkEl.click()}>
             <FontAwesomeIcon icon={faDownload} /> {i18n('exportBtn')}
         </button>
     </>
@@ -166,4 +170,5 @@ const Options: FunctionComponent<{
     </div>
 }
 
+export { Export }
 export default Options

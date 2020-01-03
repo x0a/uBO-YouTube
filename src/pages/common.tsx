@@ -54,7 +54,15 @@ const readJSONFile = (file: File): Promise<any> => new Promise((resolve, reject)
     })
     reader.readAsText(file.slice())
 })
-
+const defaultSettings = (): Settings => ({
+    blacklisted: [],
+    whitelisted: [],
+    muted: [],
+    muteAll: false,
+    skipOverlays: true,
+    skipAdErrors: true,
+    pauseAfterAd: false
+})
 const isSettings = (prospect: any): prospect is Settings => {
     return typeof prospect === 'object'
         && (!prospect.whitelisted || prospect.whitelisted instanceof Array)
@@ -77,15 +85,15 @@ const canonicalizeChannels = (list?: ChannelList): ChannelList => {
             .map(({ id, username, display }) => ({ id, username, display }))
         : []
 }
-const canonicalizeSettings = (prospect: Settings): Settings => {
+const canonicalizeSettings = (prospect: Settings, defaults = defaultSettings()): Settings => {
     return {
         whitelisted: canonicalizeChannels(prospect.whitelisted),
         blacklisted: canonicalizeChannels(prospect.blacklisted),
         muted: canonicalizeChannels(prospect.muted),
-        muteAll: prospect.muteAll === undefined ? false : prospect.muteAll,
-        skipOverlays: prospect.skipOverlays === undefined ? true : prospect.skipOverlays,
-        skipAdErrors: prospect.skipAdErrors === undefined ? true : prospect.skipAdErrors,
-        pauseAfterAd: prospect.pauseAfterAd === undefined ? false : prospect.pauseAfterAd
+        muteAll: prospect.muteAll === undefined ? defaults.muteAll : prospect.muteAll,
+        skipOverlays: prospect.skipOverlays === undefined ? defaults.skipOverlays : prospect.skipOverlays,
+        skipAdErrors: prospect.skipAdErrors === undefined ? defaults.skipAdErrors : prospect.skipAdErrors,
+        pauseAfterAd: prospect.pauseAfterAd === undefined ? defaults.pauseAfterAd : prospect.pauseAfterAd
     }
 }
 
@@ -114,6 +122,9 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         pauseAfterAd: next.pauseAfterAd,
     }
 }
+const settingsFromList = (list: ChannelList, exportKey: string) => ({
+    [exportKey]: list
+}) as any as Settings;
 const fullHeader = (text: string) => <h4>{text}</h4>;
 const popupHeader = (text: string) => <p className='font-weight-bold-sm font-size-6 text-center'>{text}</p>;
 const i18n = (messageName: string, substitutions?: any | Array<any>) =>
@@ -122,5 +133,6 @@ export {
     bMessage, Confirm, isSettings, canonicalizeSettings,
     diffSettings, diffList, readJSONFile, mergeSettings,
     fullHeader, popupHeader, onSettings, openTab, getExtURL,
-    requestGooglePermission, i18n, getManifest, checkDev
+    requestGooglePermission, i18n, getManifest, checkDev,
+    defaultSettings, settingsFromList
 }

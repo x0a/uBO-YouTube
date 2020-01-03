@@ -2,7 +2,8 @@ import * as React from 'react';
 import { FunctionComponent, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMinusCircle } from '@fortawesome/free-solid-svg-icons'
-import { bMessage, Confirm, fullHeader, popupHeader, i18n } from './common';
+import { bMessage, Confirm, fullHeader, popupHeader, i18n, settingsFromList } from './common';
+import { Export } from './misc'
 import { ChannelList, Channel } from '../typings';
 import Link from './link';
 
@@ -14,11 +15,12 @@ type ChannelListModify = Array<ChannelMod>;
 const ChannelTable: FunctionComponent<{
     list: ChannelList;
     title: string | JSX.Element;
+    exportKey: string;
     actionDesc: string;
     enableBulk: boolean;
     onAction: (item: Channel) => any;
     onBulkAction: (items: Array<Channel>) => any;
-}> = ({ title, list, onBulkAction, enableBulk, onAction, actionDesc }) => {
+}> = ({ title, list, exportKey, onBulkAction, enableBulk, onAction, actionDesc }) => {
     const [channels, setChannels] = useState([] as ChannelListModify);
     const [checkAll, toggleCheckAll] = useState(false);
     const getURL = (id: string) => 'https://youtube.com/channel/' + id;
@@ -44,12 +46,10 @@ const ChannelTable: FunctionComponent<{
         toggleCheckAll(nextCheck);
     }
     const selectionsMade = () => channels.some(channel => channel.checked);
-    const onListAction = () => {
-        const selected = channels
-            .filter(({ checked }) => checked)
-            .map(({ id, display, username }) => ({ id, display, username }));
-        onBulkAction(selected);
-    }
+    const getSelections = () => channels
+        .filter(({ checked }) => checked)
+        .map(({ id, display, username }) => ({ id, display, username }));
+    const onListAction = () => onBulkAction(getSelections());
     const onSingleAction = (channel: Channel, event: React.SyntheticEvent) => {
         event.stopPropagation();
         onAction(channel);
@@ -106,11 +106,14 @@ const ChannelTable: FunctionComponent<{
                 </tr>)}
             </tbody>
         </table>
-        {selectionsMade() && <button
-            className='btn btn-sm btn-danger float-right mb-2'
-            onClick={onListAction}>
-            {i18n('bulkRemoveBtn')}
-        </button>}
+        {selectionsMade() && <div className='float-right'>
+            <Export settings={settingsFromList(getSelections(), exportKey)} className='btn-sm' />
+            <button
+                className='btn btn-sm btn-danger float-right mb-2'
+                onClick={onListAction}>
+                {i18n('bulkRemoveBtn')}
+            </button>
+        </div>}
     </div>
 }
 
@@ -140,7 +143,7 @@ const WhitelistTable: FunctionComponent<{
                         .catch(error => alert(i18n('removeFailed', error), false, true))
                 })
         }}
-    />
+        exportKey='whitelisted' />
 }
 const BlacklistTable: FunctionComponent<{
     list: ChannelList
@@ -167,7 +170,9 @@ const BlacklistTable: FunctionComponent<{
                     bMessage('set', 'remove-black', channels.map(channel => channel.id))
                         .catch(error => alert(i18n('removeFailed', error), false, true))
                 })
-        }} />
+        }}
+        exportKey='blacklisted'
+    />
 }
 const MutelistTable: FunctionComponent<{
     list: ChannelList
@@ -194,7 +199,8 @@ const MutelistTable: FunctionComponent<{
                     bMessage('set', 'remove-mute', channels.map(channel => channel.id))
                         .catch(error => alert(i18n('removeFailed', error), false, true))
                 })
-        }} />
+        }}
+        exportKey='muted' />
 }
 
 const UnmutelistTable: FunctionComponent<{
@@ -222,7 +228,8 @@ const UnmutelistTable: FunctionComponent<{
                     bMessage('set', 'remove-mute', channels.map(channel => channel.id))
                         .catch(error => alert(i18n('removeFailed', error), false, true))
                 })
-        }} />
+        }}
+        exportKey='muted' />
 }
 
 export { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable }

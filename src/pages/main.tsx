@@ -3,7 +3,7 @@ import { FunctionComponent, useEffect, useState, useLayoutEffect, useRef } from 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable } from './list';
-import { bMessage, onSettings, i18n } from './common';
+import { bMessage, onSettings, defaultSettings, i18n } from './common';
 import { Settings } from '../typings';
 import { TabContainer, TabPane } from './tabs';
 import Options from './misc';
@@ -20,15 +20,6 @@ interface AlertProps {
     onConfirm: () => any,
     onCancel: () => any
 }
-const defaultSettings = (): Settings => ({
-    blacklisted: [],
-    whitelisted: [],
-    muted: [],
-    muteAll: false,
-    skipOverlays: true,
-    skipAdErrors: true,
-    pauseAfterAd: false
-})
 
 const Main: FunctionComponent<{
     full: boolean,
