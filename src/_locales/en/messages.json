@@ -209,6 +209,9 @@
     "exportBtn": {
         "message": "Download"
     },
+    "exportAltBtn": {
+        "message": "Export"
+    },
     "channelSearchHeader": {
         "message": "Find channels"
     },
