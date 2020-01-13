@@ -107,7 +107,7 @@ const ChannelTable: FunctionComponent<{
             </tbody>
         </table>
         {selectionsMade() && <div className='float-right'>
-            <Export settings={settingsFromList(getSelections(), exportKey)} className='btn-sm' />
+            <Export settings={settingsFromList(getSelections(), exportKey)} className='btn-sm' alt={true} />
             <button
                 className='btn btn-sm btn-danger float-right mb-2'
                 onClick={onListAction}>

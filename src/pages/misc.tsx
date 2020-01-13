@@ -62,7 +62,8 @@ const Import: FunctionComponent<{
 const Export: FunctionComponent<{
     settings: Settings
     className?: string;
-}> = ({ settings, className = '' }) => {
+    alt?: boolean
+}> = ({ settings, className = '', alt = false }) => {
     const [linkEl, setLink] = useState(null as HTMLAnchorElement);
     const [blobURL, setBlobURL] = useState('');
     const linkRef = useCallback((el: HTMLAnchorElement) => el !== null && setLink(el), []);
@@ -79,7 +80,7 @@ const Export: FunctionComponent<{
             type='button'
             className={'btn btn-primary ' + className}
             onClick={() => linkEl.click()}>
-            <FontAwesomeIcon icon={faDownload} /> {i18n('exportBtn')}
+            <FontAwesomeIcon icon={faDownload} /> {alt ? i18n('exportAltBtn') : i18n('exportBtn')}
         </button>
     </>
 }
