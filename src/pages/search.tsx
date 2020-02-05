@@ -3,6 +3,7 @@ import { FunctionComponent, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faMinus, faSearch, faSpinner, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { ChannelList, Channel } from '../typings';
+import gKey from '../../shared/api'
 import { bMessage, requestGooglePermission, Confirm, i18n } from './common';
 
 const ChannelSearch: FunctionComponent<{
@@ -32,9 +33,10 @@ const ChannelSearch: FunctionComponent<{
         let int: number;
         setChannels([]);
         if (search.length) {
-            int = setTimeout(() => fetch('https://content.googleapis.com/youtube/v3/search?type=channel&q=' + search + '&maxResults=10&part=snippet&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo')
+            int = setTimeout(() => fetch('https://content.googleapis.com/youtube/v3/search?type=channel&q=' + search + '&maxResults=10&part=snippet&key=' + gKey)
                 .then(resp => resp.json())
                 .then(json => {
+                    if (!json.items) throw "Error";
                     setSearching(false);
                     setError(false);
                     setChannels(json.items);
@@ -78,7 +80,7 @@ const ChannelSearch: FunctionComponent<{
                 placeholder={i18n('searchPlaceholder')}
                 className='form-control form-control-sm'
                 disabled={!permission} />
-            <FontAwesomeIcon icon={searchIcon} className="search-feedback" spin={spin}/>
+            <FontAwesomeIcon icon={searchIcon} className="search-feedback" spin={spin} />
         </div>
         <hr />
         {!permission && <div>
@@ -146,7 +148,7 @@ const ChannelItem: FunctionComponent<{
         </div>
         <div className={'channel-action ' + (hovering || (!hovering && added) ? '' : 'invisible')}>
             <button
-                className={'btn btn-sm ' + (added ? (!hovering ? 'btn-link' : 'btn-danger') : 'btn-primary')}
+                className={'btn text-nowrap btn-sm ' + (added ? (!hovering ? 'btn-link' : 'btn-danger') : 'btn-primary')}
                 disabled={added && !hovering}
                 onClick={toggle}>
 

@@ -6,6 +6,7 @@ import {
     Channel, ChannelList, Settings,
     Ad, PendingItem, ParsedURL
 } from './typings';
+import apiKey from '../shared/api'
 
 let settings: SettingsManager;
 let ads: AdManager;
@@ -296,7 +297,8 @@ class AdManager {
             const url = 'https://content.googleapis.com'
                 + '/youtube/v3/channels?part=snippet&id='
                 + id
-                + '&key=AIzaSyCPqJiD5cXWMilMdzmu4cvm8MjJuJsbYIo';
+                + '&key='
+                + apiKey;
             return fetch(url)
                 .then(response => response.json())
                 .then(json => {

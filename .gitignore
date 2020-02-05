@@ -1,3 +1,4 @@
 dist/*
 node_modules/
+shared/api.ts
 package-lock.json

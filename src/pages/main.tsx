@@ -119,7 +119,7 @@ const Main: FunctionComponent<{
                                 }
                                 <BlacklistTable list={settings.blacklisted} alert={showAlert} full={full} />
                             </div>
-                            <div className='col-md-3'>
+                            <div className='col-md-6'>
                                 <RecentAds full={full} settings={settings} />
                             </div>
                         </div>
