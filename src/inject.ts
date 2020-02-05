@@ -32,6 +32,7 @@ interface LocaleMessages {
 /* ---------------------------- */
 
 let settings: ReadonlySettings;
+let lists: Lists;
 let locale: LocaleMessages;
 let accessURLs: AccessURL;
 let pages: Page, watcher: MutationWatcher, agent: MessageAgent, toast: (text: string) => void;
@@ -822,7 +823,7 @@ class SingleChannelPage {
         }
 
         if (this.adConfirmed) {
-            const inMutelist = ChannelID.inmutelist(this.currentAd.channelId) !== -1;
+            const inMutelist = lists.mutelist.has(this.currentAd.channelId);
             const muteAll = !!settings.muteAll;
 
             // if muteAll && inmute should be false
@@ -903,10 +904,12 @@ class SingleChannelPage {
 
     toggleMute() {
         if (!this.currentAd.channelId) throw 'Ad channel ID not available for muting';
-        let shouldMute = ChannelID.inmutelist(this.currentAd.channelId) === -1;
-        let action = shouldMute ? 'add-mute' : 'remove-mute';
+        const shouldMute = !lists.mutelist.has(this.currentAd.channelId);
+        const action = shouldMute
+            ? lists.mutelist.add(this.currentAd.channelId)
+            : lists.mutelist.remove(this.currentAd.channelId);
 
-        agent.send('set-settings', { param: this.currentAd.channelId, type: action })
+        action
             .then(() => agent.send('mute-tab', shouldMute))
             .catch(error => console.error('Error setting settings', error));
     }
@@ -914,11 +917,11 @@ class SingleChannelPage {
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
 
-        if (ChannelID.inwhitelist(this.channelId) !== -1) {
-            agent.send('set-settings', { param: this.channelId, type: 'remove-white' });
+        if (lists.whitelist.has(this.channelId)) {
+            lists.whitelist.remove(this.channelId);
             this.whitelistButton.off();
         } else {
-            agent.send('set-settings', { param: this.channelId, type: 'add-white' });
+            lists.whitelist.add(this.channelId);
             this.whitelistButton.on();
         }
 
@@ -926,7 +929,7 @@ class SingleChannelPage {
     setDataNode(/* override */node?: HTMLElement) { return node }
     insertButton(/* override */button: WhitelistButtonInstance) { }
     updateVideos(/* override */whitelisted: boolean, forceUpdate: boolean) { }
-    getChannelId(/* override */node: HTMLElement): Channel { return ChannelID.createNew(); }
+    getChannelId(/* override */node: HTMLElement): Channel { return Channels.empty(); }
 
 }
 
@@ -983,16 +986,16 @@ class VideoPagePoly extends SingleChannelPage {
     }
 
     getChannelId(container: HTMLElement) {
-        let channelId = ChannelID.createNew();
+        let channelId = Channels.empty();
         container = this.setDataNode(container);
 
         if (!container) return null;
 
-        channelId.username = ChannelID.getUsernameFromURL(oGet(container, 'data.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
+        channelId.username = Channels.fromURL(oGet(container, 'data.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
         channelId.id = oGet(container, 'data.navigationEndpoint.browseEndpoint.browseId') || '';
         channelId.display = oGet(container, 'data.title.runs[0].text') || '';
 
-        return ChannelID.validate(channelId);
+        return Channels.valid(channelId);
     }
 }
 
@@ -1041,7 +1044,7 @@ class VideoPageBasic extends SingleChannelPage {
         this.setDataNode(container);
 
         let links = this.dataNode.querySelectorAll('a') as ArrayLike<any>;
-        return ChannelID.validate(ChannelID.extractFromLinks(links as Array<any>));
+        return Channels.valid(Channels.fromLinks(links as Array<any>));
     }
 }
 
@@ -1073,7 +1076,7 @@ class ChannelPagePoly extends SingleChannelPage {
     }
 
     getChannelId(container: HTMLElement) {
-        let channelId = ChannelID.createNew();
+        let channelId = Channels.empty();
         container = this.setDataNode(container);
         if (!container) return null;
 
@@ -1081,7 +1084,7 @@ class ChannelPagePoly extends SingleChannelPage {
         channelId.display = oGet(container, 'data.response.metadata.channelMetadataRenderer.title') || '';
         channelId.id = oGet(container, 'data.response.metadata.channelMetadataRenderer.externalId') || '';
 
-        return ChannelID.validate(channelId);
+        return Channels.valid(channelId);
     }
 }
 
@@ -1115,10 +1118,10 @@ class ChannelPageBasic extends SingleChannelPage {
             links.push(link);
         }
 
-        let channelId = ChannelID.extractFromLinks(links);
+        let channelId = Channels.fromLinks(links);
         channelId.username = (link && link.getAttribute('username')) || '';
         channelId.display = document.querySelector('.branded-page-header-title-link').textContent || '';
-        return ChannelID.validate(channelId)
+        return Channels.valid(channelId)
     }
 }
 
@@ -1133,7 +1136,7 @@ class SearchPagePoly {
 
         for (let channelElement of channelElements) {
             let channelId = this.getChannelId(channelElement);
-            let whitelisted = ChannelID.inwhitelist(channelId) !== -1;
+            let whitelisted = lists.whitelist.has(channelId);
 
             if (channelElement.whitelistButton && channelElement.whitelistButton.exists()) {
                 if (forceUpdate)
@@ -1153,21 +1156,21 @@ class SearchPagePoly {
         let channelId = this.getChannelId(dataNode);
         if (!channelId) throw 'Channel ID not available';
 
-        if (ChannelID.inwhitelist(channelId) !== -1) {
-            ChannelID.whitelistRemove(channelId);
+        if (lists.whitelist.has(channelId)) {
+            lists.whitelist.remove(channelId);
         } else {
-            ChannelID.whitelistAdd(channelId);
+            lists.whitelist.add(channelId);
         }
     }
     getChannelId(container: HTMLElement) {
-        let channelId = ChannelID.createNew();
+        let channelId = Channels.empty();
         if (!container) throw 'Search element required to get channelId under search mode';
 
         channelId.display = oGet(container, 'data.title.simpleText') || '';
         channelId.id = oGet(container, 'data.channelId') || '';
-        channelId.username = ChannelID.getUsernameFromURL(oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || '';
+        channelId.username = Channels.fromURL(oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || '';
 
-        return ChannelID.validate(channelId);
+        return Channels.valid(channelId);
     }
 }
 
@@ -1179,14 +1182,46 @@ class SearchPageBasic {
 
     }
 }
-class ChannelID {
-    static createNew(): Channel {
+class Channels {
+    type: string;
+    list: Array<Channel>;
+
+    constructor(list: Array<Channel>, type: string) {
+        this.list = list;
+        this.type = type;
+    }
+
+    static empty(): Channel {
         return { id: '', username: '', display: '' };
     }
-    static getUsernameFromURL(url: string): string {
+    static valid(channel: Channel): Channel | null {
+        return (channel && (channel.id || channel.username))
+            ? channel
+            : null;
+    }
+    static fromLinks(links: Array<any>): Channel {
+        const channel = Channels.empty();
+
+        for (const link of links) {
+            if (!link.href) continue;
+            const matches = link.href.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/)
+            if (!matches) continue;
+            const [_, type, id] = matches;
+
+            if (type === 'user')
+                channel.username = id;
+            else if (type === 'channel') {
+                channel.id = id
+                if (link.textContent) //to weed out the metadata link on channel pages
+                    channel.display = link.textContent;
+            }
+        }
+        return channel;
+    }
+    static fromURL(url: string) {
         if (!url) return '';
 
-        let matches = url.match(/\/user\/(.+)/);
+        const matches = url.match(/\/user\/(.+)/);
 
         if (matches && matches.length > 1) {
             return matches[1];
@@ -1194,71 +1229,23 @@ class ChannelID {
             return '';
         }
     }
-    static whitelistRemove(channelId: Channel) {
-        return agent.send('set-settings', { param: channelId, type: 'remove-white' });
+    has(channel: Channel | string) {
+        const needle = typeof channel === 'string' ? channel : channel.id;
+        return this.list.findIndex(({ id }) => id === needle) !== -1;
     }
-    static whitelistAdd(channelId: Channel) {
-        return agent.send('set-settings', { param: channelId, type: 'add-white' });
+    remove(channel: Channel) {
+        return agent.send('set-settings', { param: channel, type: 'remove-' + this.type })
     }
-    static inmutelist(search: Channel | string, idOnly = false) {
-        return ChannelID.searchlist(settings.muted, search, idOnly);
+    add(channel: Channel) {
+        return agent.send('set-settings', { param: channel, type: 'add-' + this.type });
     }
-
-    static inwhitelist(search: Channel | string, idOnly = false) {
-        return ChannelID.searchlist(settings.whitelisted, search, idOnly)
-    }
-
-    static searchlist(object: ChannelList, channelId: Channel | string, idOnly?: boolean) {
-        if (!channelId) return;
-
-        let id: string, username: string;
-
-        if (idOnly) {
-            id = channelId as string;
-            username = '';
-        } else {
-            id = (channelId as Channel).id;
-            username = (channelId as Channel).username;
-        }
-
-        const validId = id.length > 4;
-        const validUsername = username.length > 4;
-
-        for (let i in object) {
-            if ((validId && object[i].id === id) || (validUsername && object[i].username === username)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    static validate(channelId: Channel): Channel {
-        if (channelId && (channelId.id || channelId.username))
-            return channelId;
-        else
-            return null;
-    }
-
-    static extractFromLinks(links: Array<any>): Channel {
-        let channelId = ChannelID.createNew();
-
-        for (let link of links) {
-            if (!link.href) continue;
-            let matches;
-
-            if (matches = link.href.match(/\/(user|channel)\/([\w-]+)(?:\/|$|\?)/)) {
-                if (matches[1] === 'user') {
-                    channelId.username = matches[2] //we can safely assume that /user/$1 is a username
-                } else if (matches[1] === 'channel') {
-                    channelId.id = matches[2];
-
-                    if (link.textContent) { //to weed out the metadata link on channel pages
-                        channelId.display = link.textContent;
-                    }
-                }
-            }
-        }
-        return channelId;
+}
+class Lists {
+    whitelist: Channels;
+    mutelist: Channels;
+    constructor(settings: ReadonlySettings) {
+        this.whitelist = new Channels(settings.whitelisted, 'white');
+        this.mutelist = new Channels(settings.muted, 'mute');
     }
 }
 
@@ -1339,8 +1326,8 @@ class Page {
         for (let video of videos) {
             if (!forceUpdate && video.data.processed) continue;
 
-            let id = oGet(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId') ||
-                (channelId && channelId.id);
+            let id = oGet(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+                || (channelId && channelId.id);
 
             if (id) {
                 let links = video.querySelectorAll('a[href^="/watch?"]') as NodeListOf<HTMLAnchorElement>;
@@ -1348,7 +1335,7 @@ class Page {
 
                 let destURL = video.data.originalHref;
 
-                if (ChannelID.inwhitelist(id, true) !== -1) {
+                if (lists.whitelist.has(id)) {
                     if (!video.data.originalHref) {
                         destURL = links[0].getAttribute('href');
                         video.data.originalHref = destURL;
@@ -1391,11 +1378,11 @@ class Page {
                 inwhite = whitelisted;
             } else {
                 let user = vid.querySelector('.stat.attribution span');
-                let values = ChannelID.createNew();
+                let values = Channels.empty();
 
                 if (!user || !(values.username = user.textContent))
                     continue;
-                inwhite = ChannelID.inwhitelist(values) !== -1
+                inwhite = lists.whitelist.has(values);
             }
             if (inwhite || forceUpdate) { // exists
                 let links = vid.querySelectorAll('a[href^="/watch?"]');
@@ -1424,7 +1411,7 @@ class Page {
             } else {
                 user = userNode.getAttribute('data-ytid');
             }
-            let inwhite = ChannelID.inwhitelist(user, true) !== -1
+            let inwhite = lists.whitelist.has(user);
             let links = vid.querySelectorAll('a[href^="/watch?"]');
             if (inwhite || forceUpdate) {
                 for (let link of links) {
@@ -1439,13 +1426,13 @@ class Page {
 
         if (location.href.indexOf('&disableadblock=1') !== -1) {
             // ads are enabled, should we correct that?
-            if (ChannelID.inwhitelist(channelId) === -1) {
+            if (!lists.whitelist.has(channelId)) {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, false));
                 return false;
             } else return true;
         } else {
             // ads are not enabled, lets see if they should be
-            if (ChannelID.inwhitelist(channelId) !== -1) {
+            if (lists.whitelist.has(channelId)) {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, true));
 
                 if (verify) this.confirmDisabled();
@@ -1622,6 +1609,7 @@ const init = (design: Layout) => {
     agent
         .on('settings-update', (updated: any) => {
             settings = updated.settings;
+            lists = new Lists(settings);
             pages.update(true, updated.initiator)
         })
         .on('ad-update', (ad: any) => {
@@ -1655,6 +1643,7 @@ agent
     .send('get-settings')
     .then(response => {
         settings = response.settings;
+        lists = new Lists(settings);
         accessURLs = response.accessURLs;
         locale = response.i18n;
 
