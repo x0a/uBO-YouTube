@@ -6,7 +6,9 @@ import {
     Channel, ChannelList, Settings,
     Ad, PendingItem, ParsedURL
 } from './typings';
-import apiKey from '../shared/api'
+import apiKeys from '../shared/api'
+
+const [apiKey] = apiKeys;
 
 let settings: SettingsManager;
 let ads: AdManager;
@@ -86,7 +88,7 @@ class SettingsManager {
             .then(tabs => {
                 const current = tabs.find(({ active }) => active);
                 if (!current) throw "No current tab";
-                browser.tabs.highlight({ tabs: [current.index, originTab.index] });
+                (browser.tabs as any).highlight({ tabs: [current.index, originTab.index] });
             })
             .catch(error => console.error("Unable to highlight tab:", error));
     }
