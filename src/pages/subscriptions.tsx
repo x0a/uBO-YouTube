@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { Confirm, diffList, bMessage, mergeSettings, i18n } from './common';
 import { Channel, Settings } from '../typings';
 
@@ -54,7 +56,9 @@ const ImportSubscriptions: FunctionComponent<{
             });
     }
     return <button className={'btn btn-sm btn-primary ' + className} disabled={importing} onClick={importSubscriptions}>
-        {i18n('importSubsBtn')}
+        {importing
+            ? <FontAwesomeIcon icon={faSpinner} spin={true} />
+            : i18n('importSubsBtn')}
     </button>
 }
 export default ImportSubscriptions
