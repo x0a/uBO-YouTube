@@ -83,6 +83,10 @@ table.table {
     margin-right: 2px;
 }
 
+.border-0 {
+    border: 0px !important;
+}
+
 button {
     margin-left: 2px;
     margin-right: 2px;

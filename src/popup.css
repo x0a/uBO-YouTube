@@ -329,3 +329,6 @@ hr {
 .mr-1 {
     margin-right: .25rem !important;
 }
+.invisible {
+    visibility: none;
+}
