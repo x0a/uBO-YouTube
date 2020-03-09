@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMinus, faSearch, faSpinner, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faMinus, faSearch, faSpinner, faExclamationCircle, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { ChannelList, Channel } from '../typings';
-import gKey from '../../shared/api'
+import apiKeys from '../../shared/api'
 import { bMessage, requestGooglePermission, Confirm, i18n } from './common';
+
+const [, apiKey] = apiKeys;
 
 const ChannelSearch: FunctionComponent<{
     full: boolean;
@@ -17,9 +19,15 @@ const ChannelSearch: FunctionComponent<{
     const [searching, setSearching] = useState(false);
     const [channels, setChannels] = useState([] as any);
     const [permission, setPermission] = useState(false);
+    const [nav, setNav] = useState({
+        current: '',
+        next: '',
+        prev: ''
+    })
     const onChange = (event: React.FormEvent<HTMLInputElement>) => {
         const text = event.currentTarget.value;
         setSearch(text);
+        setNav({ current: '', next: '', prev: '' })
         setSearching(true);
     }
     const requestPermission = () => requestGooglePermission()
@@ -31,27 +39,42 @@ const ChannelSearch: FunctionComponent<{
     }, [])
     useEffect(() => {
         let int: number;
-        setChannels([]);
+        if (!nav.current) setChannels([]);
         if (search.length) {
-            int = setTimeout(() => fetch('https://content.googleapis.com/youtube/v3/search?type=channel&q=' + search + '&maxResults=10&part=snippet&key=' + gKey)
+            int = setTimeout(() => fetch('https://content.googleapis.com/youtube/v3/search?type=channel&q='
+                + search
+                + (nav.current ? '&pageToken=' + nav.current : '')
+                + '&maxResults=10&part=snippet&key='
+                + apiKey)
                 .then(resp => resp.json())
                 .then(json => {
                     if (!json.items) throw "Error";
-                    setSearching(false);
                     setError(false);
+                    setSearching(false);
                     setChannels(json.items);
+                    setNav({
+                        current: nav.current,
+                        next: json.nextPageToken || '',
+                        prev: json.prevPageToken || ''
+                    })
                 })
                 .catch(err => {
+                    setError(true);
                     setSearching(false);
                     setChannels([]);
-                    setError(true);
-                }), 800) as any as number;
+                    setNav({
+                        current: '',
+                        next: '',
+                        prev: ''
+                    })
+                }), nav.current ? 300 : 800) as any as number;
         } else {
             setSearching(false);
             setError(false);
         }
         return () => clearTimeout(int);
-    }, [search])
+    }, [search, nav.current]);
+
     let searchIcon;
     let spin = false;
 
@@ -108,24 +131,42 @@ const ChannelSearch: FunctionComponent<{
             {i18n('searchFailed')}
         </span>}
         {channels.map((item: any) => <ChannelItem
+            key={item.id.channelId}
             onClick={toggleWhitelist}
             full={full}
             item={item}
             added={whitelisted.findIndex(channel => channel.id === item.id.channelId) !== -1} />)}
+        {!!channels.length && <div className='d-flex justify-content-center mt-2'>
+            <button
+                onClick={() => setNav({ prev: '', next: '', current: nav.prev })}
+                disabled={!nav.prev}
+                className='btn btn-secondary btn-sm'>
+                <FontAwesomeIcon icon={faChevronLeft} />
+            </button>
+            <button
+                className='btn btn-secondary btn-sm'
+                disabled={!nav.next}
+                onClick={() => setNav({ prev: '', next: '', current: nav.next })}>
+                <FontAwesomeIcon icon={faChevronRight} />
+            </button>
+        </div>
+        }
     </div>
 }
 
 const ChannelItem: FunctionComponent<{
     item: any;
     added: boolean;
-    onClick: (channel: Channel, whitelist: boolean) => any;
     full: boolean;
+    onClick: (channel: Channel, whitelist: boolean) => any;
 }> = ({ item, full, added, onClick }) => {
     const title = item.snippet.channelTitle as string;
     const thumbnail = item.snippet.thumbnails.default.url as string;
     const description = item.snippet.description as string;
     const [hovering, setHovering] = useState(false);
-    const url = 'https://youtube.com/channel/' + item.id.channelId + (added ? '?igno=re&disableadblock=1' : '');
+    const url = 'https://youtube.com/channel/'
+        + item.id.channelId
+        + (added ? '?igno=re&disableadblock=1' : '');
     const toggle = () => {
         const channel = {
             id: item.id.channelId,
@@ -142,7 +183,7 @@ const ChannelItem: FunctionComponent<{
         <div className='channel-thumb-container' >
             <img className='channel-thumb' src={thumbnail} />
         </div>
-        <div className='channel-info'>
+        <div className='channel-info p-1'>
             <a className='channel-name mr-1' href={url}>{title}</a>
             <span className={full ? 'channel-desc' : 'hidden'}>{description}</span>
         </div>
@@ -155,7 +196,7 @@ const ChannelItem: FunctionComponent<{
                 {!added && <><FontAwesomeIcon icon={faPlus} className="mr-1" /><span>
                     {i18n('addBtn')}
                 </span></>}
-                {added && !hovering && 'Added'}
+                {added && !hovering && i18n('addedBtn')}
                 {added && hovering && <><FontAwesomeIcon icon={faMinus} className="mr-2" /><span>
                     {i18n('removeBtn')}
                 </span> </>}
