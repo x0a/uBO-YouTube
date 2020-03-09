@@ -1,11 +1,12 @@
 import * as React from 'react';
 import browser from '../browser';
+import LocaleString from '../_locales/types';
 import { HostMessage, ClientMessage, Settings, Channel, ChannelList } from '../typings';
 
 type SettingsFn = (settings: Settings) => any;
 type Confirm = (text: string, confirm?: boolean, danger?: boolean) => Promise<void>
 
-let settingsListener: (settings: Settings) => any = () => { }; // basically a gloval variable since it will be available wherever imported
+let settingsListener: (settings: Settings) => any = () => { }; // basically a global variable since it will be available wherever imported
 
 const isPopup = browser.tabs.getCurrent().then(tab => tab === undefined);
 const checkDev = browser.management.getSelf().then(self => self.installType === 'development');
@@ -127,7 +128,7 @@ const settingsFromList = (list: ChannelList, exportKey: string) => ({
 }) as any as Settings;
 const fullHeader = (text: string) => <h4>{text}</h4>;
 const popupHeader = (text: string) => <p className='font-weight-bold-sm font-size-6 text-center'>{text}</p>;
-const i18n = (messageName: string, substitutions?: any | Array<any>) =>
+const i18n = (messageName: LocaleString, substitutions?: any | Array<any>) =>
     browser.i18n.getMessage(messageName, substitutions instanceof Array ? substitutions.map(i => i + '') : substitutions + '');
 export {
     bMessage, Confirm, isSettings, canonicalizeSettings,

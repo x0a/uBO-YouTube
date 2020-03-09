@@ -65,7 +65,7 @@ const ChannelTable: FunctionComponent<{
             })));
     }, [list])
 
-    return <div className='clearfix'>
+    return <div className=''>
         {title}
         <table className='table table-sm table-hover'>
             <thead className='thead-dark d-sm-none d-md-table-header-group'>
@@ -74,7 +74,7 @@ const ChannelTable: FunctionComponent<{
                         <input type="checkbox" checked={checkAll} onChange={toggleAll} />
                     }</th>}
                     <th>{i18n('channelColumn')}</th>
-                    <th>{i18n('removeRow')}</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -106,10 +106,10 @@ const ChannelTable: FunctionComponent<{
                 </tr>)}
             </tbody>
         </table>
-        {selectionsMade() && <div className='float-right'>
+        {<div className={'d-md-flex justify-content-end d-sm-none ' + (selectionsMade() ? '' : 'invisible')}>
             <Export settings={settingsFromList(getSelections(), exportKey)} className='btn-sm' alt={true} />
             <button
-                className='btn btn-sm btn-danger float-right mb-2'
+                className='btn btn-sm btn-danger float-right'
                 onClick={onListAction}>
                 {i18n('bulkRemoveBtn')}
             </button>
@@ -216,7 +216,7 @@ const UnmutelistTable: FunctionComponent<{
         actionDesc={i18n('muteBtn')}
         enableBulk={full}
         onAction={channel => {
-            alert(i18n('removeunMuteConfirm', channel.display), true, false)
+            alert(i18n('removeUnmuteConfirm', channel.display), true, false)
                 .then(() => {
                     bMessage('set', 'remove-mute', channel)
                         .catch(error => alert(i18n('removeFailed', error), false, true))

@@ -1,4 +1,5 @@
 import MessageAgent from './agent';
+import LocaleString from 'src/_locales/types';
 import hookEvents from "./events";
 import icons from './icons';
 
@@ -269,11 +270,11 @@ class MutationWatcher {
             + (el.id.length ? '#' + el.id : '')
     }
     onMutation(mutations: Array<MutationElement>) {
-        let mode = pages.getMode();
+        const type = pages.getType();
 
-        for (let mutation of mutations) {
+        for (const mutation of mutations) {
             // this.findInjection(mutation, 'video');
-            if (mode === PageType.Video) {
+            if (type === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
 
                 if (userInfo = this.isPolyUserInfo(mutation)) {
@@ -297,7 +298,7 @@ class MutationWatcher {
                         overlaySkipButton.click();
                 }
             } else {
-                if (mode === PageType.Channel) {
+                if (type === PageType.Channel) {
                     let player, skipContainer;
                     if (player = this.isPlayerUpdate(mutation)) {
                         pages.channel.updateAdPlaying(player, !!player.classList.contains('ad-showing'));
@@ -310,11 +311,11 @@ class MutationWatcher {
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
-                    if (mode === PageType.Channel) {
+                    if (type === PageType.Channel) {
                         this.pollUpdate(pages.channel.updatePage);
-                    } else if (mode === PageType.Search) {
+                    } else if (type === PageType.Search) {
                         this.pollUpdate(pages.search.updatePage);
-                    } else if (mode === PageType.Any) {
+                    } else if (type === PageType.Any) {
                         pages.updateAllVideos();
                     }
                 }
@@ -451,8 +452,6 @@ class AdOptions {
             });
             return el;
         })();
-
-        ;
 
         this.optionsButton = (() => {
             let el = document.createElement('button');
@@ -600,8 +599,6 @@ class AdOptions {
                 this.closeMenu();
             }
         })
-
-        return false;
     }
 
     closeMenu() {
@@ -859,8 +856,9 @@ class SingleChannelPage {
     }
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
+        const shouldSkip = this.awaitingSkip || (this.videoError && settings.skipAdErrors);
 
-        if (this.skipButton && (this.awaitingSkip || this.videoError)) {
+        if (this.skipButton && shouldSkip) {
             this.skipButton.click();
         }
     }
@@ -1279,17 +1277,17 @@ class Page {
             return Layout.Basic;
         }
     }
-    getMode(): PageType {
+    getType(): PageType {
         let newURL = location.href;
 
         if (newURL !== this.currentURL) {
             this.currentURL = newURL;
-            return this.mode = this.determineMode(newURL);
+            return this.mode = this.determineType(newURL);
         } else {
             return this.mode;
         }
     }
-    determineMode(url = location.href): PageType {
+    determineType(url = location.href): PageType {
         if (url.indexOf('youtube.com/watch?') !== -1) {
             return PageType.Video;
         } else if (url.indexOf('youtube.com/channel/') !== -1 || url.indexOf('youtube.com/user/') !== -1) {
@@ -1302,7 +1300,7 @@ class Page {
     }
 
     update(forceUpdate?: boolean, verify?: boolean) {
-        let mode = this.getMode();
+        let mode = this.getType();
 
         if (mode === PageType.Video) {
             this.video.updatePage(forceUpdate, verify);
@@ -1315,7 +1313,7 @@ class Page {
         }
     }
 
-    updateAd(ad: any, mode = this.getMode()) {
+    updateAd(ad: any, mode = this.getType()) {
         if (mode === PageType.Video) {
             this.video.updateAdInformation(ad);
         } else if (mode === PageType.Channel) {
@@ -1508,7 +1506,7 @@ const hookToast = () => {
  * @param object Reference to object literal
  * @param keyString Location to key item
  */
-function oGet(object: any, keyString: string) {
+const oGet = (object: any, keyString: string) => {
     const props = keyString.split(/[\[\]\.]+/);
     let current = object;
 
@@ -1578,7 +1576,7 @@ class LoadHastener {
 
 }
 
-const i18n = (messageName: string, substitutions?: string | number | Array<string | number>): string => {
+const i18n = (messageName: LocaleString, substitutions?: string | number | Array<string | number>): string => {
     const message = locale[messageName];
     if (!message) {
         console.error('No i18n message found for', messageName);
