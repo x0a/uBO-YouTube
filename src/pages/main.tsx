@@ -157,20 +157,25 @@ const SwitchableOption: FunctionComponent<{
 }
 const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm, onCancel, show }) => {
     const alertRef = useRef(null as HTMLDivElement);
+    const okBtn = useRef(null as HTMLButtonElement);
+
     useLayoutEffect(() => {
         if (show) {
             const height = alertRef.current.offsetHeight;
             const width = alertRef.current.offsetWidth;
             alertRef.current.style.left = (window.innerWidth / 2 - width / 2) + 'px';
             alertRef.current.style.top = (window.innerHeight / 2 - height / 2) + 'px';
+            okBtn.current.focus();
         }
-    }, [show])
+    }, [show]);
+    
     return <div className={show ? '' : 'd-none'}>
-        <div className='overlay' />
+        <div className='overlay' onClick={onCancel || onConfirm}/>
         <div ref={alertRef} className='alert'>
             <p className='font-weight-bold-sm'>{text}</p>
             <div className='float-right-sm'>
                 <button type='button'
+                    ref={okBtn}
                     className={'btn btn-sm ' + (danger ? 'btn-danger' : 'btn-primary')}
                     onClick={onConfirm}>
                     {i18n('okBtn')}
