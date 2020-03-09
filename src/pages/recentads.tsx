@@ -1,16 +1,17 @@
 import * as React from 'react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faVideo, faVideoSlash, faVolumeMute, faBan } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faVideo, faVideoSlash, faVolumeMute, faBan, faVolumeUp } from '@fortawesome/free-solid-svg-icons'
 import { bMessage, popupHeader, fullHeader, i18n } from './common';
 import { Ad, Settings, Channel } from '../typings';
 import Link from './link';
 const AdItem: FunctionComponent<{
     ad: Ad;
+    muteAll: boolean;
     muted: boolean;
     blocked: boolean;
     full: boolean;
-}> = ({ ad, muted, blocked, full }) => {
+}> = ({ ad, muted, blocked, muteAll, full }) => {
 
     const url = 'http://www.youtube.com/watch?v=' + ad.video_id;
     const channelURL = 'http://www.youtube.com/channel/' + ad.channelId.id;
@@ -53,14 +54,14 @@ const AdItem: FunctionComponent<{
                     className='btn btn-outline-secondary d-sm-none d-md-inline-block'
                     onClick={onMute}
                     disabled={muted}
-                    title={i18n('muteAdvertiserTooltip')}>
-                    <FontAwesomeIcon icon={faVolumeMute} />
+                    title={muteAll ? i18n('removeMuteTooltip') : i18n('muteAdvertiserTooltip')}>
+                    <FontAwesomeIcon icon={muteAll ? faVolumeUp : faVolumeMute} />
                 </button>
                 <button
                     className={'btn ' + (full ? 'btn-outline-danger' : 'btn-link text-danger float-right')}
                     onClick={onBlock}
                     disabled={blocked}
-                    title={i18n('blockAdvertiserTooltip')}>
+                    title={i18n('blacklistAdvertiserTooltip')}>
                     <FontAwesomeIcon icon={faBan} />
                 </button>
             </div>
@@ -105,9 +106,10 @@ const RecentAds: FunctionComponent<{
                     {full && <td></td>}
                 </tr>}
                 {ads.map(ad => <AdItem
+                    key={ad.timestamp}
+                    muteAll={settings.muteAll}
                     muted={isMuted(ad.channelId)}
                     blocked={isBlocked(ad.channelId)}
-                    key={ad.timestamp}
                     ad={ad}
                     full={full} />)}
             </tbody>
