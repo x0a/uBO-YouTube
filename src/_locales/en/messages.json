@@ -80,6 +80,10 @@
         "message": "Add",
         "description": "Button shown next to channel name, for adding to whitelist"
     },
+    "addedBtn": {
+        "message": "Added",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
     "removeBtn": {
         "message": "Remove"
     },
