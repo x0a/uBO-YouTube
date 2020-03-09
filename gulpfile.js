@@ -9,6 +9,7 @@ const del = require('del');
 const gulpif = require('gulp-if');
 const mergestream = require('merge-stream');
 const webpack = require('webpack-stream');
+const fs = require('fs');
 const compiler = require('webpack');
 const Archiver = require('gulp-archiver2');
 const Server = require('websocket').server;
@@ -53,6 +54,15 @@ gulp.task('css', () => {
 });
 
 gulp.task('locales', () => {
+    fs.readFile('src/_locales/en/messages.json', (err, data) => {
+        const strings = JSON.parse(data.toString());
+        const keys = Object.keys(strings);
+        const keyGroups = keys.reduce((accum, cur) => ((accum[accum.length - 1] && accum[accum.length - 1].length !== 4 || accum.push([]), accum[accum.length - 1]).push(cur), accum), []);
+        const complete = keyGroups.map(group => group.map(key => `"${key}"`).join(" | ")).join("\n    | ");
+        const nextFile = `type locals = ${complete};\nexport default locals`
+        fs.writeFile('src/_locales/types.d.ts', nextFile, () => { });
+    })
+
     return gulp.src('src/_locales/**/*')
         .pipe(gulpif(build, src.add('/src/_locales')))
         .pipe(gulp.dest('dist/chrome/debug/_locales'))
@@ -264,7 +274,7 @@ gulp.task('watch', gulp.series('default', () => {
         })
     });
 
-    gulp.watch('src/_locales/**/*', gulp.series('locales', 'fullreload'))
+    gulp.watch('src/_locales/**/*.json', gulp.series('locales', 'fullreload'))
     gulp.watch(['src/*.css', 'src/css/**/*'], gulp.series('css', 'sass', 'partialreload'));
     gulp.watch('src/pages/*.html', gulp.series('html'))
     gulp.watch('src/pages/*.[tj]sx', gulp.series('ts'));
