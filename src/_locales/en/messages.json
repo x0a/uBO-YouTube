@@ -102,13 +102,27 @@
     "whitelistHeader": {
         "message": "Whitelisted Channels"
     },
+    "excludeHeader": {
+        "message": "Exclude from whitelist"
+    },
     "removeWhitelistTooltip": {
         "message": "Remove channel from whitelist"
+    },
+    "removeExcludeTooltip": {
+        "message": "Re-allow channel to be whitelisted if subscribed"
     },
     "removeFailed": {
         "message": "Could not remove requested items: $error$",
         "placeholders": {
             "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "Are you sure you want to allow \"$channelName$\" to be automatically whitelisted (if subscribed)?",
+        "placeholders": {
+            "channelName": {
                 "content": "$1"
             }
         }
@@ -123,6 +137,14 @@
     },
     "bulkRemoveWhitelistConfirm": {
         "message": "Are you sure you want to remove $count$ items from whitelist?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "Are you sure you want to allow $count$ items to be automatically whitelisted (if subscribed)?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -228,10 +250,13 @@
     "overlaysOption": {
         "message": "Hide ad overlays"
     },
+    "autoWhiteOption": {
+        "message": "Whitelist subscribed channels by default"
+    },
     "adErrorsOption": {
         "message": "Skip ad playback errors"
     },
-    "adErrorsOptionTooltip":{
+    "adErrorsOptionTooltip": {
         "message": "Skips to video if ad fails to play, rather than showing the 'An error occurred' with TV static"
     },
     "adBlocked": {
@@ -261,7 +286,7 @@
         "message": "Anti-Startle Mode"
     },
     "pauseAfterAdTooltip": {
-        "message":"If a muted ad finishes playing, and the tab is not currently in focus, video is quietly paused in the background until user returns to it"
+        "message": "If a muted ad finishes playing, and the tab is not currently in focus, video is quietly paused in the background until user returns to it"
     },
     "permissionDesc": {
         "message": "A one-time permission is needed to search for YouTube channels"
@@ -273,7 +298,7 @@
         "message": "Type to search for a youtube channel or",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
     },
-    "searchPlaceholder":{
+    "searchPlaceholder": {
         "message": "Channel name..",
         "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },

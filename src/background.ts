@@ -17,40 +17,48 @@ class SettingsManager {
     whitelist: Channels;
     blacklist: Channels;
     mutelist: Channels;
+    exclude: Channels;
     muteAll: boolean;
     skipOverlays: boolean;
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
+    autoWhite: boolean;
 
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
         this.blacklist = new Channels(settings.blacklisted);
+        this.exclude = new Channels(settings.exclude);
         this.mutelist = new Channels(settings.muted);
         this.muteAll = settings.muteAll
         this.skipOverlays = settings.skipOverlays;
         this.skipAdErrors = settings.skipAdErrors;
-        this.pauseAfterAd = settings.pauseAfterAd
+        this.pauseAfterAd = settings.pauseAfterAd;
+        this.autoWhite = settings.autoWhite;
     }
-    // The reason for this complexity is that chrome.storage.sync
-    // has a storage limit of about 8k bytes per item
-    // And an overall storage limit of 100k bytes.
-    // With raw JSON, you quickly start running into problems if you try to import subscriptions
-    // The solution is to both compress JSON-serialized settings, and to split it into multiple items
+
     static sanitizeSettings(settings?: Settings): Settings {
         settings = settings || {} as Settings;
 
         if (!settings.whitelisted) settings.whitelisted = [];
         if (!settings.blacklisted) settings.blacklisted = [];
         if (!settings.muted) settings.muted = [];
+        if (!settings.exclude) settings.exclude = [];
 
         settings.muteAll = !!settings.muteAll;
         settings.pauseAfterAd = !!settings.pauseAfterAd;
+        settings.autoWhite = !!settings.autoWhite;
         settings.skipOverlays = settings.skipOverlays === undefined ? true : !!settings.skipOverlays;
         settings.skipAdErrors = settings.skipAdErrors === undefined ? true : !!settings.skipAdErrors;
 
         return settings;
     }
+    // The reason for this complexity is that chrome.storage.sync
+    // has a storage limit of about 8k bytes per item
+    // And an overall storage limit of 100k bytes.
+    // With raw JSON, you quickly start running into problems if you try to import subscriptions
+    // The solution is to both compress JSON-serialized settings, and to split it into multiple items
+
     static getSettings(): Promise<Settings> {
         return browser.storage.sync.get(null).then(store => {
             if (store.algorithm === 'lz' && store.totalKeys) {
@@ -102,6 +110,9 @@ class SettingsManager {
     toggleMuteAll(on: boolean) {
         this.muteAll = !!on;
     }
+    toggleAutoWhite(on: boolean) {
+        this.autoWhite = !!on;
+    }
     toggleSkipOverlays(on: boolean) {
         this.skipOverlays = !!on;
     }
@@ -116,10 +127,12 @@ class SettingsManager {
             whitelisted: this.whitelist.get(),
             blacklisted: this.blacklist.get(),
             muted: this.mutelist.get(),
+            exclude: this.exclude.get(),
             muteAll: this.muteAll,
             skipOverlays: this.skipOverlays,
             skipAdErrors: this.skipAdErrors,
-            pauseAfterAd: this.pauseAfterAd
+            pauseAfterAd: this.pauseAfterAd,
+            autoWhite: this.autoWhite
         };
     }
     getCompressed(): any {
@@ -154,13 +167,14 @@ class SettingsManager {
 class Channels {
     private list: ChannelList;
     constructor(list: ChannelList) {
-        this.list = list;
+        this.list = list.filter(channel => this.is(channel));
     }
     contains(id: string): boolean {
         return this.list.findIndex(channel => channel.id === id) !== -1;
     }
     is(channel: Channel): channel is Channel {
-        return typeof channel === 'object'
+        return !!channel
+            && typeof channel === 'object'
             && typeof channel.id === 'string'
             && typeof channel.username === 'string'
             && typeof channel.display === 'string'
@@ -203,7 +217,7 @@ class AdManager {
             : this.extractTitle(ad.player_response);
         // minimize memory consumption by removing unneeded data for all but most recent ad
         this.ads = arrayTrim(this.ads, 20)
-            .map(oldAd => this.trim(oldAd)) 
+            .map(oldAd => this.trim(oldAd))
             .concat(ad);
     }
     trim(ad: Ad): Ad {
@@ -379,6 +393,9 @@ SettingsManager.getSettings()
             .on('add-white', (_, channelId: Channel) => settings.whitelist.add(channelId))
             .on('add-black', (_, channelId: Channel) => settings.blacklist.add(channelId))
             .on('add-mute', (_, channelId: Channel) => settings.mutelist.add(channelId))
+            .on('add-exclude', (_, channelId: Channel) => settings.exclude.add(channelId))
+            .on('remove-exclude', (_, channel: Channel | Array<string>) =>
+                settings.exclude.remove(channel instanceof Array ? channel : channel.id))
             .on('remove-mute', (_, channel: Channel | Array<string>) =>
                 settings.mutelist.remove(channel instanceof Array ? channel : channel.id))
             .on('remove-white', (_, channel: Channel | Array<string>) =>
@@ -388,6 +405,7 @@ SettingsManager.getSettings()
             .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
             .on('reset', () => settings = new SettingsManager({} as Settings))
             .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))
+            .on('auto-whitelist', (_, shouldAutoWhite) => settings.toggleAutoWhite(shouldAutoWhite))
             .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
             .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
             .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))

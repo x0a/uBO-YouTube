@@ -93,7 +93,7 @@ gulp.task('ts', () => {
         .pipe(webpack({
             entry: {
                 content: './src/content',
-                inject: './src/inject',
+                inject: './src/inject/index.ts',
                 background: './src/background',
                 popup: './src/pages/app.tsx'
             },

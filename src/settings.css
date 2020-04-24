@@ -187,7 +187,9 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
 }
-
+.toggle-collapse:hover {
+    color: white !important;
+}
 .flex-grow-1 {
     flex-grow: 1 !important;
 }

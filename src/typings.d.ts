@@ -16,16 +16,18 @@ interface ClientMessage {
     response: any;
 }
 
-interface Settings {
-    whitelisted: ChannelList;
-    blacklisted: ChannelList;
-    muted: ChannelList;
+interface Settings<T = ChannelList> {
+    whitelisted: T;
+    blacklisted: T;
+    muted: T;
+    exclude: T;
     muteAll: boolean;
     skipOverlays: boolean;
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
+    autoWhite: boolean;
 }
-type ReadonlySettings = Readonly<Settings>;
+type ReadonlySettings<T = ChannelList> = Readonly<Settings<T>>;
 interface AccessURL {
     ICO: string;
 }

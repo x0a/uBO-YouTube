@@ -54,6 +54,11 @@ class InjectHook {
             agent.send('settings-update', { settings: message.settings, initiator: message.initiator });
         } else if (message.action === 'ad-update') {
             agent.send('ad-update', message.ad);
+        } else if (message.action === 'toggle-basic') {
+            const turnOn = message.on;
+            browser.cookies.get({ url: 'youtube.com', name: 'f6' })
+                .then(cookie => console.log(cookie))
+                .catch(err => console.error('hey', err))
         }
     }
     pushPending() {

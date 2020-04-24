@@ -1,15 +1,14 @@
 import * as React from 'react';
 import { FunctionComponent, useEffect, useState, useLayoutEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import { WhitelistTable, BlacklistTable, MutelistTable, UnmutelistTable } from './list';
+
+import { WhitelistTable, ExcludeTable, BlacklistTable, MutelistTable, UnmutelistTable } from './list';
 import { bMessage, onSettings, defaultSettings, i18n } from './common';
 import { Settings } from '../typings';
 import { TabContainer, TabPane } from './tabs';
 import Options from './misc';
 import ChannelSearch from './search';
 import ImportSubscriptions from './subscriptions';
-import Switch from './switch';
+import SwitchableOption from './switch';
 import RecentAds from './recentads';
 
 interface AlertProps {
@@ -71,6 +70,7 @@ const Main: FunctionComponent<{
                         <div className='row'>
                             <div className='col-md'>
                                 <WhitelistTable list={settings.whitelisted} alert={showAlert} full={full} />
+                                {settings.autoWhite && <ExcludeTable list={settings.exclude} alert={showAlert} full={full} />}
                             </div>
                             <div className='col-md d-sm-none d-md-block'>
                                 <h4 className='invisible'>
@@ -134,27 +134,7 @@ const Main: FunctionComponent<{
 
     </div >
 }
-const SwitchableOption: FunctionComponent<{
-    checked: boolean;
-    onChange: (checked: boolean) => any;
-    text: string;
-    tooltip?: string;
-}> = ({ checked, onChange, text, tooltip }) => {
-    return <li className='list-group-item list-group-option'>
-        <Switch
-            checked={checked}
-            onChange={onChange} />
-        <span className='ml-2 flex-grow-1'>
-            {text}
-        </span>
-        {tooltip && <div className='tooltip-parent'>
-            <FontAwesomeIcon icon={faInfoCircle} />
-            <div className='tooltip'>
-                <div className='tooltip-inner'>{tooltip}</div>
-            </div>
-        </div>}
-    </li>
-}
+
 const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm, onCancel, show }) => {
     const alertRef = useRef(null as HTMLDivElement);
     const okBtn = useRef(null as HTMLButtonElement);
@@ -168,9 +148,9 @@ const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm
             okBtn.current.focus();
         }
     }, [show]);
-    
+
     return <div className={show ? '' : 'd-none'}>
-        <div className='overlay' onClick={onCancel || onConfirm}/>
+        <div className='overlay' onClick={onCancel || onConfirm} />
         <div ref={alertRef} className='alert'>
             <p className='font-weight-bold-sm'>{text}</p>
             <div className='float-right-sm'>

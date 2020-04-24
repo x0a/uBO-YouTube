@@ -1,13 +1,14 @@
-import MessageAgent from './agent';
-import LocaleString from 'src/_locales/types';
+import MessageAgent from '../agent';
+
 import hookEvents from "./events";
 import icons from './icons';
-
+import AdOptions from './ad-options';
+import { i18n, seti18n } from './i18n';
 import {
-    Channel, ReadonlySettings, AccessURL,
-    Action, MutationElement, ChannelList,
-    MenuItem, InfoLink, VideoPoly, VideoBasic, Ad
-} from './typings';
+    Channel, Settings as _Settings,
+    Action, MutationElement,
+    InfoLink, VideoPoly, VideoBasic, Ad
+} from '../typings';
 
 const enum Layout {
     Polymer,
@@ -27,15 +28,9 @@ interface ChannelElement extends HTMLDivElement {
     whitelistButton: WhitelistButtonPoly;
 }
 
-interface LocaleMessages {
-    [messageName: string]: string
-}
 /* ---------------------------- */
 
-let settings: ReadonlySettings;
-let lists: Lists;
-let locale: LocaleMessages;
-let accessURLs: AccessURL;
+let settings: Settings;
 let pages: Page, watcher: MutationWatcher, agent: MessageAgent, toast: (text: string) => void;
 
 class MutationWatcher {
@@ -170,7 +165,14 @@ class MutationWatcher {
                 && mutation.target.querySelector('.ytp-ad-skip-button-container')
             );
     }
-
+    isSubscribeBtn(mutation: MutationElement): boolean | undefined {
+        return mutation.type === 'childList'
+            && mutation.target.localName === 'yt-formatted-string'
+            && mutation.target.parentElement.localName === 'paper-button'
+            && mutation.target.parentElement.parentElement.localName === 'ytd-subscribe-button-renderer'
+            ? !!mutation.target.parentElement.getAttribute('subscribed')
+            : undefined
+    }
     static adSkipButton(container: HTMLElement): HTMLButtonElement {
         return container.style.display !== 'none'
             && container.querySelector('button');
@@ -273,12 +275,12 @@ class MutationWatcher {
         const type = pages.getType();
 
         for (const mutation of mutations) {
-            // this.findInjection(mutation, 'video');
+            this.findInjection(mutation, 'paper-button.ytd-subscribe-button-renderer yt-formatted-string');
             if (type === PageType.Video) {
-                let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement;
+                let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
 
                 if (userInfo = this.isPolyUserInfo(mutation)) {
-                    pages.video.setDataNode(userInfo)
+                    pages.video.setParentNode(userInfo)
                     pages.video.updatePage();
                 } else if (userInfo = this.isBasicUserInfo(mutation)) {
                     pages.video.setDataNode(userInfo)
@@ -296,10 +298,12 @@ class MutationWatcher {
                 } else if (overlaySkipButton = this.isOverlayAd(mutation)) {
                     if (settings.skipOverlays)
                         overlaySkipButton.click();
+                } else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
+                    pages.video.updatePage();
                 }
             } else {
                 if (type === PageType.Channel) {
-                    let player, skipContainer;
+                    let player, skipContainer, subscribeChange;
                     if (player = this.isPlayerUpdate(mutation)) {
                         pages.channel.updateAdPlaying(player, !!player.classList.contains('ad-showing'));
                         let errorState = this.isPlayerErrorChange(mutation);
@@ -308,6 +312,8 @@ class MutationWatcher {
                         }
                     } else if (skipContainer = this.isAdSkipContainer(mutation)) {
                         pages.channel.skipButtonUpdate(MutationWatcher.adSkipButton(skipContainer));
+                    }else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
+                        pages.channel.updatePage();
                     }
                 }
                 if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
@@ -395,243 +401,7 @@ class WhitelistButtonBasic extends WhitelistButton {
     }
 }
 
-class AdOptions {
-    unMuteIcon: Element;
-    muteIcon: Element;
-    playIcon: Element;
-    muteButton: MenuItem;
-    skipButton: MenuItem;
-    blacklistButton: MenuItem;
-    menu: HTMLDivElement;
-    optionsButton: HTMLButtonElement;
-    tooltip: HTMLSpanElement;
-
-    buttonFocused: boolean;
-    menuFocused: boolean;
-    menuOpen: boolean;
-    muted: boolean;
-
-    constructor(onBlacklist: EventListener, onMute: EventListener, onSkip: () => {}) {
-        this.toggleMenu = this.toggleMenu.bind(this);
-        this.lostFocus = this.lostFocus.bind(this);
-        this.unMuteIcon = AdOptions.generateIcon(icons.unMute);
-        this.muteIcon = AdOptions.generateIcon(icons.mute);
-        this.playIcon = AdOptions.generateIcon(icons.play);
-        this.muteButton = this.generateMenuItem(
-            i18n('muteBtn'),
-            i18n('muteAdvertiserTooltip'),
-            this.muteIcon,
-            onMute
-        )
-
-        this.skipButton = this.generateMenuItem(
-            i18n('skipBtn'),
-            i18n('skipTooltip'),
-            icons.fastForward,
-            () => {
-                this.closeMenu();
-                onSkip()
-            }
-        )
-        this.blacklistButton = this.generateMenuItem(
-            i18n('blacklistBtn'),
-            i18n('blacklistAdvertiserTooltip'),
-            icons.block,
-            onBlacklist
-        );
-        this.menu = (() => {
-            let el = document.createElement('div');
-            el.setAttribute('class', 'UBO-menu hidden');
-            el.appendChild(this.blacklistButton);
-            el.appendChild(this.muteButton);
-            el.appendChild(this.skipButton);
-            el.addEventListener('focusin', () => this.menuFocused = true);
-            el.addEventListener('focusout', () => {
-                this.menuFocused = false;
-                this.lostFocus();
-            });
-            return el;
-        })();
-
-        this.optionsButton = (() => {
-            let el = document.createElement('button');
-            el.setAttribute('class', 'UBO-ads-btn ytp-button hidden');
-
-            el.appendChild(this.tooltip = (() => {
-                let el = document.createElement('span');
-                el.setAttribute('class', 'UBO-ads-tooltip');
-                return el;
-            })());
-
-            el.appendChild((() => {
-                let el = document.createElement('div');
-                el.setAttribute('class', 'UBO-icon-container');
-                el.appendChild((() => {
-                    let el = document.createElement('img');
-                    el.setAttribute('src', accessURLs.ICO);
-                    return el;
-                })());
-                return el;
-            })());
-
-            el.addEventListener('click', this.toggleMenu);
-            el.addEventListener('focusin', () => this.buttonFocused = true);
-            el.addEventListener('focusout', () => {
-                this.buttonFocused = false;
-                this.lostFocus();
-            });
-            return el;
-        })();
-
-        this.menuOpen = false;
-        this.menuFocused = false;
-        this.buttonFocused = false;
-        this.muted = false;
-        this.reset();
-    }
-
-    generateMenuItem(text: string, description: string, iconVector: string | Element, onClick: EventListener): MenuItem {
-        const defaultIcon = iconVector instanceof Element ? iconVector : AdOptions.generateIcon(iconVector);
-
-        let el: MenuItem = document.createElement('button') as MenuItem;
-        let currentIcon = defaultIcon;
-        let itemText = document.createTextNode(text);
-        let tooltipText = document.createTextNode(description);
-
-        el.setAttribute('class', 'UBO-menu-item');
-        el.appendChild(currentIcon);
-        el.appendChild(itemText);
-        el.appendChild((() => {
-            let el = document.createElement('span');
-            el.setAttribute('class', 'UBO-ads-tooltip');
-            el.appendChild(tooltipText);
-            return el;
-        })())
-
-        el.setIcon = newIcon => {
-            el.replaceChild(newIcon, currentIcon);
-            currentIcon = newIcon;
-        }
-        el.setText = newText => {
-            itemText.data = newText;
-        }
-        el.setDescription = newDescription => {
-            tooltipText.data = newDescription;
-        }
-        el.setDefaults = () => {
-            el.setIcon(defaultIcon);
-            el.setText(text);
-            el.setDescription(description);
-        }
-        el.addEventListener('click', onClick);
-        return el;
-    }
-
-    static generateIcon(iconVector: string): Element {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 512 512');
-        svg.setAttribute('class', 'UBO-icon');
-
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttributeNS(null, 'fill', 'currentColor');
-        path.setAttributeNS(null, 'd', iconVector);
-
-        svg.appendChild(path);
-        return svg;
-    }
-    set muteTab(shouldMute: boolean) {
-        if (shouldMute) {
-
-            agent.send('mute-tab', true)
-                .then(resp => {
-                    this.muted = true;
-                    this.muteButton.setIcon(this.unMuteIcon);
-                    this.muteButton.setText(i18n('removeMuteBtn'));
-                    this.muteButton.setDescription(i18n('removeMuteTooltip'));
-                })
-                .catch(error => {
-                    console.error('Error muting:', error);
-                });
-
-        } else {
-            const done = () => {
-                this.muted = false;
-                this.muteButton.setDefaults();
-            }
-            agent.send('mute-tab', false).then(done).catch(done); // replicate .finally
-        }
-    }
-
-    set muteOption(enabled: boolean) {
-        this.muteButton.disabled = !enabled;
-    }
-
-    set blacklistOption(enabled: boolean) {
-        this.blacklistButton.disabled = !enabled;
-    }
-
-    set skipOption(enabled: boolean) {
-        this.skipButton.disabled = !enabled;
-    }
-
-    set advertiserName(title: string) {
-        this.tooltip.textContent = i18n('adOptionsTooltip', title);
-    }
-
-    reset() {
-        this.tooltip.textContent = i18n('adOptionsDefaultTooltip');
-        this.blacklistOption = false;
-        this.muteOption = false;
-        this.skipOption = false;
-    }
-
-    toggleMenu() {
-        if (this.menuOpen) {
-            this.closeMenu();
-        } else {
-            this.openMenu();
-        }
-    }
-
-    lostFocus() {
-        requestAnimationFrame(() => {
-            if (!this.menuFocused && !this.buttonFocused) {
-                this.closeMenu();
-            }
-        })
-    }
-
-    closeMenu() {
-        this.menu.classList.add('hidden');
-        this.tooltip.classList.remove('hidden');
-        this.menuOpen = false;
-    }
-
-    openMenu() {
-        this.menu.classList.remove('hidden');
-        this.tooltip.classList.add('hidden');
-        this.menu.style.left = (this.optionsButton.offsetLeft - (this.menu.offsetWidth / 2) + (this.optionsButton.offsetWidth / 2)) + 'px';
-        this.menu.style.bottom = '49px';
-        this.menuOpen = true;
-    }
-
-    show() {
-        this.optionsButton.classList.remove('hidden');
-    }
-
-    hide() {
-        this.closeMenu();
-        this.optionsButton.classList.add('hidden');
-    }
-
-    renderButton() {
-        return this.optionsButton;
-    }
-    renderMenu() {
-        return this.menu;
-    }
-}
-
+/** Class for dealing with pages with only one channel and thus only one Whitelisting button needed */
 class SingleChannelPage {
     dataNode: HTMLElement;
     buttonParent: HTMLElement;
@@ -665,17 +435,17 @@ class SingleChannelPage {
         this.awaitingSkip = false;
         this.videoError = false;
         this.skipButton = null;
-        this.adOptions.muteTab = false;
+        this.muteTab(false);
         console.log(this);
     }
 
     updatePage(forceUpdate?: boolean, verify?: boolean) {
         if (!this.dataNode && !this.setDataNode()) return // console.error('Container not available');
-
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
+        const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
 
-        let whitelisted = pages.updateURL(this.channelId, verify);
+        pages.updateURL(whitelisted, verify);
 
         whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
 
@@ -746,7 +516,7 @@ class SingleChannelPage {
             if (this.shouldPause()) {
                 this.schedulePause()
             } else {
-                this.adOptions.muteTab = false;
+                this.muteTab(false);
             }
             this.adOptions.hide();
             this.adOptions.reset();
@@ -765,7 +535,7 @@ class SingleChannelPage {
         this.videoError = error;
 
         if (this.videoError && this.adPlaying && this.skipButton && settings.skipAdErrors)
-            this.attemptSkip();
+            this.attemptSkip(false);
     }
     updateAdInformation(ad: Ad) {
         if (this.currentAd && this.currentAd.video_id !== ad.video_id) {
@@ -789,7 +559,7 @@ class SingleChannelPage {
         this.onVideoPlayable(this.currentPlayer)
             .then(() => {
                 this.currentPlayer.pause();
-                this.adOptions.muteTab = false;
+                this.muteTab(false);
                 this.pauseOrigin = true;
 
                 pageTitle = document.title;
@@ -820,7 +590,7 @@ class SingleChannelPage {
         }
 
         if (this.adConfirmed) {
-            const inMutelist = lists.mutelist.has(this.currentAd.channelId);
+            const inMutelist = settings.muted.has(this.currentAd.channelId);
             const muteAll = !!settings.muteAll;
 
             // if muteAll && inmute should be false
@@ -829,12 +599,12 @@ class SingleChannelPage {
             // if !muteAll && !inmute should be false
             // All of these conditions are met with muteAll !== inmute
 
-            this.adOptions.muteTab = muteAll !== inMutelist;
+            this.muteTab(muteAll !== inMutelist);
         } else if (this.adPlaying && this.currentPlayer) {
-            this.adOptions.muteTab = settings.muteAll;
+            this.muteTab(settings.muteAll);
         }
     }
-    attemptSkip() {
+    attemptSkip(mute = true) {
         if (!this.currentPlayer || !this.adPlaying) return;
 
         if (this.skipButton) {
@@ -842,7 +612,7 @@ class SingleChannelPage {
         }
 
         this.awaitingSkip = true;
-        this.adOptions.muteTab = true;
+        this.muteTab(mute);
         this.currentPlayer.currentTime = this.getPlaybackLimit(this.currentPlayer) - 1;
         this.currentPlayer.playbackRate = 5;
     }
@@ -899,35 +669,47 @@ class SingleChannelPage {
             .then(() => this.attemptSkip())
             .catch(error => console.error('Error blacklisting:', error))
     }
+    muteTab(shouldMute: boolean) {
+        if (shouldMute) {
+            agent.send('mute-tab', true)
+                .then(resp => this.adOptions.muted = true)
+                .catch(error => {
+                    console.error('Error muting:', error);
+                });
 
+        } else {
+            const done = () => this.adOptions.muted = false;
+            agent.send('mute-tab', false)
+                .then(done)
+                .catch(done); // replicate .finally
+        }
+    }
     toggleMute() {
         if (!this.currentAd.channelId) throw 'Ad channel ID not available for muting';
-        const shouldMute = !lists.mutelist.has(this.currentAd.channelId);
+        const shouldMute = !settings.muted.has(this.currentAd.channelId);
         const action = shouldMute
-            ? lists.mutelist.add(this.currentAd.channelId)
-            : lists.mutelist.remove(this.currentAd.channelId);
+            ? settings.muted.add(this.currentAd.channelId)
+            : settings.muted.remove(this.currentAd.channelId);
 
         action
             .then(() => agent.send('mute-tab', shouldMute))
-            .catch(error => console.error('Error setting settings', error));
+            .catch((error: any) => console.error('Error setting settings', error));
     }
     toggleWhitelist() {
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
 
-        if (lists.whitelist.has(this.channelId)) {
-            lists.whitelist.remove(this.channelId);
-            this.whitelistButton.off();
-        } else {
-            lists.whitelist.add(this.channelId);
+        if (settings.toggleWl(this.channelId, this.isSubscribed())) {
             this.whitelistButton.on();
+        } else {
+            this.whitelistButton.off();
         }
-
     }
     setDataNode(/* override */node?: HTMLElement) { return node }
     insertButton(/* override */button: WhitelistButtonInstance) { }
     updateVideos(/* override */whitelisted: boolean, forceUpdate: boolean) { }
     getChannelId(/* override */node: HTMLElement): Channel { return Channels.empty(); }
+    isSubscribed(/* override */): boolean { return false };
 
 }
 
@@ -940,30 +722,29 @@ class VideoPagePoly extends SingleChannelPage {
     }
 
     setDataNode(container: HTMLElement) {
-        return this.dataNode = container || this.dataNode || document.querySelector('ytd-video-owner-renderer');
+        return this.dataNode = container || this.dataNode || document.querySelector('ytd-video-secondary-info-renderer');
     }
 
-    setParentNode(parent: HTMLElement) {
-        return this.buttonParent = parent || this.buttonParent;
+    setParentNode(parent?: HTMLElement) {
+        return this.buttonParent = parent || this.buttonParent || document.querySelector('ytd-video-owner-renderer');
     }
     insertButton(button: WhitelistButtonInstance) {
-        this.setParentNode(this.dataNode.parentNode as HTMLElement);
-
-        if (this.dataNode.nextSibling) {
-            this.buttonParent.insertBefore(button.render(), this.dataNode.nextSibling);
+        this.setParentNode();
+        if (this.buttonParent.nextSibling) {
+            this.buttonParent.parentElement.insertBefore(button.render(), this.buttonParent.nextSibling);
         } else {
             this.buttonParent.appendChild(button.render());
         }
     }
     updateVideos(whitelisted: boolean, forceUpdate: boolean) {
-        this.updateInfobar(this.dataNode, whitelisted);
+        this.updateInfobar(this.buttonParent, whitelisted);
         let relatedVideos = document.querySelectorAll('ytd-compact-video-renderer,ytd-playlist-panel-video-renderer') as NodeListOf<VideoPoly>;
 
         pages.updateVideos(relatedVideos, forceUpdate)
     }
 
     updateInfobar(container: HTMLElement, whitelisted: boolean, channelId = this.channelId) {
-        container = this.setDataNode(container);
+        container = this.setParentNode(container);
         if (!container) return false;
         if (!channelId) return false;
 
@@ -982,16 +763,18 @@ class VideoPagePoly extends SingleChannelPage {
             }
         }
     }
-
+    isSubscribed() {
+        return oGet(this.dataNode, 'data.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+    }
     getChannelId(container: HTMLElement) {
         let channelId = Channels.empty();
         container = this.setDataNode(container);
 
         if (!container) return null;
 
-        channelId.username = Channels.fromURL(oGet(container, 'data.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
-        channelId.id = oGet(container, 'data.navigationEndpoint.browseEndpoint.browseId') || '';
-        channelId.display = oGet(container, 'data.title.runs[0].text') || '';
+        channelId.username = Channels.fromURL(oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
+        channelId.id = oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
+        channelId.display = oGet(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
 
         return Channels.valid(channelId);
     }
@@ -1044,6 +827,9 @@ class VideoPageBasic extends SingleChannelPage {
         let links = this.dataNode.querySelectorAll('a') as ArrayLike<any>;
         return Channels.valid(Channels.fromLinks(links as Array<any>));
     }
+    isSubscribed() {
+        return false;
+    }
 }
 
 class ChannelPagePoly extends SingleChannelPage {
@@ -1084,6 +870,9 @@ class ChannelPagePoly extends SingleChannelPage {
 
         return Channels.valid(channelId);
     }
+    isSubscribed() {
+        return oGet(this.dataNode, 'data.response.header.c4TabbedHeaderRenderer.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+    }
 }
 
 class ChannelPageBasic extends SingleChannelPage {
@@ -1121,6 +910,9 @@ class ChannelPageBasic extends SingleChannelPage {
         channelId.display = document.querySelector('.branded-page-header-title-link').textContent || '';
         return Channels.valid(channelId)
     }
+    isSubscribed() {
+        return false;
+    }
 }
 
 class SearchPagePoly {
@@ -1134,7 +926,7 @@ class SearchPagePoly {
 
         for (let channelElement of channelElements) {
             let channelId = this.getChannelId(channelElement);
-            let whitelisted = lists.whitelist.has(channelId);
+            let whitelisted = settings.asWl(channelId, this.isSubscribed(channelElement));
 
             if (channelElement.whitelistButton && channelElement.whitelistButton.exists()) {
                 if (forceUpdate)
@@ -1154,11 +946,10 @@ class SearchPagePoly {
         let channelId = this.getChannelId(dataNode);
         if (!channelId) throw 'Channel ID not available';
 
-        if (lists.whitelist.has(channelId)) {
-            lists.whitelist.remove(channelId);
-        } else {
-            lists.whitelist.add(channelId);
-        }
+        settings.toggleWl(channelId, this.isSubscribed(dataNode));
+    }
+    isSubscribed(dataNode: HTMLElement): boolean {
+        return oGet(dataNode, 'data.subscriptionButton.subscribed') || false;
     }
     getChannelId(container: HTMLElement) {
         let channelId = Channels.empty();
@@ -1238,13 +1029,49 @@ class Channels {
         return agent.send('set-settings', { param: channel, type: 'add-' + this.type });
     }
 }
-class Lists {
-    whitelist: Channels;
-    mutelist: Channels;
-    constructor(settings: ReadonlySettings) {
-        this.whitelist = new Channels(settings.whitelisted, 'white');
-        this.mutelist = new Channels(settings.muted, 'mute');
+
+class Settings implements _Settings<Channels> {
+    whitelisted: Channels;
+    muted: Channels;
+    exclude: Channels;
+    blacklisted: Channels;
+    pauseAfterAd: boolean;
+    autoWhite: boolean;
+    muteAll: boolean;
+    skipAdErrors: boolean;
+    skipOverlays: boolean;
+
+    constructor(settings: _Settings) {
+        Object.assign(this, {
+            ...settings,
+            whitelisted: new Channels(settings.whitelisted, 'white'),
+            muted: new Channels(settings.muted, 'mute'),
+            exclude: new Channels(settings.exclude, 'exclude'),
+            blacklisted: new Channels(settings.blacklisted, 'black')
+        })
     }
+    /** Determine whether channel should be treated as whitelisted */
+    asWl(channel: Channel, subscribed = false): boolean {
+        return settings.whitelisted.has(channel)
+            || (settings.autoWhite && subscribed && !settings.exclude.has(channel));
+    }
+    /** Toggle a channel's whitelisted status */
+    toggleWl(channel: Channel, subscribed = false): boolean {
+        const curWl = this.asWl(channel, subscribed);
+        if (curWl) {
+            if (this.autoWhite && subscribed)
+                this.exclude.add(channel);
+            this.whitelisted.remove(channel);
+            return false;
+        } else {
+            if (this.autoWhite && subscribed)
+                this.exclude.remove(channel)
+            else
+                this.whitelisted.add(channel);
+            return true;
+        }
+    }
+
 }
 
 class Page {
@@ -1333,7 +1160,7 @@ class Page {
 
                 let destURL = video.data.originalHref;
 
-                if (lists.whitelist.has(id)) {
+                if (settings.asWl(id)) {
                     if (!video.data.originalHref) {
                         destURL = links[0].getAttribute('href');
                         video.data.originalHref = destURL;
@@ -1380,7 +1207,7 @@ class Page {
 
                 if (!user || !(values.username = user.textContent))
                     continue;
-                inwhite = lists.whitelist.has(values);
+                inwhite = settings.whitelisted.has(values);
             }
             if (inwhite || forceUpdate) { // exists
                 let links = vid.querySelectorAll('a[href^="/watch?"]');
@@ -1409,7 +1236,7 @@ class Page {
             } else {
                 user = userNode.getAttribute('data-ytid');
             }
-            let inwhite = lists.whitelist.has(user);
+            let inwhite = settings.whitelisted.has(user);
             let links = vid.querySelectorAll('a[href^="/watch?"]');
             if (inwhite || forceUpdate) {
                 for (let link of links) {
@@ -1419,18 +1246,16 @@ class Page {
             vid.processed = true;
         }
     }
-    updateURL(channelId: Channel, verify: boolean) {
-        if (!channelId) throw 'No channel ID passed to updateURL';
-
+    updateURL(whitelisted: boolean, verify: boolean) {
         if (location.href.indexOf('&disableadblock=1') !== -1) {
             // ads are enabled, should we correct that?
-            if (!lists.whitelist.has(channelId)) {
+            if (!whitelisted) {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, false));
                 return false;
             } else return true;
         } else {
             // ads are not enabled, lets see if they should be
-            if (lists.whitelist.has(channelId)) {
+            if (whitelisted) {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, true));
 
                 if (verify) this.confirmDisabled();
@@ -1576,27 +1401,6 @@ class LoadHastener {
 
 }
 
-const i18n = (messageName: LocaleString, substitutions?: string | number | Array<string | number>): string => {
-    const message = locale[messageName];
-    if (!message) {
-        console.error('No i18n message found for', messageName);
-        return '';
-    }
-
-    if (!substitutions)
-        return message;
-
-    const subs = substitutions instanceof Array
-        ? substitutions.map(i => i + '')
-        : [substitutions + ''];
-    let result = message;
-
-    for (let i = 0; i < subs.length; i++)
-        result = result.replace(new RegExp('\\$' + (i + 1) + '\\$', 'g'), subs[i]);
-
-    return result;
-}
-
 const init = (design: Layout) => {
     pages = new Page(design || Page.getDesign());
     watcher = new MutationWatcher();
@@ -1606,8 +1410,7 @@ const init = (design: Layout) => {
 
     agent
         .on('settings-update', (updated: any) => {
-            settings = updated.settings;
-            lists = new Lists(settings);
+            settings = new Settings(updated.settings);
             pages.update(true, updated.initiator)
         })
         .on('ad-update', (ad: any) => {
@@ -1640,11 +1443,11 @@ agent
     })
     .send('get-settings')
     .then(response => {
-        settings = response.settings;
-        lists = new Lists(settings);
-        accessURLs = response.accessURLs;
-        locale = response.i18n;
+        settings = new Settings(response.settings);
+        AdOptions.uboIcon = response.accessURLs.ICO;
+        seti18n(response.i18n);
 
         let load = new LoadHastener();
-        load.getDesign().then(design => init(design));
+        load.getDesign()
+            .then(design => init(design));
     });

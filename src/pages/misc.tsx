@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FunctionComponent, useState, useCallback, useEffect, FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload, faFileImport, faTrash } from '@fortawesome/free-solid-svg-icons'
+import SwitchableOption from './switch';
 import { Settings } from '../typings';
 import {
     Confirm, isSettings, canonicalizeSettings, diffSettings,
@@ -127,6 +128,11 @@ const Options: FunctionComponent<{
     return <div className='row'>
         <div className='d-sm-none d-md-block col-md-6'>
             <div className='list-group list-group-flush'>
+                <SwitchableOption
+                    checked={settings.autoWhite}
+                    onChange={(checked) => bMessage('set', 'auto-whitelist', checked)}
+                    text={i18n('autoWhiteOption')}
+                />
                 <ListGroupItem>
                     {i18n('import')}
                     <Import alert={alert} settings={settings} />
@@ -170,6 +176,7 @@ const Options: FunctionComponent<{
         </div>
     </div>
 }
+
 
 export { Export }
 export default Options

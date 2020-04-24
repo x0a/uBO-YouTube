@@ -59,22 +59,26 @@ const defaultSettings = (): Settings => ({
     blacklisted: [],
     whitelisted: [],
     muted: [],
+    exclude: [],
     muteAll: false,
     skipOverlays: true,
     skipAdErrors: true,
-    pauseAfterAd: false
+    pauseAfterAd: false,
+    autoWhite: false
 })
 const isSettings = (prospect: any): prospect is Settings => {
     return typeof prospect === 'object'
         && (!prospect.whitelisted || prospect.whitelisted instanceof Array)
         && (!prospect.blacklisted || prospect.blacklisted instanceof Array)
         && (!prospect.muted || prospect.muted instanceof Array)
+        && (!prospect.exclude || prospect.exclude instanceof Array)
         && (typeof prospect.skipOverlays === 'undefined' || typeof prospect.skipOverlays === 'boolean')
         && (typeof prospect.muteAll === 'undefined' || typeof prospect.muteAll === 'boolean')
         && (typeof prospect.skipAdErrors === 'undefined' || typeof prospect.skipAdErrors === 'boolean')
 }
 const isChannel = (prospect: any): prospect is Channel => {
-    return typeof prospect === 'object'
+    return !!prospect
+        && typeof prospect === 'object'
         && typeof prospect.id === 'string'
         && typeof prospect.username === 'string'
         && typeof prospect.display === 'string';
@@ -91,10 +95,12 @@ const canonicalizeSettings = (prospect: Settings, defaults = defaultSettings()):
         whitelisted: canonicalizeChannels(prospect.whitelisted),
         blacklisted: canonicalizeChannels(prospect.blacklisted),
         muted: canonicalizeChannels(prospect.muted),
+        exclude: canonicalizeChannels(prospect.exclude),
         muteAll: prospect.muteAll === undefined ? defaults.muteAll : prospect.muteAll,
         skipOverlays: prospect.skipOverlays === undefined ? defaults.skipOverlays : prospect.skipOverlays,
         skipAdErrors: prospect.skipAdErrors === undefined ? defaults.skipAdErrors : prospect.skipAdErrors,
-        pauseAfterAd: prospect.pauseAfterAd === undefined ? defaults.pauseAfterAd : prospect.pauseAfterAd
+        pauseAfterAd: prospect.pauseAfterAd === undefined ? defaults.pauseAfterAd : prospect.pauseAfterAd,
+        autoWhite: prospect.autoWhite === undefined ? defaults.autoWhite : prospect.autoWhite
     }
 }
 
@@ -106,10 +112,12 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         whitelisted: diffList(current.whitelisted, next.whitelisted),
         blacklisted: diffList(current.blacklisted, next.blacklisted),
         muted: diffList(current.muted, next.muted),
+        exclude: diffList(current.exclude, next.exclude),
         muteAll: next.muteAll,
         skipOverlays: next.skipOverlays,
         skipAdErrors: next.skipAdErrors,
-        pauseAfterAd: next.pauseAfterAd
+        pauseAfterAd: next.pauseAfterAd,
+        autoWhite: next.autoWhite
     }
 }
 const mergeSettings = (current: Settings, next: Settings): Settings => {
@@ -117,10 +125,12 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         whitelisted: current.whitelisted.concat(next.whitelisted),
         blacklisted: current.blacklisted.concat(next.blacklisted),
         muted: current.muted.concat(next.muted),
+        exclude: current.exclude.concat(next.exclude),
         muteAll: next.muteAll,
         skipOverlays: next.skipOverlays,
         skipAdErrors: next.skipAdErrors,
         pauseAfterAd: next.pauseAfterAd,
+        autoWhite: next.autoWhite
     }
 }
 const settingsFromList = (list: ChannelList, exportKey: string) => ({

@@ -1,6 +1,6 @@
 {
     "files": [
-        "src/inject.ts",
+        "src/inject/index.ts",
         "src/background.ts",
         "src/content.ts",
         "src/agent.ts",
