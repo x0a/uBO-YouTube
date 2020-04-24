@@ -19,7 +19,7 @@
         "js": ["content.js"],
         "run_at": "document_start"
     }],
-    "permissions": ["storage", "webRequest", "webRequestBlocking", "*://*.youtube.com/"],
+    "permissions": ["webRequest", "webRequestBlocking", "*://*.youtube.com/"],
     "optional_permissions": ["*://*.content.googleapis.com/"],
     "background": {
         "scripts": ["background.js"]
