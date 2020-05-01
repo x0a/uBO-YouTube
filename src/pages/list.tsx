@@ -84,7 +84,7 @@ const ChannelTable: FunctionComponent<{
                 </tr>
             </thead>
             <tbody>
-                {!channels.length && <tr>
+                {!channels.length && !hide && <tr>
                     <td className='text-muted'>{i18n('emptyList')}</td>
                     <td></td>
                     <td></td>
