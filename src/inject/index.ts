@@ -1040,7 +1040,7 @@ class Settings implements _Settings<Channels> {
     muteAll: boolean;
     skipAdErrors: boolean;
     skipOverlays: boolean;
-
+    verifyWl: boolean;
     constructor(settings: _Settings) {
         Object.assign(this, {
             ...settings,
@@ -1258,7 +1258,7 @@ class Page {
             if (whitelisted) {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, true));
 
-                if (verify) this.confirmDisabled();
+                if (verify && settings.verifyWl) this.confirmDisabled();
                 return true;
             } else return false;
         }

@@ -23,7 +23,7 @@ class SettingsManager {
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
     autoWhite: boolean;
-
+    verifyWl: boolean;
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
@@ -35,6 +35,7 @@ class SettingsManager {
         this.skipAdErrors = settings.skipAdErrors;
         this.pauseAfterAd = settings.pauseAfterAd;
         this.autoWhite = settings.autoWhite;
+        this.verifyWl = settings.verifyWl;
     }
 
     static sanitizeSettings(settings?: Settings): Settings {
@@ -50,6 +51,7 @@ class SettingsManager {
         settings.autoWhite = !!settings.autoWhite;
         settings.skipOverlays = settings.skipOverlays === undefined ? true : !!settings.skipOverlays;
         settings.skipAdErrors = settings.skipAdErrors === undefined ? true : !!settings.skipAdErrors;
+        settings.verifyWl = settings.verifyWl === undefined ? true : !!settings.verifyWl;
 
         return settings;
     }
@@ -122,6 +124,9 @@ class SettingsManager {
     togglePauseAfterAd(on: boolean) {
         this.pauseAfterAd = !!on;
     }
+    toggleVerifyWl(on: boolean){
+        this.verifyWl= !!on;
+    }
     get(): Settings {
         return {
             whitelisted: this.whitelist.get(),
@@ -132,7 +137,8 @@ class SettingsManager {
             skipOverlays: this.skipOverlays,
             skipAdErrors: this.skipAdErrors,
             pauseAfterAd: this.pauseAfterAd,
-            autoWhite: this.autoWhite
+            autoWhite: this.autoWhite,
+            verifyWl: this.verifyWl
         };
     }
     getCompressed(): any {
@@ -409,6 +415,7 @@ SettingsManager.getSettings()
             .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
             .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
             .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
+            .on('verify-wl', (_, shouldVerify) => settings.toggleVerifyWl(shouldVerify))
             .onAll(sender => {
                 settings.save();
                 settings.updateAll(sender.tab);

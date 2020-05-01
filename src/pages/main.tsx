@@ -106,6 +106,12 @@ const Main: FunctionComponent<{
                                         tooltip={i18n('adErrorsOptionTooltip')}
                                     />
                                     <SwitchableOption
+                                        checked={settings.verifyWl}
+                                        onChange={(checked) => bMessage('set', 'verify-wl', checked)}
+                                        text={i18n('verifyWlOption')}
+                                        tooltip={i18n('verifyWlOptionTooltip')}
+                                    />
+                                    <SwitchableOption
                                         checked={settings.skipOverlays}
                                         onChange={(checked) => bMessage('set', 'skip-overlays', checked)}
                                         text={i18n('overlaysOption')}

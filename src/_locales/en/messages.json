@@ -259,6 +259,12 @@
     "adErrorsOptionTooltip": {
         "message": "Skips to video if ad fails to play, rather than showing the 'An error occurred' with TV static"
     },
+    "verifyWlOption": {
+        "message": "Verify whitelist status"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "Confirm that ads aren't blocked on whitelisted channels by simulating loading an ad"
+    },
     "adBlocked": {
         "message": "Blocked",
         "description": "Shown next to ads that were blocked"

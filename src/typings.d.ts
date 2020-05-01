@@ -26,6 +26,7 @@ interface Settings<T = ChannelList> {
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
     autoWhite: boolean;
+    verifyWl: boolean;
 }
 type ReadonlySettings<T = ChannelList> = Readonly<Settings<T>>;
 interface AccessURL {

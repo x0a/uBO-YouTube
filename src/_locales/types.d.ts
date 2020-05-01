@@ -13,11 +13,11 @@ type locals = "okBtn" | "cancelBtn" | "optionsBtn" | "adOptionsDefaultTooltip"
     | "bulkRemoveMuteConfirm" | "resetBtn" | "resetTooltip" | "emptyList"
     | "importBtn" | "exportBtn" | "exportAltBtn" | "channelSearchHeader"
     | "adOptionsHeader" | "muteOption" | "overlaysOption" | "autoWhiteOption"
-    | "adErrorsOption" | "adErrorsOptionTooltip" | "adBlocked" | "adAllowed"
-    | "muteAdvertiserTooltip" | "blacklistAdvertiserTooltip" | "blacklistBtn" | "skipBtn"
-    | "skipTooltip" | "pauseAfterAdOption" | "pauseAfterAdTooltip" | "permissionDesc"
-    | "permissionBtn" | "searchDesc" | "searchPlaceholder" | "searching"
-    | "searchFailed" | "importSubsBtn" | "importSubsFailed" | "importSubsConfirm"
-    | "updateFailed" | "wrongFormat" | "parseFailed" | "noNew"
-    | "confirmImport";
+    | "adErrorsOption" | "adErrorsOptionTooltip" | "verifyWlOption" | "verifyWlOptionTooltip"
+    | "adBlocked" | "adAllowed" | "muteAdvertiserTooltip" | "blacklistAdvertiserTooltip"
+    | "blacklistBtn" | "skipBtn" | "skipTooltip" | "pauseAfterAdOption"
+    | "pauseAfterAdTooltip" | "permissionDesc" | "permissionBtn" | "searchDesc"
+    | "searchPlaceholder" | "searching" | "searchFailed" | "importSubsBtn"
+    | "importSubsFailed" | "importSubsConfirm" | "updateFailed" | "wrongFormat"
+    | "parseFailed" | "noNew" | "confirmImport";
 export default locals

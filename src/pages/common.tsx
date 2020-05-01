@@ -64,7 +64,8 @@ const defaultSettings = (): Settings => ({
     skipOverlays: true,
     skipAdErrors: true,
     pauseAfterAd: false,
-    autoWhite: false
+    autoWhite: false,
+    verifyWl: true
 })
 const isSettings = (prospect: any): prospect is Settings => {
     return typeof prospect === 'object'
@@ -100,7 +101,8 @@ const canonicalizeSettings = (prospect: Settings, defaults = defaultSettings()):
         skipOverlays: prospect.skipOverlays === undefined ? defaults.skipOverlays : prospect.skipOverlays,
         skipAdErrors: prospect.skipAdErrors === undefined ? defaults.skipAdErrors : prospect.skipAdErrors,
         pauseAfterAd: prospect.pauseAfterAd === undefined ? defaults.pauseAfterAd : prospect.pauseAfterAd,
-        autoWhite: prospect.autoWhite === undefined ? defaults.autoWhite : prospect.autoWhite
+        autoWhite: prospect.autoWhite === undefined ? defaults.autoWhite : prospect.autoWhite,
+        verifyWl: prospect.verifyWl === undefined ? defaults.verifyWl : prospect.verifyWl
     }
 }
 
@@ -117,7 +119,8 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         skipOverlays: next.skipOverlays,
         skipAdErrors: next.skipAdErrors,
         pauseAfterAd: next.pauseAfterAd,
-        autoWhite: next.autoWhite
+        autoWhite: next.autoWhite,
+        verifyWl: next.verifyWl
     }
 }
 const mergeSettings = (current: Settings, next: Settings): Settings => {
@@ -130,7 +133,8 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         skipOverlays: next.skipOverlays,
         skipAdErrors: next.skipAdErrors,
         pauseAfterAd: next.pauseAfterAd,
-        autoWhite: next.autoWhite
+        autoWhite: next.autoWhite,
+        verifyWl: next.verifyWl
     }
 }
 const settingsFromList = (list: ChannelList, exportKey: string) => ({
