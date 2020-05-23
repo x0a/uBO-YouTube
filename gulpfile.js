@@ -84,6 +84,8 @@ gulp.task('ts', () => {
     if (build) {
         gulp.src('src/*.ts')
             .pipe(src.add('src/'));
+        gulp.src('src/inject/*.ts')
+            .pipe(src.add('src/inject'))
         gulp.src('shared/api.ts')
             .pipe(src.add('/shared'));
         gulp.src('src/pages/*.[tj]sx')
