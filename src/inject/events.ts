@@ -12,7 +12,7 @@ interface EventFilter {
     eventName: string,
     filter: (target: EventTarget, event: InterceptedEvent) => boolean;
 }
-const hookEvents = (): [
+const hookEvents = (debug = false): [
     (element: EventTarget, name: string) => Array<InterceptedEvent>,
     (element: EventTarget, name: string, expires?: number) => Promise<InterceptedEvent>,
     (name: string, filter: (target: EventTarget, event: InterceptedEvent) => boolean) => void,
@@ -33,6 +33,8 @@ const hookEvents = (): [
         if (filters.some(({ eventName, filter }) => name === eventName && filter(self, event) === false)) return;
 
         originalAdd.apply(this, arguments); // run first to allow native method to halt execution in case of error;
+        
+        if(!debug) return;
 
         eventMap.set(self, (eventMap.get(self) || [])
             .concat(event));
