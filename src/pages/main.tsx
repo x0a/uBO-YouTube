@@ -116,6 +116,11 @@ const Main: FunctionComponent<{
                                         onChange={(checked) => bMessage('set', 'skip-overlays', checked)}
                                         text={i18n('overlaysOption')}
                                     />
+                                    <SwitchableOption
+                                        checked={settings.autoSkip}
+                                        onChange={(checked) => bMessage('set', 'auto-skip', {autoSkip: checked, autoSkipSeconds: settings.autoSkipSeconds})}
+                                        text={i18n('autoSkipOption')}
+                                    />
                                 </ul>
                             </div>}
                             <div className='col-md-3'>

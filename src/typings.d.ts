@@ -15,7 +15,7 @@ interface ClientMessage {
     error: string;
     response: any;
 }
-
+type AutoSkipSeconds = 0 | 5 | 30
 interface Settings<T = ChannelList> {
     whitelisted: T;
     blacklisted: T;
@@ -26,6 +26,8 @@ interface Settings<T = ChannelList> {
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
     autoWhite: boolean;
+    autoSkip: boolean;
+    autoSkipSeconds: AutoSkipSeconds;
     verifyWl: boolean;
 }
 type ReadonlySettings<T = ChannelList> = Readonly<Settings<T>>;
@@ -145,5 +147,6 @@ export {
     Channel, ChannelList, MutationElement,
     Settings, ReadonlySettings, Action, AccessURL,
     MenuItem, InfoLink, VideoBasic, VideoPoly,
-    Ad, PendingItem, ParsedURL, HostMessage, ClientMessage
+    Ad, PendingItem, ParsedURL, HostMessage, ClientMessage,
+    AutoSkipSeconds
 }

@@ -253,6 +253,9 @@
     "autoWhiteOption": {
         "message": "Whitelist subscribed channels by default"
     },
+    "autoSkipOption": {
+        "message": "Automatically skip ads"
+    },
     "adErrorsOption": {
         "message": "Skip ad playback errors"
     },
@@ -281,6 +284,14 @@
     },
     "blacklistBtn": {
         "message": "Block advertiser"
+    },
+    "autoSkipTooltip": {
+        "message": "Skipping in $number seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
     },
     "skipBtn": {
         "message": "Force skip"

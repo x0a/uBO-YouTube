@@ -16,6 +16,7 @@ export default class AdOptions {
     buttonFocused: boolean;
     menuFocused: boolean;
     menuOpen: boolean;
+    overridingTooltip: boolean;
     private _muted: boolean;
 
     static uboIcon: string;
@@ -178,6 +179,15 @@ export default class AdOptions {
         this.tooltip.textContent = i18n('adOptionsTooltip', title);
     }
 
+    overrideTooltip(text: string) {
+        const nextTooltip = this.tooltip.cloneNode(true) as HTMLSpanElement;
+        this.optionsButton.replaceChild(nextTooltip, this.tooltip);
+        nextTooltip.textContent = text;
+        nextTooltip.classList.add('force-show');
+        setTimeout(() => {
+            this.optionsButton.replaceChild(this.tooltip, nextTooltip);
+        }, 4000);
+    }
     reset() {
         this.tooltip.textContent = i18n('adOptionsDefaultTooltip');
         this.blacklistOption = false;

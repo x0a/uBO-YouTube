@@ -65,6 +65,8 @@ const defaultSettings = (): Settings => ({
     skipAdErrors: true,
     pauseAfterAd: false,
     autoWhite: false,
+    autoSkip: false,
+    autoSkipSeconds: 30,
     verifyWl: true
 })
 const isSettings = (prospect: any): prospect is Settings => {
@@ -102,6 +104,8 @@ const canonicalizeSettings = (prospect: Settings, defaults = defaultSettings()):
         skipAdErrors: prospect.skipAdErrors === undefined ? defaults.skipAdErrors : prospect.skipAdErrors,
         pauseAfterAd: prospect.pauseAfterAd === undefined ? defaults.pauseAfterAd : prospect.pauseAfterAd,
         autoWhite: prospect.autoWhite === undefined ? defaults.autoWhite : prospect.autoWhite,
+        autoSkip: prospect.autoSkip === undefined ? defaults.autoSkip : prospect.autoSkip,
+        autoSkipSeconds: prospect.autoSkipSeconds === undefined ? defaults.autoSkipSeconds : prospect.autoSkipSeconds,
         verifyWl: prospect.verifyWl === undefined ? defaults.verifyWl : prospect.verifyWl
     }
 }
@@ -120,6 +124,8 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         skipAdErrors: next.skipAdErrors,
         pauseAfterAd: next.pauseAfterAd,
         autoWhite: next.autoWhite,
+        autoSkip: next.autoSkip,
+        autoSkipSeconds: next.autoSkipSeconds,
         verifyWl: next.verifyWl
     }
 }
@@ -134,6 +140,8 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         skipAdErrors: next.skipAdErrors,
         pauseAfterAd: next.pauseAfterAd,
         autoWhite: next.autoWhite,
+        autoSkip: next.autoSkip,
+        autoSkipSeconds: next.autoSkipSeconds,
         verifyWl: next.verifyWl
     }
 }

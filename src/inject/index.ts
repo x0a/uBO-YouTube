@@ -7,7 +7,7 @@ import { i18n, seti18n } from './i18n';
 import {
     Channel, Settings as _Settings,
     Action, MutationElement,
-    InfoLink, VideoPoly, VideoBasic, Ad
+    InfoLink, VideoPoly, VideoBasic, Ad, AutoSkipSeconds
 } from '../typings';
 
 const enum Layout {
@@ -275,7 +275,7 @@ class MutationWatcher {
         const type = pages.getType();
 
         for (const mutation of mutations) {
-            this.findInjection(mutation, 'paper-button.ytd-subscribe-button-renderer yt-formatted-string');
+            // this.findInjection(mutation, 'paper-button.ytd-subscribe-button-renderer yt-formatted-string');
             if (type === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
 
@@ -312,7 +312,7 @@ class MutationWatcher {
                         }
                     } else if (skipContainer = this.isAdSkipContainer(mutation)) {
                         pages.channel.skipButtonUpdate(MutationWatcher.adSkipButton(skipContainer));
-                    }else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
+                    } else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
                         pages.channel.updatePage();
                     }
                 }
@@ -416,7 +416,7 @@ class SingleChannelPage {
     videoError: boolean;
     pauseOrigin: boolean;
     skipButton: HTMLButtonElement;
-    currentPlayer: HTMLVideoElement;
+    _currentPlayer: HTMLVideoElement;
 
     constructor(ButtonFactory: WhitelistButtonFactory) {
         this.dataNode = null
@@ -470,7 +470,24 @@ class SingleChannelPage {
         this.updateAdButton();
         this.updateVideos(whitelisted, forceUpdate);
     }
+    set currentPlayer(nextPlayer: HTMLVideoElement) {
+        if (nextPlayer && this._currentPlayer !== nextPlayer) {
+            nextPlayer.addEventListener('timeupdate', () => {
+                if (this.adPlaying
+                    && settings.autoSkip
+                    && nextPlayer.currentTime > settings.autoSkipSeconds
+                    && nextPlayer.duration > settings.autoSkipSeconds) {
+                    console.log('Automatically skipping per settings');
+                    this.attemptSkip();
+                }
+            })
+            this._currentPlayer = nextPlayer;
 
+        }
+    }
+    get currentPlayer() {
+        return this._currentPlayer;
+    }
     updateAdPlaying(player: HTMLElement, playing: boolean, firstRun = false) {
         if (playing && !this.adPlaying) {
             let container = player.querySelector('.ytp-right-controls');
@@ -488,6 +505,9 @@ class SingleChannelPage {
             if (this.currentPlayer = player.querySelector('video')) {
                 this.adOptions.skipOption = true;
                 this.adOptions.show();
+                if (settings.autoSkip) {
+                    this.adOptions.overrideTooltip(i18n('autoSkipTooltip', 30));
+                }
                 this.onVideoPlayable(this.currentPlayer)
                     .then(() => this.updateAdButton());
             }
@@ -1040,6 +1060,8 @@ class Settings implements _Settings<Channels> {
     muteAll: boolean;
     skipAdErrors: boolean;
     skipOverlays: boolean;
+    autoSkip: boolean;
+    autoSkipSeconds: AutoSkipSeconds;
     verifyWl: boolean;
     constructor(settings: _Settings) {
         Object.assign(this, {

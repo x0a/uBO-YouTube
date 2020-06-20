@@ -4,7 +4,7 @@ import MessageListener from './ext-agent';
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
 import {
     Channel, ChannelList, Settings,
-    Ad, PendingItem, ParsedURL
+    Ad, PendingItem, ParsedURL, AutoSkipSeconds
 } from './typings';
 import apiKeys from '../shared/api'
 
@@ -23,6 +23,8 @@ class SettingsManager {
     skipAdErrors: boolean;
     pauseAfterAd: boolean;
     autoWhite: boolean;
+    autoSkip: boolean;
+    autoSkipSeconds: AutoSkipSeconds;
     verifyWl: boolean;
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
@@ -51,6 +53,8 @@ class SettingsManager {
         settings.autoWhite = !!settings.autoWhite;
         settings.skipOverlays = settings.skipOverlays === undefined ? true : !!settings.skipOverlays;
         settings.skipAdErrors = settings.skipAdErrors === undefined ? true : !!settings.skipAdErrors;
+        settings.autoSkip = !!settings.autoSkip
+        settings.autoSkipSeconds = settings.autoSkipSeconds || 30;
         settings.verifyWl = settings.verifyWl === undefined ? true : !!settings.verifyWl;
 
         return settings;
@@ -127,6 +131,10 @@ class SettingsManager {
     toggleVerifyWl(on: boolean){
         this.verifyWl= !!on;
     }
+    toggleAutoSkip(on: boolean, seconds: AutoSkipSeconds){
+        this.autoSkip = !!on;
+        this.autoSkipSeconds = seconds === undefined ? 30 : ~~seconds as AutoSkipSeconds;
+    }
     get(): Settings {
         return {
             whitelisted: this.whitelist.get(),
@@ -138,6 +146,8 @@ class SettingsManager {
             skipAdErrors: this.skipAdErrors,
             pauseAfterAd: this.pauseAfterAd,
             autoWhite: this.autoWhite,
+            autoSkip: this.autoSkip,
+            autoSkipSeconds: this.autoSkipSeconds,
             verifyWl: this.verifyWl
         };
     }
@@ -415,6 +425,7 @@ SettingsManager.getSettings()
             .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
             .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
             .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
+            .on('auto-skip', (_, {autoSkip, autoSkipSeconds}) => settings.toggleAutoSkip(autoSkip, autoSkipSeconds))
             .on('verify-wl', (_, shouldVerify) => settings.toggleVerifyWl(shouldVerify))
             .onAll(sender => {
                 settings.save();
