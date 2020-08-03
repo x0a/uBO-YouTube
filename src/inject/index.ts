@@ -505,6 +505,11 @@ class SingleChannelPage {
             if (this.currentPlayer = player.querySelector('video')) {
                 this.adOptions.skipOption = true;
                 this.adOptions.show();
+
+                if (this.channelId && !settings.whitelisted.has(this.channelId)) {
+                    console.log('Ad playing that should not be playing, attempting skip');
+                    this.attemptSkip();
+                }
                 if (settings.autoSkip) {
                     this.adOptions.overrideTooltip(i18n('autoSkipTooltip', 30));
                 }
