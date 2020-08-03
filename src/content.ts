@@ -258,12 +258,29 @@ const hookReload = () => {
     }
     window.addEventListener('uBOWL-destroy', unloader);
 }
+const reflectURLFlag = (url: string, shouldContain: boolean): string => {
+    // take url, return url with flags removed if add is off
+    // return url with flags added if add is on
+    let search = /((?!\?)igno=re&disableadblock=1&?)|(&disableadblock=1)/g
 
+    if (shouldContain) {
+        url = reflectURLFlag(url, false); // remove first, then add
+        let paramsStart = url.indexOf('?');
+        return url + (paramsStart === -1 ? '?igno=re' : (paramsStart === url.length - 1 ? 'igno=re' : '')) + '&disableadblock=1'
+
+    } else {
+        return url.replace(search, '');
+    }
+}
+const finishedLoading = document.readyState === 'complete' || document.readyState === 'interactive';
 if (location.pathname === "/ubo-yt") {
     const allowed = ['whitelist', 'ads', 'misc'];
     const tab = allowed.find(tab => '#' + tab === location.hash.toLowerCase()) || '';
 
     browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
+} else if (!finishedLoading && location.href.indexOf('&disableadblock=1') === -1) {
+    // first load should contain flag to prevent new uBO rules from removing important metadata
+    location.href = reflectURLFlag(location.href, true);
 }
 
 
