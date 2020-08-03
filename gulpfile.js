@@ -282,5 +282,5 @@ gulp.task('watch', gulp.series('default', () => {
     gulp.watch('src/pages/*.[tj]sx', gulp.series('ts'));
     gulp.watch('shared/manifest.json', gulp.series('manifest', 'fullreload'));
     gulp.watch('src/background.ts', gulp.series('ts', 'fullreload')); // core js changes (background.js) require reload
-    gulp.watch(['src/*.ts', '!src/background.ts'], gulp.series('ts', 'partialreload')); // content.js doesnt require full reload, only script reloading
+    gulp.watch(['src/*.ts', 'src/inject/*.ts', '!src/background.ts'], gulp.series('ts', 'partialreload')); // content.js doesnt require full reload, only script reloading
 }))
