@@ -254,7 +254,7 @@
         "message": "Añadir canales suscritos a la lista blanca por defecto"
     },
     "autoSkipOption": {
-        "message": "Omitir anuncios automaticamente"
+        "message": "Saltar anuncios automáticamente"
     },
     "adErrorsOption": {
         "message": "Omitir errores de reproducción de anuncios"
@@ -300,7 +300,7 @@
         "message": "Intento para omitir este anuncio"
     },
     "pauseAfterAdOption": {
-        "message": "Modo Anti-Startle"
+        "message": "Modo Discreto"
     },
     "pauseAfterAdTooltip": {
         "message": "Si un anuncio silenciado termina de reproducir, y la pestaña no está enfocada actualmente, el vídeo será pausado silenciosamente en segundo plano hasta que el usuario regrese a él"
