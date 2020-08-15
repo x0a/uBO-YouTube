@@ -1,0 +1,384 @@
+{
+    "okBtn": {
+        "message": "OK",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Cancelar",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Opções",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "Opções para este anunciante"
+    },
+    "adOptionsTooltip": {
+        "message": "Gerenciar anúncios de \"$title$\"",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "Restaurar as configurações padrões"
+    },
+    "import": {
+        "message": "Importar configurações de um arquivo"
+    },
+    "export": {
+        "message": "Exportar configurações para um arquivo"
+    },
+    "resetConfirm": {
+        "message": "This will erase all whitelisted items, ad options and preferences. If you don't want to lose your settings, cancel and click \"Download\" first."
+    },
+    "whitelistTabTitle": {
+        "message": "Lista Branca",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "Ativar anúncios para este canal"
+    },
+    "whitelistedTooltip": {
+        "message": "Anúncios ativados para este canal"
+    },
+    "adsTabTitle": {
+        "message": "Anúncios",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "Anúncios",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "Outros",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "Canal",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Anunciante",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Vídeo",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "Status",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "Acão",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "Adicionar",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "Adicionado",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "Remover"
+    },
+    "bulkRemoveBtn": {
+        "message": "Remover selecionados"
+    },
+    "adsStillBlocked": {
+        "message": "Ads may still be blocked, make sure you've added the following rule to your uBlock Origin whitelist"
+    },
+    "adsHeaderLong": {
+        "message": "Recently detected advertisers"
+    },
+    "adsHeaderShort": {
+        "message": "Anúncios recentes"
+    },
+    "whitelistHeader": {
+        "message": "Whitelisted Channels"
+    },
+    "excludeHeader": {
+        "message": "Exclude from whitelist"
+    },
+    "removeWhitelistTooltip": {
+        "message": "Remove channel from whitelist"
+    },
+    "removeExcludeTooltip": {
+        "message": "Re-allow channel to be whitelisted if subscribed"
+    },
+    "removeFailed": {
+        "message": "Could not remove requested items: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "Are you sure you want to allow \"$channelName$\" to be automatically whitelisted (if subscribed)?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "Are you sure you want to remove \"$channelName$\" from whitelist?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "Are you sure you want to remove $count$ items from whitelist?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "Are you sure you want to allow $count$ items to be automatically whitelisted (if subscribed)?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "Blacklisted Advertisers"
+    },
+    "removeBlacklistTooltip": {
+        "message": "Remove channel from blacklist"
+    },
+    "removeBlacklistConfirm": {
+        "message": "Are you sure you want to remove \"$channelName$\" from blacklist?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "Are you sure you want to remove $count$ items from blacklist?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "Unmuted Advertisers"
+    },
+    "muteBtn": {
+        "message": "Mute advertiser"
+    },
+    "removeUnmuteConfirm": {
+        "message": "Are you sure you want to resume muting for \"$channelName$\"?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "Are you sure you want to resume muting for $count$ items?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "Muted Advertisers"
+    },
+    "removeMuteBtn": {
+        "message": "Unmute advertiser"
+    },
+    "removeMuteTooltip": {
+        "message": "Remove advertiser from mutelist"
+    },
+    "removeMuteConfirm": {
+        "message": "Are you sure you want to remove \"$channelName$\" from mutelist?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "Are you sure you want to remove $count$ items from mutelist?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "Reset"
+    },
+    "resetTooltip": {
+        "message": "Erase all settings"
+    },
+    "emptyList": {
+        "message": "None"
+    },
+    "importBtn": {
+        "message": "Select file..."
+    },
+    "exportBtn": {
+        "message": "Download"
+    },
+    "exportAltBtn": {
+        "message": "Export"
+    },
+    "channelSearchHeader": {
+        "message": "Find channels"
+    },
+    "adOptionsHeader": {
+        "message": "Ad Options"
+    },
+    "muteOption": {
+        "message": "Mute ads by default"
+    },
+    "overlaysOption": {
+        "message": "Hide ad overlays"
+    },
+    "autoWhiteOption": {
+        "message": "Whitelist subscribed channels by default"
+    },
+    "autoSkipOption": {
+        "message": "Automatically skip ads"
+    },
+    "adErrorsOption": {
+        "message": "Skip ad playback errors"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "Skips to video if ad fails to play, rather than showing the 'An error occurred' with TV static"
+    },
+    "verifyWlOption": {
+        "message": "Verify whitelist status"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "Confirm that ads aren't blocked on whitelisted channels by simulating loading an ad"
+    },
+    "adBlocked": {
+        "message": "Blocked",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "Allowed",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "Automatically mute all ads from this advertiser"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "Block all ads from this advertiser"
+    },
+    "blacklistBtn": {
+        "message": "Block advertiser"
+    },
+    "autoSkipTooltip": {
+        "message": "Skipping in $number seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "Force skip"
+    },
+    "skipTooltip": {
+        "message": "Attempt to skip this ad"
+    },
+    "pauseAfterAdOption": {
+        "message": "Anti-Startle Mode"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "If a muted ad finishes playing, and the tab is not currently in focus, video is quietly paused in the background until user returns to it"
+    },
+    "permissionDesc": {
+        "message": "A one-time permission is needed to search for YouTube channels"
+    },
+    "permissionBtn": {
+        "message": "Grant permission"
+    },
+    "searchDesc": {
+        "message": "Type to search for a youtube channel or",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "Channel name..",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "Searching..."
+    },
+    "searchFailed": {
+        "message": "Could not load results. Offline?"
+    },
+    "importSubsBtn": {
+        "message": "Import from Subscriptions"
+    },
+    "importSubsFailed": {
+        "message": "Could not fetch subscriptions. Make sure you're logged in to YouTube."
+    },
+    "importSubsConfirm": {
+        "message": "Found $total$ subscriptions, of which $new$ are not in the list. Add $new$ items to whitelist?",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "Could not set settings, encountered error: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "File needs to be of type \"$expected$\", detected \"$encountered$\" instead",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "Failed to parse as JSON. File is likely not JSON or corrupted."
+    },
+    "noNew": {
+        "message": "No new items to add"
+    },
+    "confirmImport": {
+        "message": "Add $whitelisted$ items to whitelist, $blacklisted$ items to blacklist, and $muted$ items to mutelist?",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    }
+}
