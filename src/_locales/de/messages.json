@@ -80,6 +80,10 @@
         "message": "Hinzufügen",
         "description": "Button shown next to channel name, for adding to whitelist"
     },
+    "addedBtn": {
+        "message": "Hinzugefügt",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
     "removeBtn": {
         "message": "Entfernen"
     },
@@ -98,13 +102,27 @@
     "whitelistHeader": {
         "message": "Zugelassene Kanäle"
     },
+    "excludeHeader": {
+        "message": "Von der Whitelist ausschließen"
+    },
     "removeWhitelistTooltip": {
         "message": "Kanal von der Whitelist entfernen"
+    },
+    "removeExcludeTooltip": {
+        "message": "Zulassen, dass der Kanal - wenn abonniert - automatisch auf die Whitelist gesetzt wird"
     },
     "removeFailed": {
         "message": "Konnte die angeforderten Einträge nicht entfernen: $error$",
         "placeholders": {
             "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "Bist du sicher, dass du es \"$channelName$\" erlauben willst, automatisch auf die Whitelist gesetzt zu werden (wenn abonniert)?",
+        "placeholders": {
+            "channelName": {
                 "content": "$1"
             }
         }
@@ -119,6 +137,14 @@
     },
     "bulkRemoveWhitelistConfirm": {
         "message": "Bist du sicher, $count$ Elemente aus der Whitelist zu löschen?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "Bist du sicher, dass du es $count$ Kanälen erlauben willst, automatisch auf die Whitelist gesetzt zu werden (wenn abonniert)?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -210,7 +236,7 @@
         "message": "Herunterladen"
     },
     "exportAltBtn": {
-        "message": "Export"
+        "message": "Exportieren"
     },
     "channelSearchHeader": {
         "message": "Kanäle finden"
@@ -224,11 +250,23 @@
     "overlaysOption": {
         "message": "Overlay ausblenden"
     },
+    "autoWhiteOption": {
+        "message": "Abonnierte Kanäle automatisch auf die Whitelist setzen"
+    },
+    "autoSkipOption": {
+        "message": "Werbung automatisch überspringen"
+    },
     "adErrorsOption": {
         "message": "Fehler bei der Werbungswiedergabe überspringen"
     },
     "adErrorsOptionTooltip": {
         "message": "Springt zurück zum Video, falls die Werbung nicht abgespielt werden kann, anstatt die Meldung \"Ein Fehler ist aufgetreten\" mit Bildrauschen anzuzeigen"
+    },
+    "verifyWlOption": {
+        "message": "Wirkung der Whitelist überprüfen"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "Durch simuliertes Laden einer Werbung sicherstellen, dass Werbungen bei Kanälen, die sich auf der Whitelist befinden, nicht blockiert sind"
     },
     "adBlocked": {
         "message": "Blockiert",
@@ -246,6 +284,14 @@
     },
     "blacklistBtn": {
         "message": "Werbetreibenden sperren"
+    },
+    "autoSkipTooltip": {
+        "message": "Überspringt in $number Sekunden",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
     },
     "skipBtn": {
         "message": "Überspringen erzwingen"
