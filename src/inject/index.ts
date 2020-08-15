@@ -4,6 +4,8 @@ import hookEvents from "./events";
 import icons from './icons';
 import AdOptions from './ad-options';
 import { i18n, seti18n } from './i18n';
+import { hookAdblock } from './adblock';
+
 import {
     Channel, Settings as _Settings,
     Action, MutationElement,
@@ -444,7 +446,10 @@ class SingleChannelPage {
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
         const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
-
+        if (!whitelisted && this.adPlaying && !this.awaitingSkip) {
+            console.log('Ad playing that should not be playing, forcing skip');
+            this.attemptSkip();
+        }
         pages.updateURL(whitelisted, verify);
 
         whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
@@ -603,7 +608,7 @@ class SingleChannelPage {
             })
     }
     shouldPause() {
-        return this.adOptions.muted && settings.pauseAfterAd && document.hidden;
+        return this.adOptions.muted && settings.pauseAfterAd && document.hidden && !this.awaitingSkip;
     }
     updateAdButton() {
         if (!this.adConfirmed && this.adPlaying && this.currentAd && this.verifyAd()) {
@@ -1147,8 +1152,10 @@ class Page {
         } else if (url.indexOf('youtube.com/channel/') !== -1 || url.indexOf('youtube.com/user/') !== -1) {
             return PageType.Channel;
         } else if (url.indexOf('youtube.com/results?') !== -1) {
+            toggleAdblock(true);
             return PageType.Search;
         } else {
+            toggleAdblock(true);
             return PageType.Any;
         }
     }
@@ -1163,6 +1170,7 @@ class Page {
         } else if (mode === PageType.Search) {
             this.search.updatePage(forceUpdate);
         } else if (mode === PageType.Any) {
+            this.updateURL(false, false);
             this.updateAllVideos(forceUpdate)
         }
     }
@@ -1213,7 +1221,7 @@ class Page {
         }
     }
     updateAllVideos(forceUpdate?: boolean, channelId?: Channel) {
-        const query = 'ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer';
+        const query = 'ytd-rich-grid-video-renderer,ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer';
         const videos = document.querySelectorAll(query) as NodeListOf<VideoPoly>;
 
         return this.updateVideos(videos, forceUpdate, channelId);
@@ -1278,13 +1286,14 @@ class Page {
             // ads are enabled, should we correct that?
             if (!whitelisted) {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, false));
+                toggleAdblock(true);
                 return false;
             } else return true;
         } else {
             // ads are not enabled, lets see if they should be
             if (whitelisted) {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, true));
-
+                toggleAdblock(false);
                 if (verify && settings.verifyWl) this.confirmDisabled();
                 return true;
             } else return false;
@@ -1458,6 +1467,8 @@ const init = (design: Layout) => {
 const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
 (window as any).gev = getEventListeners; // delete me
 
+const [toggleAdblock, unhookAdblock] = hookAdblock(true);
+
 filterEventListeners("visibilitychange", (target, { fn }) => pages
     ? pages.eventExemptions.indexOf(fn) !== -1
     : false);
@@ -1466,6 +1477,7 @@ agent = new MessageAgent('uBOWL-message', true);
 agent
     .on('destroy', () => {
         unhookEvents();
+        unhookAdblock();
         agent.destroy();
     })
     .send('get-settings')
