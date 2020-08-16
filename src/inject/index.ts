@@ -446,10 +446,7 @@ class SingleChannelPage {
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
         const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
-        if (!whitelisted && this.adPlaying && !this.awaitingSkip) {
-            console.log('Ad playing that should not be playing, forcing skip');
-            this.attemptSkip();
-        }
+
         pages.updateURL(whitelisted, verify);
 
         whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
@@ -617,6 +614,11 @@ class SingleChannelPage {
             this.adOptions.blacklistOption = true;
             this.adOptions.advertiserName = this.currentAd.channelId.display;
             this.adOptions.show();
+
+            if (!settings.asWl(this.channelId) && !this.awaitingSkip) {
+                console.log('Ad playing that should not be playing, forcing skip');
+                this.attemptSkip();
+            }
         }
 
         if (this.adConfirmed) {
@@ -643,6 +645,7 @@ class SingleChannelPage {
 
         this.awaitingSkip = true;
         this.muteTab(mute);
+        console.log(this.getPlaybackLimit(this.currentPlayer));
         this.currentPlayer.currentTime = this.getPlaybackLimit(this.currentPlayer) - 1;
         this.currentPlayer.playbackRate = 5;
     }
@@ -652,7 +655,7 @@ class SingleChannelPage {
         //     return ranges.end(ranges.length - 1) || video.duration;
         // }
 
-        return video.duration;
+        return !isNaN(video.duration) ? video.duration : 3600;
     }
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
@@ -1049,6 +1052,7 @@ class Channels {
         }
     }
     has(channel: Channel | string) {
+        if (!channel) return false;
         const needle = typeof channel === 'string' ? channel : channel.id;
         return this.list.findIndex(({ id }) => id === needle) !== -1;
     }
