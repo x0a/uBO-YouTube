@@ -79,7 +79,7 @@ const hookElWatch = (): [(nextState: boolean) => void, () => void] => {
 }
 const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => any] => {
     const unhookXhr = hookXhr();
-    const unhookFetch = hookFetch();
+    // const unhookFetch = hookFetch();
     const [onChange, unhookEl] = hookElWatch();
     const toggleAdblock = (nextBlock: boolean) => {
         if (block !== nextBlock) {
@@ -90,7 +90,7 @@ const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => any] =
     toggleAdblock(initBlock);
     return [toggleAdblock, () => {
         unhookXhr();
-        unhookFetch();
+        // unhookFetch();
         unhookEl();
     }]
 }
