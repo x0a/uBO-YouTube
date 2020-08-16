@@ -22,6 +22,19 @@ For convenience, I've created this filter list which can be imported to **Opera'
 
 <br />
 
+### Issues
+If you notice that ads are still being blocked on whitelisted channels, try adding the following rules to your `My filters` (note this is different from `Whitelist`) and refresh the page
+
+```
+!#if env_firefox
+@@youtube.com##+js(json-prune, [].playerResponse.adPlacements [].playerResponse.playerAds playerResponse.adPlacements playerResponse.playerAds adPlacements playerAds)
+!#endif
+!#if !env_firefox
+@@youtube.com##+js(json-prune, playerResponse.adPlacements playerResponse.playerAds adPlacements playerAds)
+!#endif
+```
+
+See the following issue for more information: https://github.com/x0a/uBO-YouTube/issues/15
 # Contributing
 
 ## Translations
