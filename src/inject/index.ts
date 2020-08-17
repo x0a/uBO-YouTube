@@ -455,6 +455,11 @@ class SingleChannelPage {
             // toast("Channel added to whitelist");
         }
 
+        if (this.channelId && !settings.asWl(this.channelId) && this.adPlaying) {
+            console.log('Ad playing that should not be playing, attempting skip');
+            this.attemptSkip();
+        }
+
         if (!this.whitelistButton.exists()) {
             this.insertButton(this.whitelistButton);
             // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
@@ -474,15 +479,19 @@ class SingleChannelPage {
     }
     set currentPlayer(nextPlayer: HTMLVideoElement) {
         if (nextPlayer && this._currentPlayer !== nextPlayer) {
-            nextPlayer.addEventListener('timeupdate', () => {
-                if (this.adPlaying
-                    && settings.autoSkip
+            const fn = () => {
+                if (isNaN(nextPlayer.duration)) return;
+
+                const shouldAutoSkip = settings.autoSkip
                     && nextPlayer.currentTime > settings.autoSkipSeconds
-                    && nextPlayer.duration > settings.autoSkipSeconds) {
+                    && nextPlayer.duration > settings.autoSkipSeconds
+
+                if (this.adPlaying && shouldAutoSkip) {
                     console.log('Automatically skipping per settings');
                     this.attemptSkip();
                 }
-            })
+            }
+            nextPlayer.addEventListener('timeupdate', fn)
             this._currentPlayer = nextPlayer;
 
         }
@@ -508,12 +517,11 @@ class SingleChannelPage {
                 this.adOptions.skipOption = true;
                 this.adOptions.show();
 
-                if (this.channelId && !settings.whitelisted.has(this.channelId)) {
-                    console.log('Ad playing that should not be playing, attempting skip');
-                    this.attemptSkip();
-                }
                 if (settings.autoSkip) {
                     this.adOptions.overrideTooltip(i18n('autoSkipTooltip', 30));
+                }
+                if (this.channelId && !settings.asWl(this.channelId)) {
+                    this.attemptSkip();
                 }
                 this.onVideoPlayable(this.currentPlayer)
                     .then(() => this.updateAdButton());
@@ -614,11 +622,6 @@ class SingleChannelPage {
             this.adOptions.blacklistOption = true;
             this.adOptions.advertiserName = this.currentAd.channelId.display;
             this.adOptions.show();
-
-            if (!settings.asWl(this.channelId) && !this.awaitingSkip) {
-                console.log('Ad playing that should not be playing, forcing skip');
-                this.attemptSkip();
-            }
         }
 
         if (this.adConfirmed) {
@@ -645,8 +648,13 @@ class SingleChannelPage {
 
         this.awaitingSkip = true;
         this.muteTab(mute);
-        console.log(this.getPlaybackLimit(this.currentPlayer));
-        this.currentPlayer.currentTime = this.getPlaybackLimit(this.currentPlayer) - 1;
+        const limit = this.getPlaybackLimit(this.currentPlayer)
+        if (isNaN(limit)) {
+            this.onVideoPlayable(this.currentPlayer)
+                .then(() => this.currentPlayer.currentTime = this.getPlaybackLimit(this.currentPlayer) - 1)
+        } else {
+            this.currentPlayer.currentTime = limit - 1;
+        }
         this.currentPlayer.playbackRate = 5;
     }
     getPlaybackLimit(video: HTMLVideoElement): number {
@@ -655,7 +663,7 @@ class SingleChannelPage {
         //     return ranges.end(ranges.length - 1) || video.duration;
         // }
 
-        return !isNaN(video.duration) ? video.duration : 3600;
+        return video.duration;
     }
     skipButtonUpdate(skipButton: HTMLElement) {
         this.skipButton = skipButton as HTMLButtonElement;
@@ -1441,6 +1449,20 @@ class LoadHastener {
 
 }
 
+const hookLinks = (onURL: (url: string) => any) => {
+    const listener = (e: MouseEvent) => {
+        const link = e.composedPath().find((node: Element) => node.tagName === 'A') as HTMLAnchorElement;
+
+        if (link) {
+            onURL(link.href);
+        }
+    }
+    document.addEventListener('click', listener)
+    return () => {
+        document.removeEventListener('click', listener);
+    }
+}
+
 const init = (design: Layout) => {
     pages = new Page(design || Page.getDesign());
     watcher = new MutationWatcher();
@@ -1471,7 +1493,8 @@ const init = (design: Layout) => {
 const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
 (window as any).gev = getEventListeners; // delete me
 
-const [toggleAdblock, unhookAdblock] = hookAdblock(true);
+const [toggleAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1);
+const unhookLinks = hookLinks(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
 
 filterEventListeners("visibilitychange", (target, { fn }) => pages
     ? pages.eventExemptions.indexOf(fn) !== -1
@@ -1482,6 +1505,7 @@ agent
     .on('destroy', () => {
         unhookEvents();
         unhookAdblock();
+        unhookLinks();
         agent.destroy();
     })
     .send('get-settings')

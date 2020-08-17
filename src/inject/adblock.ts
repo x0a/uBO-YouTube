@@ -2,24 +2,29 @@ let block = false;
 const filters = [
     'generate_204',
     'doubleclick.net',
-    '/pagead'
-]
+    '/pagead',
+    /get_video_info.+=adunit/g
+];
+
 const hookXhr = () => {
     const origOpen = XMLHttpRequest.prototype.open;
     const origSend = XMLHttpRequest.prototype.send;
-    const reqMap = new WeakMap();
+
     XMLHttpRequest.prototype.open = function () {
-        const [method, url, async] = arguments;
-        reqMap.set(this, { method, url, async });
-        return origOpen.apply(this, arguments);
+        const [method, url, async, user, password] = arguments;
+        const shouldBlock = block && filters.some(filter => url.indexOf(filter) !== -1)
+
+        if (shouldBlock) {
+            console.log('Will block', url);
+        }
+
+        return origOpen.apply(this, [method,
+            shouldBlock ? 'ubo-block://ubo-block' : url, // force throw error on send
+            async === undefined ? true : async,
+            user,
+            password]);
     }
     XMLHttpRequest.prototype.send = function () {
-        const { url } = reqMap.get(this)
-        if (filters.some(filter => url.indexOf(filter) !== -1)) {
-            console.log('blocked', url);
-
-            return;
-        }
         return origSend.apply(this, arguments);
     }
     return () => {
@@ -66,8 +71,7 @@ const hookElWatch = (): [(nextState: boolean) => void, () => void] => {
         if (nextState) {
             document.querySelectorAll('#masthead-ad,ytd-action-companion-ad-renderer,ytd-promoted-sparkles-text-search-renderer,ytd-player-legacy-desktop-watch-ads-renderer,ytd-promoted-sparkles-web-renderer')
                 .forEach(el => {
-                    fix(el as HTMLElement)
-                    console.log(el);
+                    fix(el as HTMLElement);
                 })
         }
     }
@@ -83,6 +87,7 @@ const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => any] =
     const [onChange, unhookEl] = hookElWatch();
     const toggleAdblock = (nextBlock: boolean) => {
         if (block !== nextBlock) {
+            console.log('adblocking is now', nextBlock);
             onChange(nextBlock);
         }
         block = nextBlock;
