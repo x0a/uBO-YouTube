@@ -57,6 +57,7 @@ const hookElWatch = (): [(nextState: boolean) => void, () => void] => {
     const fix = (el: HTMLElement) => {
         el.style.setProperty('display', 'none', '!important');
         el.classList.add('force-hide');
+        el.remove(); // also just get rid of it
     }
     const watch = new MutationObserver(muts => block && muts.forEach(mut => {
         if (mut.type === 'childList') {
@@ -81,7 +82,7 @@ const hookElWatch = (): [(nextState: boolean) => void, () => void] => {
     })
     return [onChange, () => watch.disconnect()];
 }
-const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => any] => {
+const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => boolean, () => any] => {
     const unhookXhr = hookXhr();
     // const unhookFetch = hookFetch();
     const [onChange, unhookEl] = hookElWatch();
@@ -93,7 +94,7 @@ const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => any] =
         block = nextBlock;
     }
     toggleAdblock(initBlock);
-    return [toggleAdblock, () => {
+    return [toggleAdblock, () => block, () => {
         unhookXhr();
         // unhookFetch();
         unhookEl();

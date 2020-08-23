@@ -445,6 +445,7 @@ class SingleChannelPage {
         if (!this.dataNode && !this.setDataNode()) return // console.error('Container not available');
         this.channelId = this.getChannelId(this.dataNode);
         if (!this.channelId) throw 'Channel ID not available';
+
         const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
 
         pages.updateURL(whitelisted, verify);
@@ -455,7 +456,7 @@ class SingleChannelPage {
             // toast("Channel added to whitelist");
         }
 
-        if (this.channelId && !settings.asWl(this.channelId) && this.adPlaying) {
+        if (!settings.asWl(this.channelId) && this.adPlaying) {
             console.log('Ad playing that should not be playing, attempting skip');
             this.attemptSkip();
         }
@@ -520,7 +521,9 @@ class SingleChannelPage {
                 if (settings.autoSkip) {
                     this.adOptions.overrideTooltip(i18n('autoSkipTooltip', 30));
                 }
-                if (this.channelId && !settings.asWl(this.channelId)) {
+
+                if (checkAdblock() && this.channelId && !settings.asWl(this.channelId)) {
+                    this.adPlaying = true;
                     this.attemptSkip();
                 }
                 this.onVideoPlayable(this.currentPlayer)
@@ -650,8 +653,13 @@ class SingleChannelPage {
         this.muteTab(mute);
         const limit = this.getPlaybackLimit(this.currentPlayer)
         if (isNaN(limit)) {
-            this.onVideoPlayable(this.currentPlayer)
-                .then(() => this.currentPlayer.currentTime = this.getPlaybackLimit(this.currentPlayer) - 1)
+            const adPlayer = this.currentPlayer;
+
+            this.onVideoPlayable(adPlayer, false)
+                .then(() => {
+                    adPlayer.currentTime = this.getPlaybackLimit(adPlayer) - 1
+                })
+                .catch(() => console.error('Src no longer matches'));
         } else {
             this.currentPlayer.currentTime = limit - 1;
         }
@@ -682,12 +690,15 @@ class SingleChannelPage {
         // and not some third party
     }
 
-    onVideoPlayable(video: HTMLVideoElement) {
+    onVideoPlayable(video: HTMLVideoElement, resolveAnySrc = true) {
         if (!!(video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 2)) // is already playable
             return Promise.resolve();
+        const lastSrc = video.src;
+
         return new Promise((resolve, reject) => {
             const listener = () => {
                 video.removeEventListener('playing', listener);
+                if (!resolveAnySrc && video.src !== lastSrc) return reject();
                 resolve();
             }
             video.addEventListener('playing', listener)
@@ -813,6 +824,8 @@ class VideoPagePoly extends SingleChannelPage {
 
         if (!container) return null;
 
+        // const secondaryInfo = oGet(this.dataNode, 'data.response.contents.twoColumnWatchNextResults.results.results.contents[1].videoSecondaryInfoRenderer');
+        // console.log('secondaryinfo', secondaryInfo)
         channelId.username = Channels.fromURL(oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
         channelId.id = oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
         channelId.display = oGet(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
@@ -1493,7 +1506,7 @@ const init = (design: Layout) => {
 const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
 (window as any).gev = getEventListeners; // delete me
 
-const [toggleAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1);
+const [toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1);
 const unhookLinks = hookLinks(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
 
 filterEventListeners("visibilitychange", (target, { fn }) => pages
