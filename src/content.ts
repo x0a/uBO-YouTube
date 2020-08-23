@@ -280,7 +280,10 @@ if (location.pathname === "/ubo-yt") {
     browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
 } else if (!finishedLoading && location.href.indexOf('&disableadblock=1') === -1) {
     // first load should contain flag to prevent new uBO rules from removing important metadata
-    location.href = reflectURLFlag(location.href, true);
+    window.history.replaceState(null, null, reflectURLFlag(location.href, true));
+    window.location.reload();
+
+    //location.href = reflectURLFlag(location.href, true);
 }
 
 
