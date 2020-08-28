@@ -1026,8 +1026,8 @@ class SearchPageBasic {
     }
 }
 class Channels {
-    type: string;
-    list: Array<Channel>;
+    private type: string;
+    private list: Array<Channel>;
 
     constructor(list: Array<Channel>, type: string) {
         this.list = list;
