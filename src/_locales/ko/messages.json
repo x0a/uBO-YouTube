@@ -1,0 +1,384 @@
+{
+    "okBtn": {
+        "message": "확인",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "취소",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "설정",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "해당 광고주 옵션"
+    },
+    "adOptionsTooltip": {
+        "message": "$title$에서 광고 관리",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "기본값으로 설정 초기화"
+    },
+    "import": {
+        "message": "파일에서 설정 가져오기"
+    },
+    "export": {
+        "message": "파일로 설정 내보내기"
+    },
+    "resetConfirm": {
+        "message": "모든 화이트리스트, 광고 설정, 환경 설정을 삭제합니다. 설정을 잃고 싶지 않다면, 먼저 다운로드하십시오."
+    },
+    "whitelistTabTitle": {
+        "message": "화이트리스트",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "이 채널에서 광고 허용"
+    },
+    "whitelistedTooltip": {
+        "message": "이 채널에서 광고가 허용되었습니다"
+    },
+    "adsTabTitle": {
+        "message": "광고",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "광고",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "기타",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "채널",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "광고주",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "동영상",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "상태",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "작업",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "추가",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "추가됨",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "삭제"
+    },
+    "bulkRemoveBtn": {
+        "message": "선택 항목 제거"
+    },
+    "adsStillBlocked": {
+        "message": "광고가 아직도 차단되었을 수도 있습니다. 해당 규칙을 uBlock Origin 화이트리스트에 추가했는지 확인하십시오."
+    },
+    "adsHeaderLong": {
+        "message": "최근 감지된 광고주"
+    },
+    "adsHeaderShort": {
+        "message": "최근 광고"
+    },
+    "whitelistHeader": {
+        "message": "화이트리스트 채널"
+    },
+    "excludeHeader": {
+        "message": "화이트리스트에서 제외"
+    },
+    "removeWhitelistTooltip": {
+        "message": "채널을 화이트리스트에서 삭제"
+    },
+    "removeExcludeTooltip": {
+        "message": "구독한 채널이 화이트리스트에 추가할 수 있게 다시 허용"
+    },
+    "removeFailed": {
+        "message": "해당 항목을 삭제하는데 실패하였습니다: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "정말로 $channelName$이(가) 자동으로 화이트리스트에 추가되도록 설정하시겠습니까? (구독시에만 적용)",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "정말로 $channelName$을(를) 화이트리스트에서 삭제하시겠습니까?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "정말로 $count$개의 항목을 화이트리스트에서 삭제하시겠습니까?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "정말로 $count$개의 항목을 자동으로 화이트리스트에 추가되도록 설정하시겠습니까? (구독시에만 적용)",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "블랙리스트 광고주"
+    },
+    "removeBlacklistTooltip": {
+        "message": "채널을 블랙리스트에서 삭제"
+    },
+    "removeBlacklistConfirm": {
+        "message": "정말로 $channelName$을(를) 블랙리스트에서 삭제하시겠습니까?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "정말로 $count$개의 항목을 블랙리스트에서 삭제하시겠습니까?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "차단 해제된 광고주"
+    },
+    "muteBtn": {
+        "message": "차단된 광고주"
+    },
+    "removeUnmuteConfirm": {
+        "message": "정말로 $channelName$을(를) 다시 차단하시겠습니까?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "정말로 $count$개의 항목을 다시 차단하시겠습니까?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "차단된 광고주"
+    },
+    "removeMuteBtn": {
+        "message": "광고주 차단 해제"
+    },
+    "removeMuteTooltip": {
+        "message": "광고주를 차단 목록에서 삭제"
+    },
+    "removeMuteConfirm": {
+        "message": "정말로 $channelName$을(를) 차단 목록에서 삭제하시겠습니까?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "정말로 $count$개의 항목을 차단 목록에서 삭제하시겠습니까?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "초기화"
+    },
+    "resetTooltip": {
+        "message": "모든 설정 지우기"
+    },
+    "emptyList": {
+        "message": "사용 안 함"
+    },
+    "importBtn": {
+        "message": "파일 선택..."
+    },
+    "exportBtn": {
+        "message": "다운로드"
+    },
+    "exportAltBtn": {
+        "message": "내보내기"
+    },
+    "channelSearchHeader": {
+        "message": "채널 찾기"
+    },
+    "adOptionsHeader": {
+        "message": "광고 설정"
+    },
+    "muteOption": {
+        "message": "기본값으로 광고 차단"
+    },
+    "overlaysOption": {
+        "message": "광고 오버레이 숨기기"
+    },
+    "autoWhiteOption": {
+        "message": "기본값으로 구독된 채널을 화이트리스트에 추가"
+    },
+    "autoSkipOption": {
+        "message": "자동으로 광고 건너뛰기"
+    },
+    "adErrorsOption": {
+        "message": "광고 재생 오류 건너뛰기"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "광고를 재생할 수 없으면, TV 노이즈 효과와 오류를 보지 않고 동영상으로 건너뛰기."
+    },
+    "verifyWlOption": {
+        "message": "화이트리스트 상태를 확인"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "한번 광고를 열어서 광고가 화이트리스트 채널에서 차단되지 않았나 확인하십시오."
+    },
+    "adBlocked": {
+        "message": "차단됨",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "허가됨",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "자동으로 이 광고주의 모든 광고를 차단"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "이 광고주의 모든 광고를 차단"
+    },
+    "blacklistBtn": {
+        "message": "광고주 차단"
+    },
+    "autoSkipTooltip": {
+        "message": "$number초후 건너뛰기",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "강제 건너뛰기"
+    },
+    "skipTooltip": {
+        "message": "광고를 건너뛰려고 시도 중"
+    },
+    "pauseAfterAdOption": {
+        "message": "광고 뒤 자동 재생 방지 모드"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "음소거된 광고가 끝난 후에 사용자가 이 창을 사용 중이 아닐 경우 적용됩니다. 갑작스러운 소리 재생을 방지하기 위해 사용자가 돌아올 때까지 동영상을 중지합니다."
+    },
+    "permissionDesc": {
+        "message": "YouTube 채널을 검색하기 위해 딱 한 번의 권한 부여가 팔요합니다."
+    },
+    "permissionBtn": {
+        "message": "권한 부여"
+    },
+    "searchDesc": {
+        "message": "입력하여 YouTube 채널을 검색...",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "채널명...",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "검색 중..."
+    },
+    "searchFailed": {
+        "message": "결과를 가져올 수 없음. 오프라인인가요?"
+    },
+    "importSubsBtn": {
+        "message": "구독자한테 가져오기"
+    },
+    "importSubsFailed": {
+        "message": "구독자를 가져올 수 없음. YouTube에 로그인되었는지 확인하세요."
+    },
+    "importSubsConfirm": {
+        "message": "총 $total$명의 구독자를 찾았고 그중 $new$명이 목록에 없습니다. $new$개의 항목을 화이트리스트에 추가하시겠습니까?",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "설정을 저장하는데 실패하였습니다. 오류 감지: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "$expected$가 아닌 $encountered$ 파일 확장자로 된 파일이 감지되었습니다.",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "JSON으로 분석할 수 없습니다. JSON 파일이 아니거나 손상되었을 확률이 높습니다."
+    },
+    "noNew": {
+        "message": "새로운 항목이 발견되지 않았습니다"
+    },
+    "confirmImport": {
+        "message": "$whitelisted$ 항목을 화이트리스트에, $blacklisted$ 항목을 블랙리스트에, 그리고 $muted$ 항목을 차단 목록에 추가하시겠습니까?",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    }
+}
