@@ -1,0 +1,384 @@
+{
+    "okBtn": {
+        "message": "Tamam",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Vazgeç",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Seçenekler",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "Bu reklamveren için seçenekler"
+    },
+    "adOptionsTooltip": {
+        "message": "\"$title$\" kaynaklı reklamları yönet",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "Varsayılan ayarlara dön"
+    },
+    "import": {
+        "message": "Ayarları içeri aktar"
+    },
+    "export": {
+        "message": "Ayarları dışarı aktar"
+    },
+    "resetConfirm": {
+        "message": "Reklamlarla ilgili tüm izinler, seçenekler ve tercihler sıfırlanacak. Eğer ayarlarınızı yitirmek istemiyorsanız vazgeçin ve önce \"İndir\"e tıklayın."
+    },
+    "whitelistTabTitle": {
+        "message": "İzin Listesi",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "Bu kanaldaki reklamlara izin ver"
+    },
+    "whitelistedTooltip": {
+        "message": "Bu kanaldaki reklamlara izin verildi"
+    },
+    "adsTabTitle": {
+        "message": "Reklamlar",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "Reklamlar",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "Çeşitli",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "Kanal",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Reklamveren",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Video",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "Durum",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "Eylem",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "Ekle",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "Eklendi",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "Kaldır"
+    },
+    "bulkRemoveBtn": {
+        "message": "Seçilenleri kaldır"
+    },
+    "adsStillBlocked": {
+        "message": "Reklamlar hâlâ engelli olabilir, aşağıdaki kuralı uBlock Origin listenize eklemelisiniz"
+    },
+    "adsHeaderLong": {
+        "message": "Yakın zamanda algılanan reklamverenler"
+    },
+    "adsHeaderShort": {
+        "message": "Son zamanlardaki reklamlar"
+    },
+    "whitelistHeader": {
+        "message": "İzin Verilen Kanallar"
+    },
+    "excludeHeader": {
+        "message": "İzin listesinin dışında tut"
+    },
+    "removeWhitelistTooltip": {
+        "message": "Kanalı izin listesinden çıkar"
+    },
+    "removeExcludeTooltip": {
+        "message": "Abone olunursa kanal izin listesine yeniden girebilsin"
+    },
+    "removeFailed": {
+        "message": "İstenen ögeler kaldırılamadı. $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "\"$channelName$\" kanalına abone olunursa bu kanal izin listesine otomatikman eklensin mi?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "\"$channelName$\" kanalını izin listesinden çıkarmak istiyor musunuz?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "$count$ ögeyi izin listesinden kaldırmak istediğinize emin misiniz?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "$count$ ögeye abone olunduğunda izin listesine otomatikman eklensin mi?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "Engellenen Reklamverenler"
+    },
+    "removeBlacklistTooltip": {
+        "message": "Kanalı engel listesinden kaldır"
+    },
+    "removeBlacklistConfirm": {
+        "message": "\"$channelName$\" kanalını engel listesinden çıkarmak istiyor musunuz?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "$count$ ögeyi engel listesinden kaldırmak istediğinize emin misiniz?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "Susturulmayan Reklamverenler"
+    },
+    "muteBtn": {
+        "message": "Reklamvereni sustur"
+    },
+    "removeUnmuteConfirm": {
+        "message": "\"$channelName$\" kanalı için susturmayı sürdürmek istiyor musunuz?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "\"$count$\" öge için susturmayı sürdürmek istiyor musunuz?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "Susturulan Reklamverenler"
+    },
+    "removeMuteBtn": {
+        "message": "Reklamverenin susturulmasını kaldır"
+    },
+    "removeMuteTooltip": {
+        "message": "Reklamvereni susturma listesinden kaldır"
+    },
+    "removeMuteConfirm": {
+        "message": "\"$channelName$\" kanalını susturma listesinden çıkarmak istiyor musunuz?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "$count$ ögeyi susturma listesinden kaldırmak istediğinize emin misiniz?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "Sıfırla"
+    },
+    "resetTooltip": {
+        "message": "Tüm ayarları sil"
+    },
+    "emptyList": {
+        "message": "Hiçbiri"
+    },
+    "importBtn": {
+        "message": "Dosya seç..."
+    },
+    "exportBtn": {
+        "message": "İndir"
+    },
+    "exportAltBtn": {
+        "message": "Dışa aktar"
+    },
+    "channelSearchHeader": {
+        "message": "Kanal bul"
+    },
+    "adOptionsHeader": {
+        "message": "Reklam Seçenekleri"
+    },
+    "muteOption": {
+        "message": "Reklamları varsayılan şekilde sustur"
+    },
+    "overlaysOption": {
+        "message": "Reklam katmanlarını gizle"
+    },
+    "autoWhiteOption": {
+        "message": "Abone olunan kanalları izin listesine otomatikman ekle"
+    },
+    "autoSkipOption": {
+        "message": "Reklamları otomatikman atla"
+    },
+    "adErrorsOption": {
+        "message": "Reklam oynatma hatalarını atla"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "Reklam oynatılamazsa \"Bir hata oluştu\" mesajı yayımlanmaz, bunun yerine videoya geçilir"
+    },
+    "verifyWlOption": {
+        "message": "İzin listesi durumunu doğrula"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "İzin listesindeki kanallarda reklamların engellenmediğini simülasyonla doğrula"
+    },
+    "adBlocked": {
+        "message": "Engellendi",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "İzin verildi",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "Bu reklamverenin tüm reklamlarını otomatikman sustur"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "Bu reklamverenin tüm reklamlarını engelle"
+    },
+    "blacklistBtn": {
+        "message": "Reklamvereni engelle"
+    },
+    "autoSkipTooltip": {
+        "message": "$number saniye sonra atlanacak",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "Atlamaya zorla"
+    },
+    "skipTooltip": {
+        "message": "Bu reklamı atlamayı dene"
+    },
+    "pauseAfterAdOption": {
+        "message": "Reklam Bitince Video Beklesin"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "Başka bir sekmedeki susturulmuş reklam bittikten sonra video duraklatılır, kullanıcı o sekmeye dönünce video oynatılır"
+    },
+    "permissionDesc": {
+        "message": "YouTube kanallarını aramak için tek seferlik bir izin gerekir"
+    },
+    "permissionBtn": {
+        "message": "İzni ver"
+    },
+    "searchDesc": {
+        "message": "YouTube kanalını aramak için yazın veya",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "Kanal adı",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "Aranıyor"
+    },
+    "searchFailed": {
+        "message": "Sonuçlar yüklenemedi. İnternet'e bağlı mısınız?"
+    },
+    "importSubsBtn": {
+        "message": "Aboneliklerden içeri aktar"
+    },
+    "importSubsFailed": {
+        "message": "Abonelikler yüklenemedi. YouTube'de oturum açtınız mı?"
+    },
+    "importSubsConfirm": {
+        "message": "Toplam $total$ abonelik bulundu, bunlardan $new$ kanal listede yok. $new$ kanal, izin listesine eklensin mi?",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "Ayarlar uygulanırken hata oluştu: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "Dosyanın türü \"$expected$ olmalı, ancak seçilen dosya \"$encountered$\"",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "JSON ayrıştırması yapılamadı. Dosya ya JSON değil veya bozulmuş."
+    },
+    "noNew": {
+        "message": "Eklenebilecek yeni öge yok"
+    },
+    "confirmImport": {
+        "message": "$whitelisted$ öge izin listesine, $blacklisted$ öge engel listesine ve $muted$ öge susturma listesine eklensin mi?",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    }
+}
