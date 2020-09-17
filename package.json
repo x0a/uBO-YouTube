@@ -1,7 +1,7 @@
 {
   "name": "youtube-channel-whitelist-ublock",
   "description": "[Chrome Web Store](https://chrome.google.com/webstore/detail/youtube-channel-whitelist/pbgojokkgbikdofpgphemhldcbaejfog?)\r ### Firefox\r [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtube-channel-whitelist/)",
-  "version": "0.10.16",
+  "version": "0.11.0",
   "main": "gulpfile.js",
   "directories": {
     "lib": "lib"
