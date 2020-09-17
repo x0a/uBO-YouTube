@@ -16,9 +16,9 @@ type locals = "okBtn" | "cancelBtn" | "optionsBtn" | "adOptionsDefaultTooltip"
     | "autoSkipOption" | "adErrorsOption" | "adErrorsOptionTooltip" | "verifyWlOption"
     | "verifyWlOptionTooltip" | "adBlocked" | "adAllowed" | "muteAdvertiserTooltip"
     | "blacklistAdvertiserTooltip" | "blacklistBtn" | "autoSkipTooltip" | "skipBtn"
-    | "skipTooltip" | "pauseAfterAdOption" | "pauseAfterAdTooltip" | "permissionDesc"
-    | "permissionBtn" | "searchDesc" | "searchPlaceholder" | "searching"
-    | "searchFailed" | "importSubsBtn" | "importSubsFailed" | "importSubsConfirm"
-    | "updateFailed" | "wrongFormat" | "parseFailed" | "noNew"
-    | "confirmImport";
+    | "skipTooltip" | "pauseAfterAdOption" | "pauseAfterAdTooltip" | "keyboardSkipOption"
+    | "permissionDesc" | "permissionBtn" | "searchDesc" | "searchPlaceholder"
+    | "searching" | "searchFailed" | "importSubsBtn" | "importSubsFailed"
+    | "importSubsConfirm" | "updateFailed" | "wrongFormat" | "parseFailed"
+    | "noNew" | "confirmImport";
 export default locals

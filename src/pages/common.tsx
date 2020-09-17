@@ -64,6 +64,7 @@ const defaultSettings = (): Settings => ({
     skipOverlays: true,
     skipAdErrors: true,
     pauseAfterAd: false,
+    keyboardSkip: true,
     autoWhite: false,
     autoSkip: false,
     autoSkipSeconds: 30,
@@ -106,6 +107,7 @@ const canonicalizeSettings = (prospect: Settings, defaults = defaultSettings()):
         autoWhite: prospect.autoWhite === undefined ? defaults.autoWhite : prospect.autoWhite,
         autoSkip: prospect.autoSkip === undefined ? defaults.autoSkip : prospect.autoSkip,
         autoSkipSeconds: prospect.autoSkipSeconds === undefined ? defaults.autoSkipSeconds : prospect.autoSkipSeconds,
+        keyboardSkip: prospect.keyboardSkip === undefined ? defaults.keyboardSkip : prospect.keyboardSkip,
         verifyWl: prospect.verifyWl === undefined ? defaults.verifyWl : prospect.verifyWl
     }
 }
@@ -126,6 +128,7 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         autoWhite: next.autoWhite,
         autoSkip: next.autoSkip,
         autoSkipSeconds: next.autoSkipSeconds,
+        keyboardSkip: next.keyboardSkip,
         verifyWl: next.verifyWl
     }
 }
@@ -142,6 +145,7 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         autoWhite: next.autoWhite,
         autoSkip: next.autoSkip,
         autoSkipSeconds: next.autoSkipSeconds,
+        keyboardSkip: next.keyboardSkip,
         verifyWl: next.verifyWl
     }
 }

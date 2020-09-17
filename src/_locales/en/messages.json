@@ -305,6 +305,9 @@
     "pauseAfterAdTooltip": {
         "message": "If a muted ad finishes playing, and the tab is not currently in focus, video is quietly paused in the background until user returns to it"
     },
+    "keyboardSkipOption": {
+        "message": "Right arrow key to force skip ads"
+    },
     "permissionDesc": {
         "message": "A one-time permission is needed to search for YouTube channels"
     },

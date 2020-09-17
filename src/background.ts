@@ -25,6 +25,7 @@ class SettingsManager {
     autoWhite: boolean;
     autoSkip: boolean;
     autoSkipSeconds: AutoSkipSeconds;
+    keyboardSkip: boolean;
     verifyWl: boolean;
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
@@ -37,6 +38,7 @@ class SettingsManager {
         this.skipAdErrors = settings.skipAdErrors;
         this.pauseAfterAd = settings.pauseAfterAd;
         this.autoWhite = settings.autoWhite;
+        this.keyboardSkip = settings.keyboardSkip;
         this.verifyWl = settings.verifyWl;
     }
 
@@ -54,6 +56,7 @@ class SettingsManager {
         settings.skipOverlays = settings.skipOverlays === undefined ? true : !!settings.skipOverlays;
         settings.skipAdErrors = settings.skipAdErrors === undefined ? true : !!settings.skipAdErrors;
         settings.autoSkip = !!settings.autoSkip
+        settings.keyboardSkip = settings.keyboardSkip === undefined ? true : !!settings.keyboardSkip;
         settings.autoSkipSeconds = settings.autoSkipSeconds || 30;
         settings.verifyWl = settings.verifyWl === undefined ? true : !!settings.verifyWl;
 
@@ -128,12 +131,15 @@ class SettingsManager {
     togglePauseAfterAd(on: boolean) {
         this.pauseAfterAd = !!on;
     }
-    toggleVerifyWl(on: boolean){
-        this.verifyWl= !!on;
+    toggleVerifyWl(on: boolean) {
+        this.verifyWl = !!on;
     }
-    toggleAutoSkip(on: boolean, seconds: AutoSkipSeconds){
+    toggleAutoSkip(on: boolean, seconds: AutoSkipSeconds) {
         this.autoSkip = !!on;
         this.autoSkipSeconds = seconds === undefined ? 30 : ~~seconds as AutoSkipSeconds;
+    }
+    toggleKeyboardSkip(on: boolean) {
+        this.keyboardSkip = !!on;
     }
     get(): Settings {
         return {
@@ -148,6 +154,7 @@ class SettingsManager {
             autoWhite: this.autoWhite,
             autoSkip: this.autoSkip,
             autoSkipSeconds: this.autoSkipSeconds,
+            keyboardSkip: this.keyboardSkip,
             verifyWl: this.verifyWl
         };
     }
@@ -425,7 +432,8 @@ SettingsManager.getSettings()
             .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
             .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
             .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
-            .on('auto-skip', (_, {autoSkip, autoSkipSeconds}) => settings.toggleAutoSkip(autoSkip, autoSkipSeconds))
+            .on('auto-skip', (_, { autoSkip, autoSkipSeconds }) => settings.toggleAutoSkip(autoSkip, autoSkipSeconds))
+            .on('keyboard-skip', (_, nextKeyboardSkip) => settings.toggleKeyboardSkip(nextKeyboardSkip))
             .on('verify-wl', (_, shouldVerify) => settings.toggleVerifyWl(shouldVerify))
             .onAll(sender => {
                 settings.save();

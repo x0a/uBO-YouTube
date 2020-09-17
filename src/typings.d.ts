@@ -28,6 +28,7 @@ interface Settings<T = ChannelList> {
     autoWhite: boolean;
     autoSkip: boolean;
     autoSkipSeconds: AutoSkipSeconds;
+    keyboardSkip: boolean;
     verifyWl: boolean;
 }
 type ReadonlySettings<T = ChannelList> = Readonly<Settings<T>>;

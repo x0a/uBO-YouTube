@@ -118,8 +118,13 @@ const Main: FunctionComponent<{
                                     />
                                     <SwitchableOption
                                         checked={settings.autoSkip}
-                                        onChange={(checked) => bMessage('set', 'auto-skip', {autoSkip: checked, autoSkipSeconds: settings.autoSkipSeconds})}
+                                        onChange={(checked) => bMessage('set', 'auto-skip', { autoSkip: checked, autoSkipSeconds: settings.autoSkipSeconds })}
                                         text={i18n('autoSkipOption')}
+                                    />
+                                    <SwitchableOption
+                                        checked={settings.keyboardSkip}
+                                        onChange={(checked) => bMessage('set', 'keyboard-skip', checked)}
+                                        text={i18n('keyboardSkipOption')}
                                     />
                                 </ul>
                             </div>}
