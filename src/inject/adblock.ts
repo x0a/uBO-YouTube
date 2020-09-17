@@ -12,7 +12,9 @@ const hookXhr = () => {
 
     XMLHttpRequest.prototype.open = function () {
         const [method, url, async, user, password] = arguments;
-        const shouldBlock = block && filters.some(filter => url.indexOf(filter) !== -1)
+        const shouldBlock = block && filters.some(filter => filter instanceof RegExp
+            ? url.match(filter)
+            : url.indexOf(filter) !== -1)
 
         if (shouldBlock) {
             console.log('Will block', url);

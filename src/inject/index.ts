@@ -11,6 +11,7 @@ import {
     Action, MutationElement,
     InfoLink, VideoPoly, VideoBasic, Ad, AutoSkipSeconds
 } from '../typings';
+import { compressToEncodedURIComponent } from 'lz-string';
 
 const enum Layout {
     Polymer,
@@ -64,6 +65,13 @@ class MutationWatcher {
                     return node as HTMLElement;
                 }
             }
+        }
+    }
+    isFirstPageLoad(mutation: MutationElement): HTMLElement {
+        if (mutation.type === 'childList'
+            && mutation.target.localName === 'body'
+            && (window as any).ytplayer?.config?.args?.author) {
+            return mutation.target as HTMLVideoElement
         }
     }
     isPlayerErrorChange(mutation: MutationElement): null | boolean {
@@ -274,9 +282,9 @@ class MutationWatcher {
             + (el.id.length ? '#' + el.id : '')
     }
     onMutation(mutations: Array<MutationElement>) {
-        const type = pages.getType();
 
         for (const mutation of mutations) {
+            const type = pages.getType();
             // this.findInjection(mutation, 'paper-button.ytd-subscribe-button-renderer yt-formatted-string');
             if (type === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
@@ -289,6 +297,10 @@ class MutationWatcher {
                     pages.video.updatePage();
                 } else if (this.isRelatedUpdate(mutation)) {
                     this.pollUpdate(pages.video.updateVideos);
+                } else if (player = this.isFirstPageLoad(mutation)) {
+                    if (!pages.video.channelId) {
+                        pages.video.updatePage();
+                    }
                 } else if (player = this.isPlayerUpdate(mutation)) {
                     pages.video.updateAdPlaying(player, !!player.classList.contains('ad-showing'));
                     let errorState = this.isPlayerErrorChange(mutation);
@@ -414,8 +426,8 @@ class SingleChannelPage {
     firstRun: boolean;
     adPlaying: boolean;
     adConfirmed: boolean;
-    awaitingSkip: boolean;
     videoError: boolean;
+    awaitingSkip: boolean;
     pauseOrigin: boolean;
     skipButton: HTMLButtonElement;
     _currentPlayer: HTMLVideoElement;
@@ -438,13 +450,16 @@ class SingleChannelPage {
         this.videoError = false;
         this.skipButton = null;
         this.muteTab(false);
+        this.onKeyboard = this.onKeyboard.bind(this);
+        document.addEventListener('keyup', this.onKeyboard);
+
         console.log(this);
     }
 
     updatePage(forceUpdate?: boolean, verify?: boolean) {
         if (!this.dataNode && !this.setDataNode()) return // console.error('Container not available');
         this.channelId = this.getChannelId(this.dataNode);
-        if (!this.channelId) throw 'Channel ID not available';
+        if (!this.channelId) return console.error('Channel ID not available');
 
         const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
 
@@ -456,12 +471,12 @@ class SingleChannelPage {
             // toast("Channel added to whitelist");
         }
 
-        if (!settings.asWl(this.channelId) && this.adPlaying) {
-            console.log('Ad playing that should not be playing, attempting skip');
+        if (!settings.asWl(this.channelId) && this.adPlaying && !this.awaitingSkip) {
+            console.error('Ad playing that should not be playing, attempting skip');
             this.attemptSkip();
         }
 
-        if (!this.whitelistButton.exists()) {
+        if (!this.whitelistButton.exists() && this.buttonParent) {
             this.insertButton(this.whitelistButton);
             // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
             if (this.firstRun) {
@@ -480,19 +495,26 @@ class SingleChannelPage {
     }
     set currentPlayer(nextPlayer: HTMLVideoElement) {
         if (nextPlayer && this._currentPlayer !== nextPlayer) {
+            let src = nextPlayer.getAttribute('src');
             const fn = () => {
+                if (!src) src = nextPlayer.getAttribute('src');
                 if (isNaN(nextPlayer.duration)) return;
+                if (nextPlayer.getAttribute('src') !== src) return;
 
                 const shouldAutoSkip = settings.autoSkip
                     && nextPlayer.currentTime > settings.autoSkipSeconds
                     && nextPlayer.duration > settings.autoSkipSeconds
 
-                if (this.adPlaying && shouldAutoSkip) {
+                if (this.awaitingSkip) {
+                    console.log('Re-attempting skip')
+                    this.forceAhead(nextPlayer);
+                } else if (this.adPlaying && shouldAutoSkip) {
                     console.log('Automatically skipping per settings');
                     this.attemptSkip();
                 }
             }
             nextPlayer.addEventListener('timeupdate', fn)
+            nextPlayer.addEventListener('durationchange', fn)
             this._currentPlayer = nextPlayer;
 
         }
@@ -567,6 +589,13 @@ class SingleChannelPage {
 
         if (this.adPlaying) {
             this.updateAdButton();
+        }
+    }
+    onKeyboard(event: KeyboardEvent) {
+        if (!settings.keyboardSkip) return;
+
+        if (event.key === 'ArrowRight' && this.adPlaying && !this.awaitingSkip) {
+            this.attemptSkip();
         }
     }
     onVideoError(error: boolean) {
@@ -651,20 +680,28 @@ class SingleChannelPage {
 
         this.awaitingSkip = true;
         this.muteTab(mute);
-        const limit = this.getPlaybackLimit(this.currentPlayer)
-        if (isNaN(limit)) {
-            const adPlayer = this.currentPlayer;
+        this.forceAhead(this.currentPlayer)
+        this.currentPlayer.playbackRate = 5;
+    }
 
-            this.onVideoPlayable(adPlayer, false)
+    forceAhead(player: HTMLVideoElement) {
+        const limit = this.getPlaybackLimit(player)
+
+        if (isNaN(limit)) {
+            console.log(player.currentTime)
+            this.onVideoPlayable(player, false)
                 .then(() => {
-                    adPlayer.currentTime = this.getPlaybackLimit(adPlayer) - 1
+                    player.currentTime = this.getPlaybackLimit(player) - 1
                 })
                 .catch(() => console.error('Src no longer matches'));
         } else {
-            this.currentPlayer.currentTime = limit - 1;
+            const target = limit - 1;
+
+            if (player.currentTime < target)
+                player.currentTime = target;
         }
-        this.currentPlayer.playbackRate = 5;
     }
+
     getPlaybackLimit(video: HTMLVideoElement): number {
         // const ranges = video.buffered;
         // if(ranges.length){
@@ -701,7 +738,7 @@ class SingleChannelPage {
                 if (!resolveAnySrc && video.src !== lastSrc) return reject();
                 resolve();
             }
-            video.addEventListener('playing', listener)
+            video.addEventListener('playing', listener);
             setTimeout(() => {
                 reject();
                 listener();
@@ -766,6 +803,7 @@ class SingleChannelPage {
 }
 
 class VideoPagePoly extends SingleChannelPage {
+    secondaryDataNode: HTMLElement;
     constructor() {
         super(WhitelistButtonPoly);
         this.toggleWhitelist = this.toggleWhitelist.bind(this);
@@ -774,7 +812,8 @@ class VideoPagePoly extends SingleChannelPage {
     }
 
     setDataNode(container: HTMLElement) {
-        return this.dataNode = container || this.dataNode || document.querySelector('ytd-video-secondary-info-renderer');
+        this.secondaryDataNode = document.querySelector('ytd-video-secondary-info-renderer');
+        return this.dataNode = container || this.dataNode || document.querySelector('ytd-app');
     }
 
     setParentNode(parent?: HTMLElement) {
@@ -816,19 +855,23 @@ class VideoPagePoly extends SingleChannelPage {
         }
     }
     isSubscribed() {
-        return oGet(this.dataNode, 'data.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+        if (!this.secondaryDataNode) return false;
+        return oGet(this.secondaryDataNode, 'data.subscribeButton.subscribeButtonRenderer.subscribed') || false;
     }
     getChannelId(container: HTMLElement) {
         let channelId = Channels.empty();
         container = this.setDataNode(container);
 
         if (!container) return null;
+        const prevId = this.channelId ? Channels.valid(this.channelId) : null;
 
-        // const secondaryInfo = oGet(this.dataNode, 'data.response.contents.twoColumnWatchNextResults.results.results.contents[1].videoSecondaryInfoRenderer');
-        // console.log('secondaryinfo', secondaryInfo)
-        channelId.username = Channels.fromURL(oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
-        channelId.id = oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
-        channelId.display = oGet(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
+        channelId.id = oGet(container, 'data.playerResponse.videoDetails.channelId') || (!prevId ? (window as any).ytplayer?.config?.args?.ucid : null);
+        channelId.display = oGet(container, 'data.playerResponse.videoDetails.author') || (!prevId ? (window as any).ytplayer?.config?.args?.author : null);
+
+
+        // channelId.username = Channels.fromURL(oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
+        // channelId.id = oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
+        // channelId.display = oGet(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
 
         return Channels.valid(channelId);
     }
@@ -1097,6 +1140,7 @@ class Settings implements _Settings<Channels> {
     skipOverlays: boolean;
     autoSkip: boolean;
     autoSkipSeconds: AutoSkipSeconds;
+    keyboardSkip: boolean;
     verifyWl: boolean;
     constructor(settings: _Settings) {
         Object.assign(this, {
@@ -1362,6 +1406,9 @@ class Page {
         })
     }
     destroy() {
+        document.removeEventListener('keyup', this.video.onKeyboard);
+        document.removeEventListener('keyup', this.channel.onKeyboard);
+
         let nodes = document.querySelectorAll('.UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu');
 
         for (let node of nodes) {
