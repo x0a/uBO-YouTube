@@ -11,7 +11,6 @@ import {
     Action, MutationElement,
     InfoLink, VideoPoly, VideoBasic, Ad, AutoSkipSeconds
 } from '../typings';
-import { compressToEncodedURIComponent } from 'lz-string';
 
 const enum Layout {
     Polymer,
@@ -40,10 +39,12 @@ class MutationWatcher {
 
     watcher: MutationObserver;
     queuedActions: Map<Function, Action>;
+    firstLoad: boolean;
 
     constructor() {
         this.watcher = new MutationObserver(this.onMutation.bind(this));
         this.queuedActions = new Map();
+        this.firstLoad = false;
     }
 
     start() {
@@ -51,7 +52,7 @@ class MutationWatcher {
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ['hidden', 'href', 'style'],
+            attributeFilter: ['hidden', 'href', 'style'], // we keep these to a minimum to avoid overwatching the page
             attributeOldValue: true
         });
     }
@@ -67,11 +68,12 @@ class MutationWatcher {
             }
         }
     }
-    isFirstPageLoad(mutation: MutationElement): HTMLElement {
-        if (mutation.type === 'childList'
+    isFirstPageLoad(mutation: MutationElement): boolean {
+        if (!this.firstLoad && mutation.type === 'childList'
             && mutation.target.localName === 'body'
             && (window as any).ytplayer?.config?.args?.author) {
-            return mutation.target as HTMLVideoElement
+            this.firstLoad = true;
+            return true
         }
     }
     isPlayerErrorChange(mutation: MutationElement): null | boolean {
@@ -297,7 +299,7 @@ class MutationWatcher {
                     pages.video.updatePage();
                 } else if (this.isRelatedUpdate(mutation)) {
                     this.pollUpdate(pages.video.updateVideos);
-                } else if (player = this.isFirstPageLoad(mutation)) {
+                } else if (this.isFirstPageLoad(mutation)) {
                     if (!pages.video.channelId) {
                         pages.video.updatePage();
                     }
@@ -573,11 +575,6 @@ class SingleChannelPage {
 
             this.adPlaying = true;
         } else if (!playing && this.adPlaying) {
-            if (this.shouldPause()) {
-                this.schedulePause()
-            } else {
-                this.muteTab(false);
-            }
             this.adOptions.hide();
             this.adOptions.reset();
             this.adPlaying = false;
@@ -585,6 +582,11 @@ class SingleChannelPage {
             this.awaitingSkip = false;
             this.skipButton = null;
             this.currentAd = null;
+            if (this.shouldPause()) {
+                this.schedulePause()
+            } else {
+                this.muteTab(false);
+            }
         }
 
         if (this.adPlaying) {
@@ -622,13 +624,13 @@ class SingleChannelPage {
         let pageTitle: string;
         let intervalId: number;
         let titleChanges = 0;
-
+        console.log('scheduling pause')
         this.onVideoPlayable(this.currentPlayer)
             .then(() => {
                 this.currentPlayer.pause();
                 this.muteTab(false);
                 this.pauseOrigin = true;
-
+                console.log('paused')
                 pageTitle = document.title;
                 intervalId = setInterval(() => {
                     document.title = ++titleChanges % 2 ? "[❚❚] " + pageTitle : "[❚❚]";
@@ -638,6 +640,7 @@ class SingleChannelPage {
                 return pages.onPageFocus();
             })
             .then(() => {
+                console.log('unpaused')
                 clearInterval(intervalId);
                 document.title = pageTitle;
                 this.currentPlayer.play();
@@ -667,6 +670,10 @@ class SingleChannelPage {
             // All of these conditions are met with muteAll !== inmute
 
             this.muteTab(muteAll !== inMutelist);
+
+            if (settings.blacklisted.has(this.currentAd.channelId)) {
+                this.attemptSkip();
+            }
         } else if (this.adPlaying && this.currentPlayer) {
             this.muteTab(settings.muteAll);
         }
