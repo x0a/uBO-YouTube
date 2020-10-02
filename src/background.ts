@@ -382,7 +382,59 @@ class AdManager {
         else
             return "";
     }
+    getAdDetails(url: string): [Ad, Promise<void>] | undefined {
+        const request = new XMLHttpRequest();
+        let channelTitle: Promise<void>;
 
+        request.open('GET', url, false);  // `false` makes the request synchronous
+        request.send(null);
+
+        if (request.status === 200) {
+            const ad = ads.parseURL('?' + request.responseText).params;
+
+            ad.channelId = {
+                id: ad.ucid || ads.getChannelFromURL(ad.channel_url),
+                display: '',
+                username: ''
+            };
+
+            if (ad.channelId.id) {
+                if (ad.author) {
+                    ad.channelId.display = ad.author;
+                    channelTitle = Promise.resolve();
+                } else { // sometimes channel name is not available with request, and we need to fetch ourselves
+                    const prevChannel = this.findChannelFromPreviousAd(ad.channelId.id);
+                    if (prevChannel && prevChannel.display !== prevChannel.id) {
+                        //found a recent ad where we already got the display title
+                        ad.channelId.display = prevChannel.display
+                        channelTitle = Promise.resolve();
+                    } else {
+                        //asynchrously get the author title, very messy but it's the best way 
+                        //the json method requires sending special headers
+                        ad.channelId.display = ad.channelId.id;
+
+                        channelTitle = ads.fetchChannelTitle(ad.channelId.id)
+                            .then(title => ad.channelId.display = title)
+                            .catch(title => ad.channelId.display = title);
+                    }
+                }
+            }
+            return [ad, channelTitle]
+        } else {
+            return undefined;
+        }
+    }
+    getPrevAdDetails(videoId: string): [Ad, Promise<void>] | undefined {
+        const prevAd = ads.findPrevAdByVideoId(videoId);
+
+        if (prevAd) { // at this point, all we have is the vID, no channel information, unless we've seen this specific vid before
+            const ad = cloneObject(prevAd);
+            ad.timestamp = Date.now() + '';
+            return [ad, Promise.resolve()]
+        }
+
+        return undefined;
+    }
     parseURL(url: string): ParsedURL {
         const params = {} as any;
         const queryStart = url.indexOf('?');
@@ -398,6 +450,43 @@ class AdManager {
             pathname: pathname,
             params: params
         };
+    }
+    processDetails(details: { url: string, tabId: number }, forceBlock: boolean = false): boolean {
+        let url = this.parseURL(details.url);
+        let [done, failed] = this.queue(details);
+        let shouldCancel = false;
+
+        if (url.pathname === '/get_video_info' && url.params.video_id) {
+
+            const adDetails = this.getPrevAdDetails(url.params.video_id) || this.getAdDetails(details.url);
+            if (adDetails) {
+                const [ad, completed] = adDetails;
+
+                if (ad.channelId.id) {
+                    if (settings.blacklist.contains(ad.channelId.id) || forceBlock) {
+                        shouldCancel = true;
+                    }
+                    completed
+                        .then(() => done(ad))
+                        .catch(() => done(ad));
+
+                }
+                
+                if (!ad.timestamp) ad.timestamp = Date.now() + '';
+
+                ad.video_id = url.params.video_id;
+                ad.details = details;
+                ad.blocked = shouldCancel;
+
+                if (!ad.channelId.id) {
+                    failed(ad);
+                }
+            }
+
+        } else {
+            failed('Invalid request: ' + url);
+        }
+        return shouldCancel;
     }
     checkPermissions() {
         const neededPerms = { origins: ['*://*.content.googleapis.com/'] };
@@ -454,6 +543,7 @@ SettingsManager.getSettings()
                     .then(() => browser.tabs.remove(sender.tab.id)))
             .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
             .on('last-ad', sender => ads.getLastAdFromTab(sender.tab.id))
+            .on('log-ad', (sender, url) => ads.processDetails({ url, tabId: sender.tab.id }, true))
             .on('highlight', sender => settings.highlightTab(sender.tab));
 
         listener.onAction('permission')
@@ -463,82 +553,9 @@ SettingsManager.getSettings()
 
         browser.webRequest.onBeforeSendHeaders.addListener(details => {
             if (details.tabId === -1) return; //probably came from an extension, which we don't want to process
+            const cancel = ads.processDetails(details);
 
-            let request = new XMLHttpRequest();
-            let url = ads.parseURL(details.url);
-            let ad: Ad = {};
-            let [done, failed] = ads.queue(details);
-            let shouldCancel = false;
-            let gotChannelTitle;
-
-            if (url.pathname === '/get_video_info' && url.params.video_id) {
-                let prevAd = ads.findPrevAdByVideoId(url.params.video_id);
-
-                if (prevAd) { // at this point, all we have is the vID, no channel information, unless we've seen this specific vid before
-                    if (settings.blacklist.contains(prevAd.channelId.id)) {
-                        shouldCancel = true;
-                    }
-
-                    ad = cloneObject(prevAd);
-                    ad.timestamp = Date.now() + '';
-                    gotChannelTitle = Promise.resolve();
-                } else { //get more information by accessing the url ourselves
-                    request.open('GET', details.url, false);  // `false` makes the request synchronous
-                    request.send(null);
-
-                    if (request.status === 200) {
-                        ad = ads.parseURL('?' + request.responseText).params;
-
-                        ad.channelId = {
-                            id: ad.ucid || ads.getChannelFromURL(ad.channel_url),
-                            display: '',
-                            username: ''
-                        };
-
-                        if (ad.channelId.id) {
-                            if (settings.blacklist.contains(ad.channelId.id)) {
-                                shouldCancel = true;
-                            }
-
-                            if (ad.author) {
-                                ad.channelId.display = ad.author;
-                                gotChannelTitle = Promise.resolve();
-                            } else { // sometimes channel name is not available with request, and we need to fetch ourselves
-                                let prevChannel = ads.findChannelFromPreviousAd(ad.channelId.id);
-                                if (prevChannel && prevChannel.display !== prevChannel.id) {
-                                    //found a recent ad where we already got the display title
-                                    ad.channelId.display = prevChannel.display
-                                    gotChannelTitle = Promise.resolve();
-                                } else {
-                                    //asynchrously get the author title, very messy but it's the best way 
-                                    //the json method requires sending special headers
-                                    ad.channelId.display = ad.channelId.id;
-
-                                    gotChannelTitle = ads.fetchChannelTitle(ad.channelId.id)
-                                        .then(title => ad.channelId.display = title)
-                                        .catch(title => ad.channelId.display = title);
-                                }
-                            }
-                        }
-                    }
-                }
-                ad.video_id = url.params.video_id;
-                ad.details = details;
-                ad.blocked = shouldCancel;
-
-                if (ad.channelId.id) {
-                    gotChannelTitle
-                        .then(() => done(ad))
-                        .catch(() => done(ad));
-                } else {
-                    failed(ad);
-                }
-
-            } else {
-                failed('Invalid request: ' + url);
-            }
-
-            return { cancel: shouldCancel };
+            return { cancel };
 
         }, { urls: ['*://www.youtube.com/get_video_info?*'] }, ['blocking'])
     });
