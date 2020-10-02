@@ -108,9 +108,9 @@ const hookAdblock = (initBlock: boolean, onBlocked: (url: string) => void): [(bl
 const fixPrune = () => {
     const nextWindow = document.createElement('iframe');
     nextWindow.style.display = 'none';
-    document.head.appendChild(nextWindow);
+    document.documentElement.appendChild(nextWindow);
     const nextParse = (nextWindow.contentWindow as any).JSON.parse;
-    document.head.removeChild(nextWindow);
+    document.documentElement.removeChild(nextWindow);
     JSON.parse = nextParse;
 }
 fixPrune();
