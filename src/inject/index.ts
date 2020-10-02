@@ -478,8 +478,7 @@ class SingleChannelPage {
             this.attemptSkip();
         }
 
-        if (!this.whitelistButton.exists() && this.buttonParent) {
-            this.insertButton(this.whitelistButton);
+        if (!this.whitelistButton.exists() && this.insertButton(this.whitelistButton)) {
             // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
             if (this.firstRun) {
                 let player = document.querySelector('#movie_player') as HTMLElement;
@@ -695,7 +694,6 @@ class SingleChannelPage {
         const limit = this.getPlaybackLimit(player)
 
         if (isNaN(limit)) {
-            console.log(player.currentTime)
             this.onVideoPlayable(player, false)
                 .then(() => {
                     player.currentTime = this.getPlaybackLimit(player) - 1
@@ -802,7 +800,7 @@ class SingleChannelPage {
         }
     }
     setDataNode(/* override */node?: HTMLElement) { return node }
-    insertButton(/* override */button: WhitelistButtonInstance) { }
+    insertButton(/* override */button: WhitelistButtonInstance): boolean { return false }
     updateVideos(/* override */whitelisted: boolean, forceUpdate: boolean) { }
     getChannelId(/* override */node: HTMLElement): Channel { return Channels.empty(); }
     isSubscribed(/* override */): boolean { return false };
@@ -826,13 +824,16 @@ class VideoPagePoly extends SingleChannelPage {
     setParentNode(parent?: HTMLElement) {
         return this.buttonParent = parent || this.buttonParent || document.querySelector('ytd-video-owner-renderer');
     }
-    insertButton(button: WhitelistButtonInstance) {
+    insertButton(button: WhitelistButtonInstance): boolean {
         this.setParentNode();
+        if (!this.buttonParent) return false;
+
         if (this.buttonParent.nextSibling) {
             this.buttonParent.parentElement.insertBefore(button.render(), this.buttonParent.nextSibling);
         } else {
             this.buttonParent.appendChild(button.render());
         }
+        return true;
     }
     updateVideos(whitelisted: boolean, forceUpdate: boolean) {
         this.updateInfobar(this.buttonParent, whitelisted);
@@ -909,14 +910,16 @@ class VideoPageBasic extends SingleChannelPage {
             }
         }
     }
-    insertButton(button: WhitelistButtonInstance) {
+    insertButton(button: WhitelistButtonInstance): boolean {
         this.setParentNode();
+        if (!this.buttonParent) return false;
 
         if (this.buttonParent.nextSibling) {
             this.buttonParent.parentNode.insertBefore(button.render(), this.buttonParent.nextSibling);
         } else {
             this.buttonParent.parentNode.appendChild(button.render());
         }
+        return true;
     }
     updateVideos(whitelisted: boolean, forceUpdate: boolean) {
         this.updateInfobar(this.dataNode, whitelisted);
@@ -954,9 +957,11 @@ class ChannelPagePoly extends SingleChannelPage {
     setParentNode(parent?: HTMLElement) {
         return this.buttonParent = parent || this.buttonParent || document.querySelector('#edit-buttons');
     }
-    insertButton(button: WhitelistButtonInstance) {
+    insertButton(button: WhitelistButtonInstance): boolean {
         this.setParentNode();
+        if (!this.buttonParent) return false;
         this.buttonParent.appendChild(button.render());
+        return true;
     }
 
     updateVideos(whitelisted: boolean, forceUpdate: boolean) {
@@ -993,9 +998,12 @@ class ChannelPageBasic extends SingleChannelPage {
     setParentNode(parent?: HTMLElement) {
         return this.buttonParent = parent || this.buttonParent || document.querySelector('.primary-header-actions');
     }
-    insertButton(button: WhitelistButtonBasic) {
+    insertButton(button: WhitelistButtonBasic): boolean {
         this.setParentNode();
+        if (!this.buttonParent) return false;
+
         this.buttonParent.appendChild(button.render());
+        return true;
     }
 
     updateVideos(whitelisted: boolean, forceUpdate: boolean) {
@@ -1560,7 +1568,12 @@ const init = (design: Layout) => {
 const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
 (window as any).gev = getEventListeners; // delete me
 
-const [toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1);
+const [toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1, url => {
+    if (settings) {
+        console.log('logging ad from', url)
+        agent.send('log-ad', url);
+    }
+});
 const unhookLinks = hookLinks(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
 
 filterEventListeners("visibilitychange", (target, { fn }) => pages
