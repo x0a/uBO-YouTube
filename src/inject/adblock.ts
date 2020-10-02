@@ -6,7 +6,7 @@ const filters = [
     /get_video_info.+=adunit/g
 ];
 
-const hookXhr = () => {
+const hookXhr = (onBlocked: (url: string) => void) => {
     const origOpen = XMLHttpRequest.prototype.open;
     const origSend = XMLHttpRequest.prototype.send;
 
@@ -18,6 +18,9 @@ const hookXhr = () => {
 
         if (shouldBlock) {
             console.log('Will block', url);
+            if (url.indexOf('/get_video_info') !== -1) {
+                onBlocked(url);
+            }
         }
 
         return origOpen.apply(this, [method,
@@ -84,8 +87,8 @@ const hookElWatch = (): [(nextState: boolean) => void, () => void] => {
     })
     return [onChange, () => watch.disconnect()];
 }
-const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => boolean, () => any] => {
-    const unhookXhr = hookXhr();
+const hookAdblock = (initBlock: boolean, onBlocked: (url: string) => void): [(block: boolean) => any, () => boolean, () => any] => {
+    const unhookXhr = hookXhr(onBlocked);
     // const unhookFetch = hookFetch();
     const [onChange, unhookEl] = hookElWatch();
     const toggleAdblock = (nextBlock: boolean) => {
@@ -102,6 +105,14 @@ const hookAdblock = (initBlock: boolean): [(block: boolean) => any, () => boolea
         unhookEl();
     }]
 }
-
+const fixPrune = () => {
+    const nextWindow = document.createElement('iframe');
+    nextWindow.style.display = 'none';
+    document.head.appendChild(nextWindow);
+    const nextParse = (nextWindow.contentWindow as any).JSON.parse;
+    document.head.removeChild(nextWindow);
+    JSON.parse = nextParse;
+}
+fixPrune();
 
 export { hookAdblock };
