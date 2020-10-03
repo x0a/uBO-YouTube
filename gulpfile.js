@@ -277,7 +277,7 @@ gulp.task('watch', gulp.series('default', () => {
     });
 
     gulp.watch('src/_locales/**/*.json', gulp.series('locales', 'fullreload'))
-    gulp.watch(['src/*.css', 'src/css/**/*'], gulp.series('css', 'sass', 'partialreload'));
+    gulp.watch(['src/*.css', 'src/css/**/*', 'src/sass/*.scss'], gulp.series('css', 'sass', 'partialreload'));
     gulp.watch('src/pages/*.html', gulp.series('html'))
     gulp.watch('src/pages/*.[tj]sx', gulp.series('ts'));
     gulp.watch('shared/manifest.json', gulp.series('manifest', 'fullreload'));
