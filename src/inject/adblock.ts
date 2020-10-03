@@ -52,6 +52,28 @@ const hookFetch = () => {
     }
 }
 const hookElWatch = (): [(nextState: boolean) => void, () => void] => {
+    const simpleList = [
+        '#masthead-ad',
+        'ytd-action-companion-ad-renderer',
+        'ytd-promoted-sparkles-text-search-renderer',
+        'ytd-player-legacy-desktop-watch-ads-renderer',
+        'ytd-promoted-sparkles-web-renderer',
+    ]
+    const simpleCheck = simpleList.map(filter => {
+        if ([' ', ',', '+', '>'].indexOf(filter) !== -1)
+            return el => el.matches(filter);
+        const selector = filter.slice(0, 1);
+        const name = filter.slice(1);
+        if (selector === '#')
+            return el => el.id === name;
+        if (selector === '.')
+            return el => el.classList.contains(name)
+        return el => el.localName === filter;
+    }) as Array<(el: HTMLElement) => boolean>
+
+    const customCheck = [
+
+    ]
     const check = (el: HTMLElement) => {
         return el.id === 'masthead-ad'
             || el.localName === 'ytd-action-companion-ad-renderer'
@@ -111,7 +133,12 @@ const fixPrune = () => {
     document.documentElement.appendChild(nextWindow);
     const nextParse = (nextWindow.contentWindow as any).JSON.parse;
     document.documentElement.removeChild(nextWindow);
-    JSON.parse = nextParse;
+    try {
+        JSON.parse = nextParse;
+        Object.freeze(JSON);
+    } catch (e) {
+
+    }
 }
 fixPrune();
 
