@@ -237,14 +237,15 @@ gulp.task('prod', cb => {
 })
 
 gulp.task('watch', gulp.series('default', () => {
-    let server = require('http').createServer(() => { })
+    const server = require('http').createServer(() => { })
+    const prevConnections = []
     server.listen(3050, () => { })
     ws = new Server({ httpServer: server });
     console.log('Websockets server listening on port 3050...');
 
     ws.on('request', req => {
-        let con = req.accept(null, req.origin);
-        let ref = { agent: '', nick: '' };
+        const con = req.accept(null, req.origin);
+        const ref = { agent: '', nick: '' };
 
         wsClients.set(con, ref);
 
@@ -253,6 +254,10 @@ gulp.task('watch', gulp.series('default', () => {
 
             if (msg.userAgent) {
                 console.log('Browser connected: ', msg.userAgent);
+                if(prevConnections.indexOf(msg.userAgent) === -1){
+                    prevConnections.push(msg.userAgent);
+                    con.sendUTF('reload');
+                }
                 ref.userAgent = msg.userAgent;
                 ref.nick = (agent => {
                     if (agent.indexOf('Firefox') !== -1)
