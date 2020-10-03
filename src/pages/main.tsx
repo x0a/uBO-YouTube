@@ -8,7 +8,7 @@ import { TabContainer, TabPane } from './tabs';
 import Options from './misc';
 import ChannelSearch from './search';
 import ImportSubscriptions from './subscriptions';
-import SwitchableOption from './switch';
+import { SwitchableOption, DropdownSelection } from './switch';
 import RecentAds from './recentads';
 
 interface AlertProps {
@@ -120,7 +120,18 @@ const Main: FunctionComponent<{
                                         checked={settings.autoSkip}
                                         onChange={(checked) => bMessage('set', 'auto-skip', { autoSkip: checked, autoSkipSeconds: settings.autoSkipSeconds })}
                                         text={i18n('autoSkipOption')}
-                                    />
+                                    >
+                                        {settings.autoSkip && <DropdownSelection
+                                            items={[
+                                                { text: '5s', value: 5 },
+                                                { text: '30s', value: 30 }
+                                            ]}
+                                            onSelect={seconds => {
+                                                bMessage('set', 'auto-skip', { autoSkip: settings.autoSkip, autoSkipSeconds: seconds })
+                                            }}
+                                            selected={settings.autoSkipSeconds}
+                                        />}
+                                    </SwitchableOption>
                                     <SwitchableOption
                                         checked={settings.keyboardSkip}
                                         onChange={(checked) => bMessage('set', 'keyboard-skip', checked)}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 const Switch: FunctionComponent<{
@@ -14,13 +14,38 @@ const Switch: FunctionComponent<{
         <span className='slider round'></span>
     </label>
 }
+const DropdownSelection: FunctionComponent<{
+    items: Array<{
+        text: string,
+        value: number
+    }>,
+    selected: number;
+    onSelect: (selection: number) => void
+}> = ({ items, selected, onSelect }) => {
+    const [show, setShow] = useState(false);
+    return <div className='dropdown'>
+        <button className='btn btn-secondary dropdown-toggle' onClick={() => setShow(!show)}>
+            {items.find(({ value }) => value === selected)?.text}
+        </button>
+        <div className={'dropdown-menu ' + (show ? 'show' : '')}>
+            {items.map(({ text, value }) => <a
+                className='dropdown-item'
+                href='#'
+                key={value}
+                onClick={() => {
+                    setShow(false);
+                    onSelect(value);
+                }}>{text}</a>)}
+        </div>
+    </div>
+}
 const SwitchableOption: FunctionComponent<{
     checked: boolean;
     onChange: (checked: boolean) => any;
     text: string;
     tooltip?: string;
     listItem?: boolean;
-}> = ({ checked, onChange, text, tooltip, listItem = true }) => {
+}> = ({ checked, onChange, text, tooltip, listItem = true, children }) => {
     const item = <div className='list-group-option'>
         <Switch
             checked={checked}
@@ -28,6 +53,7 @@ const SwitchableOption: FunctionComponent<{
         <span className='ml-2 flex-grow-1'>
             {text}
         </span>
+        {children}
         {tooltip && <div className='tooltip-parent'>
             <FontAwesomeIcon icon={faInfoCircle} />
             <div className='tooltip'>
@@ -41,5 +67,5 @@ const SwitchableOption: FunctionComponent<{
         </li>
         : item
 }
-
+export { SwitchableOption, DropdownSelection }
 export default SwitchableOption;
