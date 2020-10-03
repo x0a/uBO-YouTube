@@ -1271,6 +1271,7 @@ class Page {
             if (!forceUpdate && video.data.processed) continue;
 
             let id = oGet(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+                || oGet(video, 'data.content.videoRenderer.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
                 || (channelId && channelId.id);
 
             if (id) {
@@ -1305,7 +1306,7 @@ class Page {
         }
     }
     updateAllVideos(forceUpdate?: boolean, channelId?: Channel) {
-        const query = 'ytd-rich-grid-video-renderer,ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer';
+        const query = 'ytd-rich-grid-video-renderer,ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer,ytd-rich-item-renderer';
         const videos = document.querySelectorAll(query) as NodeListOf<VideoPoly>;
 
         return this.updateVideos(videos, forceUpdate, channelId);
