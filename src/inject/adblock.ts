@@ -128,13 +128,28 @@ const hookAdblock = (initBlock: boolean, onBlocked: (url: string) => void): [(bl
     }]
 }
 const fixPrune = () => {
-    const nextWindow = document.createElement('iframe');
-    nextWindow.style.display = 'none';
-    document.documentElement.appendChild(nextWindow);
-    const nextParse = (nextWindow.contentWindow as any).JSON.parse;
-    document.documentElement.removeChild(nextWindow);
+    const frame = document.createElement('iframe');
+    frame.style.display = 'none';
+    document.documentElement.appendChild(frame);
+
+    const nextWindow = (frame.contentWindow as any)
+    const nextParse = nextWindow.JSON.parse;
+    document.documentElement.removeChild(frame);
     try {
-        JSON.parse = nextParse;
+        JSON.parse = function () {
+            const res = nextParse.apply(this, arguments)
+            // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
+            // therefor they will fail the `instanceof Object` and `instanceof Array` checks that YouTube does
+            // Fix is to recreate the resulting objects in the current execution context
+            
+            if (res instanceof nextWindow.Array) {
+                return [...res]
+            } else if (res instanceof nextWindow.Object) {
+                return { ...res }
+            } else {
+                return res;
+            }
+        }
         Object.freeze(JSON);
     } catch (e) {
 
