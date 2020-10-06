@@ -1373,7 +1373,10 @@ class Page {
                 window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, false));
                 toggleAdblock(true);
                 return false;
-            } else return true;
+            } else {
+                toggleAdblock(false);
+                return true;
+            }
         } else {
             // ads are not enabled, lets see if they should be
             if (whitelisted) {
@@ -1381,7 +1384,10 @@ class Page {
                 toggleAdblock(false);
                 if (verify && settings.verifyWl) this.confirmDisabled();
                 return true;
-            } else return false;
+            } else {
+                toggleAdblock(true);
+                return false;
+            }
         }
     }
 
@@ -1529,8 +1535,8 @@ const hookLinks = (onURL: (url: string) => any) => {
     const listener = (e: MouseEvent) => {
         const link = e.composedPath().find((node: Element) => node.tagName === 'A') as HTMLAnchorElement;
 
-        if (link) {
-            onURL(link.href);
+        if (link && !!link.getAttribute('href')) {
+            onURL(link.getAttribute('href'));
         }
     }
     document.addEventListener('click', listener)
