@@ -37,6 +37,8 @@ class SettingsManager {
         this.skipOverlays = settings.skipOverlays;
         this.skipAdErrors = settings.skipAdErrors;
         this.pauseAfterAd = settings.pauseAfterAd;
+        this.autoSkip = settings.autoSkip
+        this.autoSkipSeconds = settings.autoSkipSeconds
         this.autoWhite = settings.autoWhite;
         this.keyboardSkip = settings.keyboardSkip;
         this.verifyWl = settings.verifyWl;
