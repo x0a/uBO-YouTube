@@ -52,7 +52,7 @@ class MutationWatcher {
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ['hidden', 'href', 'style'], // we keep these to a minimum to avoid overwatching the page
+            attributeFilter: ['hidden', 'href', 'style', 'class'], // we keep these to a minimum to avoid overwatching the page
             attributeOldValue: true
         });
     }
@@ -304,7 +304,7 @@ class MutationWatcher {
                         pages.video.updatePage();
                     }
                 } else if (player = this.isPlayerUpdate(mutation)) {
-                    pages.video.updateAdPlaying(player, !!player.classList.contains('ad-showing'));
+                    pages.video.updateAdPlaying(player, player.classList.contains('ad-showing'));
                     let errorState = this.isPlayerErrorChange(mutation);
                     if (errorState !== null) {
                         pages.video.onVideoError(errorState);
@@ -498,9 +498,9 @@ class SingleChannelPage {
         if (nextPlayer && this._currentPlayer !== nextPlayer) {
             let src = nextPlayer.getAttribute('src');
             const fn = () => {
-                if (!src) src = nextPlayer.getAttribute('src');
+                // if (!src) src = nextPlayer.getAttribute('src');
                 if (isNaN(nextPlayer.duration)) return;
-                if (nextPlayer.getAttribute('src') !== src) return;
+                // if (nextPlayer.getAttribute('src') !== src) return;
 
                 const shouldAutoSkip = settings.autoSkip
                     && nextPlayer.currentTime > settings.autoSkipSeconds
@@ -542,7 +542,7 @@ class SingleChannelPage {
                 this.adOptions.show();
 
                 if (settings.autoSkip) {
-                    this.adOptions.overrideTooltip(i18n('autoSkipTooltip', 30));
+                    // this.adOptions.overrideTooltip(i18n('autoSkipTooltip', settings.autoSkipSeconds));
                 }
 
                 if (checkAdblock() && this.channelId && !settings.asWl(this.channelId)) {
@@ -1270,7 +1270,8 @@ class Page {
         for (let video of videos) {
             if (!forceUpdate && video.data.processed) continue;
 
-            let id = oGet(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+            let id = oGet(video, 'data.channelId')
+                || oGet(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
                 || oGet(video, 'data.content.videoRenderer.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
                 || (channelId && channelId.id);
 
@@ -1531,19 +1532,41 @@ class LoadHastener {
 
 }
 
-const hookLinks = (onURL: (url: string) => any) => {
-    const listener = (e: MouseEvent) => {
-        const link = e.composedPath().find((node: Element) => node.tagName === 'A') as HTMLAnchorElement;
+const hookNav = (onURL: (url: string) => any) => {
+    const hookLinks = (onURL: (url: string) => any) => {
+        const listener = (e: MouseEvent) => {
+            const link = e.composedPath().find((node: Element) => node.tagName === 'A') as HTMLAnchorElement;
 
-        if (link && !!link.getAttribute('href')) {
-            onURL(link.getAttribute('href'));
+            if (link && !!link.getAttribute('href')) {
+                onURL(link.getAttribute('href'));
+            }
+        }
+        document.addEventListener('click', listener)
+        return () => {
+            document.removeEventListener('click', listener);
         }
     }
-    document.addEventListener('click', listener)
+    const hookHistory = (onURL: (url: string) => any) => {
+        const listener = () => {
+            if (location.href) {
+                onURL(location.href);
+            }
+        }
+
+        window.addEventListener('popstate', listener);
+        return () => {
+            window.removeEventListener('popstate', listener);
+        }
+    }
+    const unhookLinks = hookLinks(onURL);
+    const unhookHistory = hookHistory(onURL);
+
     return () => {
-        document.removeEventListener('click', listener);
+        unhookLinks();
+        unhookHistory();
     }
 }
+
 
 const init = (design: Layout) => {
     pages = new Page(design || Page.getDesign());
@@ -1581,7 +1604,7 @@ const [toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.i
         agent.send('log-ad', url);
     }
 });
-const unhookLinks = hookLinks(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
+const unhookLinks = hookNav(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
 
 filterEventListeners("visibilitychange", (target, { fn }) => pages
     ? pages.eventExemptions.indexOf(fn) !== -1

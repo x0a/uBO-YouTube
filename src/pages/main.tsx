@@ -124,6 +124,7 @@ const Main: FunctionComponent<{
                                         {settings.autoSkip && <DropdownSelection
                                             items={[
                                                 { text: '5s', value: 5 },
+                                                { text: '15s', value: 15 },
                                                 { text: '30s', value: 30 }
                                             ]}
                                             onSelect={seconds => {
