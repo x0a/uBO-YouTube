@@ -3,7 +3,8 @@ const filters = [
     'generate_204',
     'doubleclick.net',
     '/pagead',
-    /get_video_info.+=adunit/g
+    /get_video_info.+=adunit/g,
+    'get_midroll_info'
 ];
 
 const hookXhr = (onBlocked: (url: string) => void) => {
@@ -135,25 +136,28 @@ const fixPrune = () => {
     const nextWindow = (frame.contentWindow as any)
     const nextParse = nextWindow.JSON.parse;
     document.documentElement.removeChild(frame);
+
+    const recontextualize = (obj: any) => {
+        if (obj instanceof nextWindow.Array) {
+            return [...obj]
+        } else if (obj instanceof nextWindow.Object) {
+            return { ...obj }
+        } else {
+            return obj;
+        }
+    }
     try {
+
         JSON.parse = function () {
-            const res = nextParse.apply(this, arguments)
             // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
             // therefor they will fail the `instanceof Object` and `instanceof Array` checks that YouTube does
             // Fix is to recreate the resulting objects in the current execution context
-            
-            if (res instanceof nextWindow.Array) {
-                return [...res]
-            } else if (res instanceof nextWindow.Object) {
-                return { ...res }
-            } else {
-                return res;
-            }
+            const res = recontextualize(nextParse.apply(this, arguments))
+            return res;
         }
         Object.freeze(JSON);
-    } catch (e) {
+    } catch (e) { }
 
-    }
 }
 fixPrune();
 
