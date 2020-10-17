@@ -256,6 +256,15 @@
     "autoSkipOption": {
         "message": "Automatically skip ads"
     },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
     "adErrorsOption": {
         "message": "Skip ad playback errors"
     },
@@ -286,7 +295,8 @@
         "message": "Block advertiser"
     },
     "autoSkipTooltip": {
-        "message": "Skipping in $number seconds",
+        "message": "Skipping in $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
                 "content": "$1"
