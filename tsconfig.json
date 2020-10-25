@@ -7,7 +7,6 @@
         "src/browser.ts",
         "src/pages/main.tsx"
     ],
-
     "compilerOptions": {
         "typeRoots": [
             "node_modules/@types",
@@ -16,6 +15,11 @@
         "baseUrl": "./",
         "noImplicitAny": true,
         "target": "es6",
+        "lib": [
+            "ES2019",
+            "DOM",
+            "DOM.Iterable"
+        ],
         "jsx": "react",
         "moduleResolution": "node"
     }
