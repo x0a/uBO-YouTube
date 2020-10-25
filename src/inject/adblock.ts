@@ -18,7 +18,7 @@ const hookXhr = (onBlocked: (url: string) => void) => {
             : url.indexOf(filter) !== -1)
 
         if (shouldBlock) {
-            console.log('Will block', url);
+            console.log('uBO-YT-BlockXHR', url);
             if (url.indexOf('/get_video_info') !== -1) {
                 onBlocked(url);
             }
@@ -122,43 +122,101 @@ const hookAdblock = (initBlock: boolean, onBlocked: (url: string) => void): [(bl
         block = nextBlock;
     }
     toggleAdblock(initBlock);
+    const unhookJSON = hookJSON();
     return [toggleAdblock, () => block, () => {
         unhookXhr();
         // unhookFetch();
         unhookEl();
+        unhookJSON();
     }]
 }
-const fixPrune = () => {
+const hookJSON = () => {
     const frame = document.createElement('iframe');
     frame.style.display = 'none';
     document.documentElement.appendChild(frame);
 
     const nextWindow = (frame.contentWindow as any)
     const nextParse = nextWindow.JSON.parse;
+    const uBOParse = JSON.parse;
     document.documentElement.removeChild(frame);
 
-    const recontextualize = (obj: any) => {
+    const recontextualize = (obj: any, cache: Map<any, any> = new Map()) => {
         if (obj instanceof nextWindow.Array) {
-            return [...obj]
+            if (cache.has(obj)) return cache.get(obj);
+            const nextObj: any = [...obj].map(item => recontextualize(item, cache));
+            cache.set(obj, nextObj);
+            return nextObj;
         } else if (obj instanceof nextWindow.Object) {
-            return { ...obj }
+            if (cache.has(obj)) return cache.get(obj);
+            const nextObj: any = Object.entries({ ...obj })
+                .reduce((newObj: any, [key, value]) => (newObj[key] = recontextualize(value, cache), newObj), {})
+            cache.set(obj, nextObj);
+            return nextObj;
         } else {
             return obj;
         }
+
     }
-    try {
+    const parseProps = (searchProps: string) => searchProps
+        .split('.')
+        .filter(key => key)
+        .map(part => part.split('[]').map(_part => _part || Array))
+        .flat()
+    const pruneJSON = (obj: any, props: Array<string | ArrayConstructor>): any => {
+        let curObj = obj;
+        for (let i = 0; i < props.length; i++) {
+            const prop = props[i];
 
-        JSON.parse = function () {
-            // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
-            // therefor they will fail the `instanceof Object` and `instanceof Array` checks that YouTube does
-            // Fix is to recreate the resulting objects in the current execution context
-            const res = recontextualize(nextParse.apply(this, arguments))
-            return res;
+            if (prop === Array) {
+                if (curObj instanceof Array) {
+                    const nextProps = props.slice(i + 1);
+                    if (!nextProps.length) {
+                        while (curObj.length) curObj.pop();
+                    } else {
+                        for (let j = 0; j < curObj.length; j++) {
+                            if (typeof curObj[j] === 'object') // recurse objects skip everything else
+                                curObj[j] = pruneJSON(curObj[j], props.slice(i + 1))
+                        }
+                    }
+                }
+                return obj; // either way, we expected an array here. any modifications should be done with
+            } else if (typeof prop === 'string') {
+                if (curObj[prop] === undefined) return obj; // we didn't find what we needed
+                if (i === props.length - 1) {
+                    // console.log('uBO-JSON-prune', curObj[prop])
+                    delete obj[prop];
+                    return obj; // we made our modification so we are done
+                }
+                curObj = curObj[prop]; // proceed down the tree
+            }
         }
+        return obj;
+    }
+    const rules = '[].playerResponse.playerAds playerResponse.adPlacements playerResponse.playerAds adPlacements playerAds'
+        .split(' ')
+        .map(rule => parseProps(rule));
+    const parsePrune = function () {
+        // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
+        // therefor they will fail the `instanceof Object` and `instanceof Array` checks that YouTube does
+        // Fix is to recreate the resulting objects in the current execution context
+        const res = recontextualize(nextParse.apply(this, arguments))
+        try {
+            if (block)
+                rules.forEach(rule => pruneJSON(res, rule));
+        } catch (e) {
+            console.error('uBO-YT-Prune', e)
+        }
+        return res;
+    };
+
+    try {
+        JSON.parse = parsePrune
         Object.freeze(JSON);
-    } catch (e) { }
-
+    } catch (e) {
+        console.error('uBO-YT', 'Unable to replace JSON.parse');
+    }
+    return () => {
+        JSON.parse = uBOParse;
+    }
 }
-fixPrune();
-
 export { hookAdblock };
