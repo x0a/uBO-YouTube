@@ -8,7 +8,7 @@
 [**Firefox Addons**](https://addons.mozilla.org/en-US/firefox/addon/youtube-channel-whitelist/)
 
 ## Usage
-For **uBlock Origin**, add the following line to your whitelist:
+For **uBlock Origin**, add the following line to your `Trusted Sites`:
 
     *youtube.com/*&disableadblock=1
 
@@ -57,7 +57,19 @@ Finally build the packages by running in the root directory:
 
 The packages will be created in ```/dist/```, ready for submission as an extension, and the debug folders will be updated.
 
-## Debugging
-To temporarily install the extension on Firefox, you need to first enter the "Debug Addons" page, available through the menu on the Addons page. Then click "Load Temporary Addon", and point to ```/dist/webext/debug``` and click on any file in the directory to load the extension.
+## Development
+To start development on uBO-YouTube, simply install the required global packages, download the source and install it's required local packages, start the websockets server with `gulp watch` and load the extension. It will automatically reload the extension as changes are made.
+### Install globals
 
-To temporarily install the extension on Chrome, you can load ```/dist/chrome/debug``` as an unpacked extension
+    npm install -g gulp typescript
+
+Clone `uBO YouTube`, install the required modules and start the development server.
+```sh 
+git clone https://github.com/x0a/uBO-YouTube
+cd uBO-YouTube
+npm install --only=dev
+gulp watch
+```
+To temporarily install the extension on Firefox, you need to first enter the "Debug Addons" page, available through the menu on the Addons page. Then click "Load Temporary Addon", and point to `uBO-YouTube/dist/webext/debug` and click on any file in the directory to load the extension.
+
+To temporarily install the extension on Chrome, you can load `uBO-YouTube/dist/chrome/debug` as an unpacked extension
