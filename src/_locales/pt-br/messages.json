@@ -32,7 +32,7 @@
         "message": "Exportar configurações para um arquivo"
     },
     "resetConfirm": {
-        "message": "This will erase all whitelisted items, ad options and preferences. If you don't want to lose your settings, cancel and click \"Download\" first."
+        "message": "Isso excluirá todos os itens permitidos, opções de anúncio e preferências. Se você não quer perder essas configuraçÕes, cancele e clique em \"Download\" antes."
     },
     "whitelistTabTitle": {
         "message": "Lista Branca",
@@ -85,34 +85,34 @@
         "description": "Shown next to channel search results that are already in whitelist"
     },
     "removeBtn": {
-        "message": "Remover"
+        "message": "Excluir"
     },
     "bulkRemoveBtn": {
         "message": "Remover selecionados"
     },
     "adsStillBlocked": {
-        "message": "Ads may still be blocked, make sure you've added the following rule to your uBlock Origin whitelist"
+        "message": "Anúncios ainda podem ser bloqueados, certifique-se de que você tenha adicionado as seguintes regras à sua lista de permissões do uBlock Origin"
     },
     "adsHeaderLong": {
-        "message": "Recently detected advertisers"
+        "message": "Anunciantes detectados recentemente"
     },
     "adsHeaderShort": {
         "message": "Anúncios recentes"
     },
     "whitelistHeader": {
-        "message": "Whitelisted Channels"
+        "message": "Canais permitidos"
     },
     "excludeHeader": {
-        "message": "Exclude from whitelist"
+        "message": "Excluir da lista de permissões"
     },
     "removeWhitelistTooltip": {
-        "message": "Remove channel from whitelist"
+        "message": "Remover canal da lista de permissões"
     },
     "removeExcludeTooltip": {
-        "message": "Re-allow channel to be whitelisted if subscribed"
+        "message": "Autorizar que o canal seja permitido caso você se inscreva"
     },
     "removeFailed": {
-        "message": "Could not remove requested items: $error$",
+        "message": "Não foi possível remover itens solicitados: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -120,7 +120,7 @@
         }
     },
     "removeExcludeConfirm": {
-        "message": "Are you sure you want to allow \"$channelName$\" to be automatically whitelisted (if subscribed)?",
+        "message": "Você tem certeza que deseja autorizar que o canal \"$channelName$\" seja permitido automaticamente (caso você se torne um inscrito)?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -128,7 +128,7 @@
         }
     },
     "removeWhitelistConfirm": {
-        "message": "Are you sure you want to remove \"$channelName$\" from whitelist?",
+        "message": "Você tem certeza que deseja remover o canal \"$channelName$\" da lista de permissões?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -136,7 +136,7 @@
         }
     },
     "bulkRemoveWhitelistConfirm": {
-        "message": "Are you sure you want to remove $count$ items from whitelist?",
+        "message": "Você tem certeza que deseja remover $count$ itens da lista de permissões?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -144,7 +144,7 @@
         }
     },
     "bulkRemoveExcludeConfirm": {
-        "message": "Are you sure you want to allow $count$ items to be automatically whitelisted (if subscribed)?",
+        "message": "Você tem certeza que deseja autorizar que $count$ itens sejam permitidos (caso você se torne um inscrito)?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -152,13 +152,13 @@
         }
     },
     "blacklistHeader": {
-        "message": "Blacklisted Advertisers"
+        "message": "Anunciantes não permitidos"
     },
     "removeBlacklistTooltip": {
-        "message": "Remove channel from blacklist"
+        "message": "Remover canal da lista negra"
     },
     "removeBlacklistConfirm": {
-        "message": "Are you sure you want to remove \"$channelName$\" from blacklist?",
+        "message": "Você tem certeza que deseja remover o canal \"$channelName$\" da lista negra?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -166,7 +166,7 @@
         }
     },
     "bulkRemoveBlacklistConfirm": {
-        "message": "Are you sure you want to remove $count$ items from blacklist?",
+        "message": "Você tem certeza que deseja remover $count$ itens da lista negra?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -174,13 +174,13 @@
         }
     },
     "unmutedHeader": {
-        "message": "Unmuted Advertisers"
+        "message": "Anunciantes não silenciados"
     },
     "muteBtn": {
-        "message": "Mute advertiser"
+        "message": "Silenciar anunciante"
     },
     "removeUnmuteConfirm": {
-        "message": "Are you sure you want to resume muting for \"$channelName$\"?",
+        "message": "Você tem certeza que deseja silenciar o canal \"$channelName$\" novamente?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -188,7 +188,7 @@
         }
     },
     "bulkRemoveUnmuteConfirm": {
-        "message": "Are you sure you want to resume muting for $count$ items?",
+        "message": "Você tem certeza que deseja silenciar $count$ itens novamente?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -196,16 +196,16 @@
         }
     },
     "mutelistHeader": {
-        "message": "Muted Advertisers"
+        "message": "Anunciantes silenciados"
     },
     "removeMuteBtn": {
-        "message": "Unmute advertiser"
+        "message": "Reativar anunciante"
     },
     "removeMuteTooltip": {
-        "message": "Remove advertiser from mutelist"
+        "message": "Remover anunciante da lista de silenciados"
     },
     "removeMuteConfirm": {
-        "message": "Are you sure you want to remove \"$channelName$\" from mutelist?",
+        "message": "Você tem certeza que deseja remover o canal \"$channelName$\" da lista de silenciados?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -213,7 +213,7 @@
         }
     },
     "bulkRemoveMuteConfirm": {
-        "message": "Are you sure you want to remove $count$ items from mutelist?",
+        "message": "Você tem certeza que deseja remover $count$ itens da lista de silenciados?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -221,72 +221,82 @@
         }
     },
     "resetBtn": {
-        "message": "Reset"
+        "message": "Restaurar"
     },
     "resetTooltip": {
-        "message": "Erase all settings"
+        "message": "Apagar todas as configurações"
     },
     "emptyList": {
-        "message": "None"
+        "message": "Não há itens"
     },
     "importBtn": {
-        "message": "Select file..."
+        "message": "Selecionar arquivo..."
     },
     "exportBtn": {
-        "message": "Download"
+        "message": "Baixar"
     },
     "exportAltBtn": {
-        "message": "Export"
+        "message": "Exportar"
     },
     "channelSearchHeader": {
-        "message": "Find channels"
+        "message": "Encontrar canais"
     },
     "adOptionsHeader": {
-        "message": "Ad Options"
+        "message": "Opções de anúncio"
     },
     "muteOption": {
-        "message": "Mute ads by default"
+        "message": "Silenciar anúncios por padrão"
     },
     "overlaysOption": {
-        "message": "Hide ad overlays"
+        "message": "Esconder overlays de anúncios"
     },
     "autoWhiteOption": {
-        "message": "Whitelist subscribed channels by default"
+        "message": "Permitir canais que você seja inscrito por padrão"
     },
     "autoSkipOption": {
-        "message": "Automatically skip ads"
+        "message": "Pular anúncios automaticamente"
+    },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
     },
     "adErrorsOption": {
-        "message": "Skip ad playback errors"
+        "message": "Pular erros de reprodução de anúncio"
     },
     "adErrorsOptionTooltip": {
-        "message": "Skips to video if ad fails to play, rather than showing the 'An error occurred' with TV static"
+        "message": "Pula para vídeo se o anúncio falhar em reproduzir, ao invés de mostrar o 'Ocorreu um erro' com estática da TV"
     },
     "verifyWlOption": {
-        "message": "Verify whitelist status"
+        "message": "Verificar status da lista de permitidos"
     },
     "verifyWlOptionTooltip": {
-        "message": "Confirm that ads aren't blocked on whitelisted channels by simulating loading an ad"
+        "message": "Confirmar que os anúncios não sejam bloqueados nos canais da lista de permitidos, simulando o carregamento de um anúncio"
     },
     "adBlocked": {
-        "message": "Blocked",
+        "message": "Bloqueado",
         "description": "Shown next to ads that were blocked"
     },
     "adAllowed": {
-        "message": "Allowed",
+        "message": "Permitido",
         "description": "Shown next to ads that were allowed through"
     },
     "muteAdvertiserTooltip": {
-        "message": "Automatically mute all ads from this advertiser"
+        "message": "Silenciar automaticamente todos os anúncios deste anunciante"
     },
     "blacklistAdvertiserTooltip": {
-        "message": "Block all ads from this advertiser"
+        "message": "Bloquear todos os anúncios deste anunciante"
     },
     "blacklistBtn": {
-        "message": "Block advertiser"
+        "message": "Bloquear anunciante"
     },
     "autoSkipTooltip": {
-        "message": "Skipping in $number seconds",
+        "message": "Pulando em $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
                 "content": "$1"
@@ -294,45 +304,48 @@
         }
     },
     "skipBtn": {
-        "message": "Force skip"
+        "message": "Forçar pulo"
     },
     "skipTooltip": {
-        "message": "Attempt to skip this ad"
+        "message": "Tentativa de pular este anúncio"
     },
     "pauseAfterAdOption": {
-        "message": "Anti-Startle Mode"
+        "message": "Modo anti reprodução automática"
     },
     "pauseAfterAdTooltip": {
-        "message": "If a muted ad finishes playing, and the tab is not currently in focus, video is quietly paused in the background until user returns to it"
+        "message": "Se um anúncio silenciado acabar de ser reproduzido, e a aba não estiver atualmente em foco, o vídeo é silenciosamente pausado até que o usuário retorne a ele"
+    },
+    "keyboardSkipOption": {
+        "message": "A seta para direita do teclado força o pulo de anúncios"
     },
     "permissionDesc": {
-        "message": "A one-time permission is needed to search for YouTube channels"
+        "message": "Uma permissão única é necessária para procurar canais do YouTube"
     },
     "permissionBtn": {
-        "message": "Grant permission"
+        "message": "Conceder permissão"
     },
     "searchDesc": {
-        "message": "Type to search for a youtube channel or",
+        "message": "Digite para pesquisar por um canal do Youtube ou",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
     },
     "searchPlaceholder": {
-        "message": "Channel name..",
+        "message": "Nome do canal",
         "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },
     "searching": {
-        "message": "Searching..."
+        "message": "Buscando..."
     },
     "searchFailed": {
-        "message": "Could not load results. Offline?"
+        "message": "Não foi possível carregar os resultados. Desconectado?"
     },
     "importSubsBtn": {
-        "message": "Import from Subscriptions"
+        "message": "Importar de Assinaturas"
     },
     "importSubsFailed": {
-        "message": "Could not fetch subscriptions. Make sure you're logged in to YouTube."
+        "message": "Não foi possível obter as assinaturas. Certifique-se de que você esteja logado ao YouTube."
     },
     "importSubsConfirm": {
-        "message": "Found $total$ subscriptions, of which $new$ are not in the list. Add $new$ items to whitelist?",
+        "message": "$total$ inscrições encontradas, das quais $new$ não estão na lista. Adicionar $new$ itens à lista de canais permitidos?",
         "placeholders": {
             "total": {
                 "content": "$1"
@@ -343,7 +356,7 @@
         }
     },
     "updateFailed": {
-        "message": "Could not set settings, encountered error: $error$",
+        "message": "Não foi possível definir as configurações: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -351,7 +364,7 @@
         }
     },
     "wrongFormat": {
-        "message": "File needs to be of type \"$expected$\", detected \"$encountered$\" instead",
+        "message": "O arquivo precisa ser do tipo \"$expected$\", em vez de \"$encountered$\"",
         "placeholders": {
             "expected": {
                 "content": "application/json"
@@ -362,13 +375,13 @@
         }
     },
     "parseFailed": {
-        "message": "Failed to parse as JSON. File is likely not JSON or corrupted."
+        "message": "Falha ao analisar como JSON. Arquivo provavelmente não é um JSON ou está corrompido."
     },
     "noNew": {
-        "message": "No new items to add"
+        "message": "Não há itens novos itens para adicionar"
     },
     "confirmImport": {
-        "message": "Add $whitelisted$ items to whitelist, $blacklisted$ items to blacklist, and $muted$ items to mutelist?",
+        "message": "Adicionar $whitelisted$ itens à lista de permitidos, $blacklisted$ itens à lista negra, e $muted$ itens à lista de silenciados?",
         "placeholders": {
             "whitelisted": {
                 "content": "$1"
