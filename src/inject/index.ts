@@ -595,7 +595,14 @@ class SingleChannelPage {
     onKeyboard(event: KeyboardEvent) {
         if (!settings.keyboardSkip) return;
 
-        if (event.key === 'ArrowRight' && this.adPlaying && !this.awaitingSkip) {
+        if (event.key === 'ArrowRight'
+            && this.adPlaying
+            && !this.awaitingSkip
+            && !event.composedPath().find((node: Element) =>
+                node instanceof HTMLElement &&
+                (node.tagName === 'TEXTAREA'
+                    || node.tagName === 'INPUT'
+                    || node.getAttribute('contenteditable')))) {
             this.attemptSkip();
         }
     }
