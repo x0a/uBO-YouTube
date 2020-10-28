@@ -162,7 +162,7 @@ const hookJSON = () => {
         .filter(key => key)
         .map(part => part.split('[]').map(_part => _part || Array))
         .flat()
-    const pruneJSON = (obj: any, props: Array<string | ArrayConstructor>): any => {
+    const pruneJSON = (obj: any, props: Array<string | ArrayConstructor>, cache: Array<any> = []): any => {
         let curObj = obj;
         for (let i = 0; i < props.length; i++) {
             const prop = props[i];
@@ -174,8 +174,10 @@ const hookJSON = () => {
                         while (curObj.length) curObj.pop();
                     } else {
                         for (let j = 0; j < curObj.length; j++) {
-                            if (typeof curObj[j] === 'object') // recurse objects skip everything else
-                                curObj[j] = pruneJSON(curObj[j], props.slice(i + 1))
+                            if (typeof curObj[j] === 'object'){ // recurse objects skip everything else
+                                cache.push(curObj[j]);
+                                curObj[j] = pruneJSON(curObj[j], props.slice(i + 1), cache)
+                            }
                         }
                     }
                 }
@@ -184,7 +186,7 @@ const hookJSON = () => {
                 if (curObj[prop] === undefined) return obj; // we didn't find what we needed
                 if (i === props.length - 1) {
                     // console.log('uBO-JSON-prune', curObj[prop])
-                    delete obj[prop];
+                    delete curObj[prop];
                     return obj; // we made our modification so we are done
                 }
                 curObj = curObj[prop]; // proceed down the tree
