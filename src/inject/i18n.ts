@@ -1,4 +1,5 @@
 import LocaleString from '../_locales/types';
+import { err } from './logging'
 
 interface LocaleMessages {
     [messageName: string]: string
@@ -10,7 +11,7 @@ const seti18n = (_locale: LocaleMessages) => locale = _locale;
 const i18n = (messageName: LocaleString, substitutions?: string | number | Array<string | number>): string => {
     const message = locale[messageName];
     if (!message) {
-        console.error('No i18n message found for', messageName);
+        err('No i18n message found for', messageName);
         return '';
     }
 
