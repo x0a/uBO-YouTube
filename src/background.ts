@@ -102,6 +102,15 @@ class SettingsManager {
                 })
             );
     }
+    suggest(channels: Array<Channel>) {
+        browser.tabs.query({})
+            .then(tabs => tabs
+                .forEach(tab => {
+                    console.log('sending to', tab.id)
+                    browser.tabs.sendMessage(tab.id, { action: 'suggestions', channels })
+                }))
+
+    }
     highlightTab(originTab: browser.tabs.Tab) {
         browser.tabs.query({})
             .then(tabs => {
@@ -473,7 +482,7 @@ class AdManager {
                         .catch(() => done(ad));
 
                 }
-                
+
                 if (!ad.timestamp) ad.timestamp = Date.now() + '';
 
                 ad.video_id = url.params.video_id;
@@ -516,6 +525,10 @@ SettingsManager.getSettings()
                 settings.whitelist.remove(channel instanceof Array ? channel : channel.id))
             .on('remove-black', (_, channel: Channel | Array<string>) =>
                 settings.blacklist.remove(channel instanceof Array ? channel : channel.id))
+            .on('suggest-white', (sender, channels: Array<Channel>) => {
+                settings.suggest(channels);
+                browser.tabs.remove(sender.tab.id);
+            })
             .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
             .on('reset', () => settings = new SettingsManager({} as Settings))
             .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))

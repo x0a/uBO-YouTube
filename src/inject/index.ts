@@ -3,28 +3,30 @@ import MessageAgent from '../agent';
 import hookEvents from "./events";
 import icons from './icons';
 import AdOptions from './ad-options';
+import { log, err } from './logging';
 import { i18n, seti18n } from './i18n';
 import { hookAdblock } from './adblock';
 
 import {
     Channel, Settings as _Settings,
     Action, MutationElement,
-    InfoLink, VideoPoly, VideoBasic, Ad, AutoSkipSeconds
+    InfoLink, VideoPoly, Ad, AutoSkipSeconds
 } from '../typings';
 
 const enum Layout {
     Polymer,
-    Basic
+    Unknown
 }
 const enum PageType {
     Video,
     Channel,
     Search,
+    Subscriptions,
     Any
 }
 
-type WhitelistButtonInstance = WhitelistButtonBasic | WhitelistButtonPoly;
-type WhitelistButtonFactory = typeof WhitelistButtonBasic | typeof WhitelistButtonPoly;
+type WhitelistButtonInstance = WhitelistButtonPoly;
+type WhitelistButtonFactory = typeof WhitelistButtonPoly;
 
 interface ChannelElement extends HTMLDivElement {
     whitelistButton: WhitelistButtonPoly;
@@ -106,20 +108,6 @@ class MutationWatcher {
         }
     }
 
-    isBasicUserInfo(mutation: MutationElement): HTMLElement {
-        if (mutation.target.id === 'watch7-container' && mutation.addedNodes.length) {
-            for (let node of mutation.addedNodes) {
-                if (node.id === 'watch7-main-container') {
-                    return node.querySelector('#watch7-user-header') as HTMLElement;
-                }
-            }
-        } else if (mutation.target.id === 'watch7-user-header') {
-            return mutation.target as HTMLElement;
-        }
-
-        return null;
-    }
-
     isRelatedUpdate(mutation: MutationElement) {
         return (
             mutation.type === 'attributes'
@@ -138,15 +126,6 @@ class MutationWatcher {
                 mutation.type === 'childList'
                 && (mutation.target.id === 'items' || mutation.target.id === 'contents')
             )
-    }
-
-    finishedLoadingBasic(mutation: MutationElement): boolean {
-        for (let node of mutation.removedNodes) {
-            if (node.id === 'progress') {
-                return true; // old layout, progress bar removed
-            }
-        }
-        return false;
     }
 
     isOverlayAd(mutation: MutationElement): HTMLButtonElement {
@@ -184,6 +163,11 @@ class MutationWatcher {
             && mutation.target.parentElement.parentElement.localName === 'ytd-subscribe-button-renderer'
             ? !!mutation.target.parentElement.getAttribute('subscribed')
             : undefined
+    }
+    isChannelGrid(mutation: MutationElement) {
+        return mutation.type === 'childList'
+            && mutation.target.id === 'contents'
+            && Array.from(mutation.addedNodes).some(el => el.localName === 'ytd-item-section-renderer');
     }
     static adSkipButton(container: HTMLElement): HTMLButtonElement {
         return container.style.display !== 'none'
@@ -294,9 +278,6 @@ class MutationWatcher {
                 if (userInfo = this.isPolyUserInfo(mutation)) {
                     pages.video.setParentNode(userInfo)
                     pages.video.updatePage();
-                } else if (userInfo = this.isBasicUserInfo(mutation)) {
-                    pages.video.setDataNode(userInfo)
-                    pages.video.updatePage();
                 } else if (this.isRelatedUpdate(mutation)) {
                     this.pollUpdate(pages.video.updateVideos);
                 } else if (this.isFirstPageLoad(mutation)) {
@@ -317,6 +298,11 @@ class MutationWatcher {
                 } else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
                     pages.video.updatePage();
                 }
+            } else if (type === PageType.Subscriptions) {
+                if (this.isChannelGrid(mutation)) {
+                    console.log('channel grid:', mutation)
+                    pages.subscriptions.loadedChannels();
+                }
             } else {
                 if (type === PageType.Channel) {
                     let player, skipContainer, subscribeChange;
@@ -332,7 +318,7 @@ class MutationWatcher {
                         pages.channel.updatePage();
                     }
                 }
-                if (this.hasNewItems(mutation) || this.finishedLoadingBasic(mutation)) { // new items in videolist
+                if (this.hasNewItems(mutation)) { // new items in videolist
                     if (type === PageType.Channel) {
                         this.pollUpdate(pages.channel.updatePage);
                     } else if (type === PageType.Search) {
@@ -403,20 +389,6 @@ class WhitelistButtonPoly extends WhitelistButton {
     }
 }
 
-class WhitelistButtonBasic extends WhitelistButton {
-    constructor(onClick: EventListener, toggled: boolean) {
-        super(onClick, toggled);
-        this.button.className += ' UBO-old yt-uix-button yt-uix-button-size-default yt-uix-button-subscribed-branded hover-enabled' + (toggled ? ' yt-uix-button-toggled' : '');
-        this.button.innerHTML = i18n('adsEnableBtn');
-    }
-    exists() {
-        return document.body.contains(this.button);
-    }
-    render() {
-        return this.button;
-    }
-}
-
 /** Class for dealing with pages with only one channel and thus only one Whitelisting button needed */
 class SingleChannelPage {
     dataNode: HTMLElement;
@@ -455,13 +427,13 @@ class SingleChannelPage {
         this.onKeyboard = this.onKeyboard.bind(this);
         document.addEventListener('keyup', this.onKeyboard);
 
-        console.log(this);
+        log('uBO-YT-Log', this);
     }
 
     updatePage(forceUpdate?: boolean, verify?: boolean) {
         if (!this.dataNode && !this.setDataNode()) return // console.error('Container not available');
         this.channelId = this.getChannelId(this.dataNode);
-        if (!this.channelId) return console.error('Channel ID not available');
+        if (!this.channelId) return err('Channel ID not available');
 
         const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
 
@@ -474,7 +446,7 @@ class SingleChannelPage {
         }
 
         if (!settings.asWl(this.channelId) && this.adPlaying && !this.awaitingSkip) {
-            console.error('Ad playing that should not be playing, attempting skip');
+            log('Ad playing that should not be playing, attempting skip');
             this.attemptSkip();
         }
 
@@ -507,10 +479,10 @@ class SingleChannelPage {
                     && nextPlayer.duration > settings.autoSkipSeconds
 
                 if (this.awaitingSkip) {
-                    console.log('Re-attempting skip')
+                    log('Re-attempting skip')
                     this.forceAhead(nextPlayer);
                 } else if (this.adPlaying && shouldAutoSkip) {
-                    console.log('Automatically skipping per settings');
+                    log('Automatically skipping per settings');
                     this.attemptSkip();
                 }
             }
@@ -526,7 +498,7 @@ class SingleChannelPage {
     updateAdPlaying(player: HTMLElement, playing: boolean, firstRun = false) {
         if (playing && !this.adPlaying) {
             let container = player.querySelector('.ytp-right-controls');
-            if (!container) return console.error('Can\'t find .ytp-right-controls');
+            if (!container) return err('Can\'t find .ytp-right-controls');
 
             let options = this.adOptions.renderButton();
             let menu = this.adOptions.renderMenu();
@@ -630,13 +602,13 @@ class SingleChannelPage {
         let pageTitle: string;
         let intervalId: number;
         let titleChanges = 0;
-        console.log('scheduling pause')
+
         this.onVideoPlayable(this.currentPlayer)
             .then(() => {
                 this.currentPlayer.pause();
                 this.muteTab(false);
                 this.pauseOrigin = true;
-                console.log('paused')
+
                 pageTitle = document.title;
                 intervalId = setInterval(() => {
                     document.title = ++titleChanges % 2 ? "[❚❚] " + pageTitle : "[❚❚]";
@@ -646,7 +618,6 @@ class SingleChannelPage {
                 return pages.onPageFocus();
             })
             .then(() => {
-                console.log('unpaused')
                 clearInterval(intervalId);
                 document.title = pageTitle;
                 this.currentPlayer.play();
@@ -705,7 +676,7 @@ class SingleChannelPage {
                 .then(() => {
                     player.currentTime = this.getPlaybackLimit(player) - 1
                 })
-                .catch(() => console.error('Src no longer matches'));
+                .catch(() => err('Src no longer matches'));
         } else {
             const target = limit - 1;
 
@@ -768,14 +739,14 @@ class SingleChannelPage {
         if (!this.currentAd.channelId) throw ('Channel ID not available for blacklisting');
         agent.send('set-settings', { param: this.currentAd.channelId, type: 'add-black' })
             .then(() => this.attemptSkip())
-            .catch(error => console.error('Error blacklisting:', error))
+            .catch(error => err('Error blacklisting:', error))
     }
     muteTab(shouldMute: boolean) {
         if (shouldMute) {
             agent.send('mute-tab', true)
                 .then(resp => this.adOptions.muted = true)
                 .catch(error => {
-                    console.error('Error muting:', error);
+                    err('Error muting:', error);
                 });
 
         } else {
@@ -794,7 +765,7 @@ class SingleChannelPage {
 
         action
             .then(() => agent.send('mute-tab', shouldMute))
-            .catch((error: any) => console.error('Error setting settings', error));
+            .catch((error: any) => err('Error setting settings', error));
     }
     toggleWhitelist() {
         this.channelId = this.getChannelId(this.dataNode);
@@ -892,60 +863,6 @@ class VideoPagePoly extends SingleChannelPage {
     }
 }
 
-class VideoPageBasic extends SingleChannelPage {
-    constructor() {
-        super(WhitelistButtonBasic);
-        this.toggleWhitelist = this.toggleWhitelist.bind(this);
-        this.updatePage = this.updatePage.bind(this);
-        this.updateVideos = this.updateVideos.bind(this);
-    }
-    setDataNode(container: HTMLElement) {
-        return this.dataNode = container || this.dataNode || document.querySelector('#watch7-user-header');
-    }
-    setParentNode(parent?: HTMLElement) {
-        if (parent) {
-            return this.buttonParent = parent;
-        } else {
-            if (!this.buttonParent || this.buttonParent && this.dataNode && this.buttonParent.parentElement !== this.dataNode) {
-                if (this.dataNode) {
-                    return this.buttonParent = this.dataNode.querySelector('#watch7-subscription-container')
-                } else {
-                    return this.buttonParent = document.querySelector('#watch7-subscription-container');
-                }
-            } else {
-                return this.buttonParent;
-            }
-        }
-    }
-    insertButton(button: WhitelistButtonInstance): boolean {
-        this.setParentNode();
-        if (!this.buttonParent) return false;
-
-        if (this.buttonParent.nextSibling) {
-            this.buttonParent.parentNode.insertBefore(button.render(), this.buttonParent.nextSibling);
-        } else {
-            this.buttonParent.parentNode.appendChild(button.render());
-        }
-        return true;
-    }
-    updateVideos(whitelisted: boolean, forceUpdate: boolean) {
-        this.updateInfobar(this.dataNode, whitelisted);
-        pages.updateRelatedBasic(forceUpdate);
-    }
-    updateInfobar(container: HTMLElement, whitelisted: boolean, channelId = this.channelId) {
-
-    }
-    getChannelId(container: HTMLElement) {
-        this.setDataNode(container);
-
-        let links = this.dataNode.querySelectorAll('a') as ArrayLike<any>;
-        return Channels.valid(Channels.fromLinks(links as Array<any>));
-    }
-    isSubscribed() {
-        return false;
-    }
-}
-
 class ChannelPagePoly extends SingleChannelPage {
     constructor() {
         super(WhitelistButtonPoly);
@@ -988,49 +905,6 @@ class ChannelPagePoly extends SingleChannelPage {
     }
     isSubscribed() {
         return oGet(this.dataNode, 'data.response.header.c4TabbedHeaderRenderer.subscribeButton.subscribeButtonRenderer.subscribed') || false;
-    }
-}
-
-class ChannelPageBasic extends SingleChannelPage {
-    constructor() {
-        super(WhitelistButtonBasic);
-        this.toggleWhitelist = this.toggleWhitelist.bind(this);
-        this.updatePage = this.updatePage.bind(this);
-        this.updateVideos = this.updateVideos.bind(this);
-    }
-    setDataNode(node?: HTMLElement) {
-        return node;
-    }
-
-    setParentNode(parent?: HTMLElement) {
-        return this.buttonParent = parent || this.buttonParent || document.querySelector('.primary-header-actions');
-    }
-    insertButton(button: WhitelistButtonBasic): boolean {
-        this.setParentNode();
-        if (!this.buttonParent) return false;
-
-        this.buttonParent.appendChild(button.render());
-        return true;
-    }
-
-    updateVideos(whitelisted: boolean, forceUpdate: boolean) {
-        pages.updateAllVideosBasic(whitelisted, forceUpdate);
-    }
-    getChannelId() {
-        let links = [location as any] as Array<any>
-        let link = document.querySelector('link[rel="canonical"]') as any
-
-        if (link) {
-            links.push(link);
-        }
-
-        let channelId = Channels.fromLinks(links);
-        channelId.username = (link && link.getAttribute('username')) || '';
-        channelId.display = document.querySelector('.branded-page-header-title-link').textContent || '';
-        return Channels.valid(channelId)
-    }
-    isSubscribed() {
-        return false;
     }
 }
 
@@ -1081,13 +955,83 @@ class SearchPagePoly {
         return Channels.valid(channelId);
     }
 }
-
-class SearchPageBasic {
+class ChannelFeedPoly {
+    // #grid-container 's contain the channels
+    // if there are multiple pages, there will be multiple grid containers
+    // if they are hidden, then window.dispatchEvent(new UIEvent('resize')) triggers the load of the next page
+    // if there is a next page #continuations will have children.
+    capture: boolean;
+    container: HTMLElement;
+    timeout: number;
     constructor() {
-        this.updatePage = this.updatePage.bind(this);
+        this.capture = false;
     }
-    updatePage(forceUpdate: boolean) {
+    updatePage(force: boolean = false) {
+        if (this.capture) return;
+        if (location.href.indexOf('?uBO-YT-extract') !== -1) {
+            log('Capturing channels...');
+            this.capture = true;
+            this.insertCSS();
+            this.instantAnimation();
 
+            this.container = document.querySelector('ytd-section-list-renderer');
+            if(!this.container) return settings.whitelisted.suggest(undefined)
+            this.loadedChannels();
+        }
+    }
+    insertCSS() {
+        const nextCSS = document.createElement('style');
+        nextCSS.textContent = '#grid-container { display: none !important }'
+        document.documentElement.appendChild(nextCSS);
+    }
+    instantAnimation() {
+        const origRAF = window.requestAnimationFrame;
+        (window as any).requestAnimationFrame = function (fn: any) {
+            fn(performance.now());
+            return Math.random(); //shouldn't be much consequence to this, since the page will be closed immediately after
+        }
+        return () => {
+            window.requestAnimationFrame = origRAF;
+        }
+    }
+    loadedChannels() {
+        if (!this.capture) return;
+        const grids = document.querySelectorAll('#grid-container');
+        if (!grids) return settings.whitelisted.suggest(undefined);
+        if (this.timeout) {
+            clearTimeout(this.timeout)
+            this.timeout = 0;
+        }
+        const continuations = oGet(this.container, 'data.continuations') || [];
+        if (continuations.length) {
+            log('Fetching next page..')
+            this.timeout = setTimeout(() => {
+                settings.whitelisted.suggest(undefined);
+            }, 4000)
+            document.querySelectorAll('yt-next-continuation').forEach(el => {
+                console.log(el);
+                (el as any).data.autoloadEnabled = true;
+                (el as any).data.autoloadImmediately = true;
+                (el as any).maybeTriggerAutoload();
+            })
+            window.dispatchEvent(new UIEvent('resize'))
+        } else {
+            const channels = Array.from(document.querySelectorAll('ytd-channel-renderer'))
+                .map(el => this.getChannelId(el as HTMLElement))
+                .filter(channelId => channelId);
+            log('Collected ' + channels.length + ' channels. Sending them to background')
+            settings.whitelisted.suggest(channels);
+        }
+    }
+    getChannelId(container: HTMLElement) {
+        const channelId = Channels.empty();
+        if (!container) throw 'Channel element required to get channelId';
+
+        channelId.display = oGet(container, 'data.longBylineText.runs[0].text');
+        channelId.username = Channels.fromURL(oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl'))
+        channelId.id = oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+
+        return Channels.valid(channelId);
     }
 }
 class Channels {
@@ -1148,6 +1092,9 @@ class Channels {
     add(channel: Channel) {
         return agent.send('set-settings', { param: channel, type: 'add-' + this.type });
     }
+    suggest(channels: Array<Channel> | undefined) {
+        return agent.send('set-settings', { param: channels, type: 'suggest-' + this.type })
+    }
 }
 
 class Settings implements _Settings<Channels> {
@@ -1198,9 +1145,10 @@ class Settings implements _Settings<Channels> {
 }
 
 class Page {
-    video: VideoPagePoly | VideoPageBasic;
-    channel: ChannelPagePoly | ChannelPageBasic;
-    search: SearchPagePoly | SearchPageBasic;
+    video: VideoPagePoly //| VideoPageBasic;
+    channel: ChannelPagePoly //| ChannelPageBasic;
+    search: SearchPagePoly //| SearchPageBasic;
+    subscriptions: ChannelFeedPoly;
     currentURL: string;
     mode: number;
     eventExemptions: Array<EventListener>;
@@ -1210,10 +1158,7 @@ class Page {
             this.video = new VideoPagePoly();
             this.channel = new ChannelPagePoly();
             this.search = new SearchPagePoly();
-        } else if (design === Layout.Basic) {
-            this.video = new VideoPageBasic();
-            this.channel = new ChannelPageBasic();
-            this.search = new SearchPageBasic();
+            this.subscriptions = new ChannelFeedPoly();
         }
 
         this.currentURL = '';
@@ -1224,7 +1169,7 @@ class Page {
         if ((window as any).Polymer || document.querySelector('ytd-app')) {
             return Layout.Polymer;
         } else {
-            return Layout.Basic;
+            return Layout.Unknown;
         }
     }
     getType(): PageType {
@@ -1245,6 +1190,9 @@ class Page {
         } else if (url.indexOf('youtube.com/results?') !== -1) {
             toggleAdblock(true);
             return PageType.Search;
+        } else if (url.indexOf('youtube.com/feed/channels')) {
+            toggleAdblock(true);
+            return PageType.Subscriptions
         } else {
             toggleAdblock(true);
             return PageType.Any;
@@ -1260,6 +1208,8 @@ class Page {
             this.channel.updatePage(forceUpdate, verify);
         } else if (mode === PageType.Search) {
             this.search.updatePage(forceUpdate);
+        } else if (mode === PageType.Subscriptions) {
+            this.subscriptions.updatePage(forceUpdate);
         } else if (mode === PageType.Any) {
             this.updateURL(false, false);
             this.updateAllVideos(forceUpdate)
@@ -1318,61 +1268,6 @@ class Page {
         const videos = document.querySelectorAll(query) as NodeListOf<VideoPoly>;
 
         return this.updateVideos(videos, forceUpdate, channelId);
-    }
-
-    updateAllVideosBasic(whitelisted: boolean, forceUpdate = false) {
-        let videos: NodeListOf<VideoBasic> = document.querySelectorAll('.yt-lockup-video');
-
-        for (let vid of videos) {
-            if (!forceUpdate && vid.processed) continue;
-            let inwhite;
-
-            if (whitelisted !== null) {
-                inwhite = whitelisted;
-            } else {
-                let user = vid.querySelector('.stat.attribution span');
-                let values = Channels.empty();
-
-                if (!user || !(values.username = user.textContent))
-                    continue;
-                inwhite = settings.whitelisted.has(values);
-            }
-            if (inwhite || forceUpdate) { // exists
-                let links = vid.querySelectorAll('a[href^="/watch?"]');
-
-                for (let link of links) {
-                    link.setAttribute('href', pages.reflectURLFlag(link.getAttribute('href'), inwhite));
-                }
-            }
-            vid.processed = true;
-        }
-    }
-    updateRelatedBasic(forceUpdate: boolean) {
-        // This function really doesn't work anymore as YT
-        // removed the data-ytid attribute from video elements
-        // So there's really no way to get the UCID anymore,
-        // short of wasting time chasing some Google API.
-        let videos: NodeListOf<VideoBasic> = document.querySelectorAll('.video-list-item');
-
-        for (let vid of videos) {
-            if (!forceUpdate && vid.processed) continue;
-
-            let user, userNode = vid.querySelector('[data-ytid]');
-
-            if (!user) {
-                continue;
-            } else {
-                user = userNode.getAttribute('data-ytid');
-            }
-            let inwhite = settings.whitelisted.has(user);
-            let links = vid.querySelectorAll('a[href^="/watch?"]');
-            if (inwhite || forceUpdate) {
-                for (let link of links) {
-                    link.setAttribute('href', this.reflectURLFlag(link.getAttribute('href'), inwhite));
-                }
-            }
-            vid.processed = true;
-        }
     }
     updateURL(whitelisted: boolean, verify: boolean) {
         if (location.href.indexOf('&disableadblock=1') !== -1) {
@@ -1543,9 +1438,9 @@ const hookNav = (onURL: (url: string) => any) => {
     const hookLinks = (onURL: (url: string) => any) => {
         const listener = (e: MouseEvent) => {
             const link = e.composedPath().find((node: Element) => node.tagName === 'A') as HTMLAnchorElement;
-
-            if (link && !!link.getAttribute('href')) {
-                onURL(link.getAttribute('href'));
+            const href = link && link.getAttribute('href');
+            if (href) {
+                onURL(href);
             }
         }
         document.addEventListener('click', listener)
@@ -1591,7 +1486,7 @@ const init = (design: Layout) => {
             pages.updateAd(ad);
         })
         .on('destroy', () => {
-            console.log('Detaching inject script..');
+            log('Detaching inject script..');
             watcher.destroy();
             pages.destroy();
             agent = null;
@@ -1605,12 +1500,12 @@ const init = (design: Layout) => {
 const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
 (window as any).gev = getEventListeners; // delete me
 
-const [toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1, url => {
+const [_toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1, url => {
     if (settings) {
-        console.log('logging ad from', url)
         agent.send('log-ad', url);
     }
 });
+const toggleAdblock = (nextBlock: boolean) => _toggleAdblock(nextBlock, !settings.autoWhite)
 const unhookLinks = hookNav(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
 
 filterEventListeners("visibilitychange", (target, { fn }) => pages
@@ -1620,10 +1515,12 @@ filterEventListeners("visibilitychange", (target, { fn }) => pages
 agent = new MessageAgent('uBOWL-message', true);
 agent
     .on('destroy', () => {
+        log('Detaching all hooks and destroying agent')
         unhookEvents();
         unhookAdblock();
         unhookLinks();
         agent.destroy();
+        log('Destroyed')
     })
     .send('get-settings')
     .then(response => {

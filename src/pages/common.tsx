@@ -7,19 +7,25 @@ type SettingsFn = (settings: Settings) => any;
 type Confirm = (text: string, confirm?: boolean, danger?: boolean) => Promise<void>
 
 let settingsListener: (settings: Settings) => any = () => { }; // basically a global variable since it will be available wherever imported
-
+let suggestionsListener: (channels: Array<Channel>) => any = () => { };
 const isPopup = browser.tabs.getCurrent().then(tab => tab === undefined);
 const checkDev = browser.management.getSelf().then(self => self.installType === 'development');
-const openTab = (url: string) => browser.tabs.create({ url });
+const openTab = (url: string, active = true) => browser.tabs.create({ url, active });
 const getExtURL = (path: string) => browser.runtime.getURL(path);
 const onSettings = (fn: SettingsFn): SettingsFn => {
     settingsListener = fn;
     browser.runtime.onMessage.addListener((message: any) => {
         if (message.action === 'update') {
             settingsListener(message.settings);
+        } else if (message.action === 'suggestions') {
+            suggestionsListener(message.channels);
         }
     });
     return fn;
+}
+const onSuggestions = (fn: ((channels: Array<Channel>) => any)) => {
+    suggestionsListener = fn;
+
 }
 const bMessage = (action: string, subaction: string, param?: any) => {
     return browser.runtime.sendMessage({ action, subaction, param } as HostMessage)
@@ -161,5 +167,5 @@ export {
     diffSettings, diffList, readJSONFile, mergeSettings,
     fullHeader, popupHeader, onSettings, openTab, getExtURL,
     requestGooglePermission, i18n, getManifest, checkDev,
-    defaultSettings, settingsFromList
+    defaultSettings, settingsFromList, onSuggestions
 }
