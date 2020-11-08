@@ -132,6 +132,7 @@ const Options: FunctionComponent<{
                     checked={settings.autoWhite}
                     onChange={(checked) => bMessage('set', 'auto-whitelist', checked)}
                     text={i18n('autoWhiteOption')}
+                    tooltip={i18n('autoWhiteTooltip')}
                 />
                 <ListGroupItem>
                     {i18n('import')}

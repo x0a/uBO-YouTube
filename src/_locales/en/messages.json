@@ -253,6 +253,9 @@
     "autoWhiteOption": {
         "message": "Whitelist subscribed channels by default"
     },
+    "autoWhiteTooltip": {
+        "message": "This may result in pre-roll ads when pages are first loading"
+    },
     "autoSkipOption": {
         "message": "Automatically skip ads"
     },

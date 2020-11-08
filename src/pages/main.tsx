@@ -3,13 +3,14 @@ import { FunctionComponent, useEffect, useState, useLayoutEffect, useRef } from 
 
 import { WhitelistTable, ExcludeTable, BlacklistTable, MutelistTable, UnmutelistTable } from './list';
 import { bMessage, onSettings, defaultSettings, i18n } from './common';
-import { Settings } from '../typings';
 import { TabContainer, TabPane } from './tabs';
 import Options from './misc';
 import ChannelSearch from './search';
 import ImportSubscriptions from './subscriptions';
 import { SwitchableOption, DropdownSelection } from './switch';
 import RecentAds from './recentads';
+
+
 
 interface AlertProps {
     show: boolean,
