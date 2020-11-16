@@ -1,4 +1,6 @@
 import browser from './browser';
+declare var DEVSERVER: string;
+const defaultServer = DEVSERVER || '127.0.0.1'
 
 class Development {
     developmentServer: string;
@@ -9,7 +11,7 @@ class Development {
     ws: WebSocket;
     listeners: Map<string, () => void>
     constructor(server?: string) {
-        this.developmentServer = server || 'ws://127.0.0.1:3050';
+        this.developmentServer = server || 'ws://' + defaultServer + ':3050';
         this.originalLog = console.log;
         this.originalErr = console.error;
         this.reconnectInterval = 1500;

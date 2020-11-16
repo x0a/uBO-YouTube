@@ -12,7 +12,12 @@ const webpack = require('webpack-stream');
 const fs = require('fs');
 const compiler = require('webpack');
 const Archiver = require('gulp-archiver2');
+const { isParameter } = require('typescript');
 const Server = require('websocket').server;
+
+const ip = Object.values(require("os").networkInterfaces())
+    .flat()
+    .reduce((ip, { family, address, internal }) => ip || !internal && family === 'IPv4' && address, '');
 
 let build = false;
 let production = false;
@@ -118,6 +123,11 @@ gulp.task('ts', () => {
                     { test: /\.[tj]sx?$/, loader: 'ts-loader', options: { transpileOnly: true } }
                 ]
             },
+            plugins: [
+                new compiler.DefinePlugin({
+                    DEVSERVER: JSON.stringify(ip)
+                })
+            ],
             mode: production ? 'production' : 'development',
             optimization: {
                 minimize: production,
@@ -241,7 +251,7 @@ gulp.task('watch', gulp.series('default', () => {
     const prevConnections = []
     server.listen(3050, () => { })
     ws = new Server({ httpServer: server });
-    console.log('Websockets server listening on port 3050...');
+    console.log('Websockets server listening on', ip, 'port 3050...');
 
     ws.on('request', req => {
         const con = req.accept(null, req.origin);
@@ -254,7 +264,7 @@ gulp.task('watch', gulp.series('default', () => {
 
             if (msg.userAgent) {
                 console.log('Browser connected: ', msg.userAgent);
-                if(prevConnections.indexOf(msg.userAgent) === -1){
+                if (prevConnections.indexOf(msg.userAgent) === -1) {
                     prevConnections.push(msg.userAgent);
                     con.sendUTF('reload');
                 }
