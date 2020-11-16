@@ -1,4 +1,5 @@
 import log, { err } from './logging';
+import Obj from './objutils';
 
 let block = false;
 let prune = true;
@@ -148,7 +149,9 @@ const hookJSON = () => {
 
     const nextWindow = (frame.contentWindow as any)
     const nextParse = nextWindow.JSON.parse;
+    const nextParseFetch = nextWindow.Response.prototype.json
     const uBOParse = JSON.parse;
+    const uBOParseFetch = Response.prototype.json;
     document.documentElement.removeChild(frame);
 
     const recontextualize = (obj: any, cache: Map<any, any> = new Map()) => {
@@ -168,62 +171,32 @@ const hookJSON = () => {
         }
 
     }
-    const parseProps = (searchProps: string) => searchProps
-        .split('.')
-        .filter(key => key)
-        .map(prop => prop === '[]' ? Array : prop)
-        .flat()
-    const pruneJSON = (obj: any, props: Array<string | ArrayConstructor>, cache: Array<any> = []): any => {
-        let curObj = obj;
-        for (let i = 0; i < props.length; i++) {
-            const prop = props[i];
-
-            if (prop === Array) {
-                if (curObj instanceof Array) {
-                    const nextProps = props.slice(i + 1);
-                    if (!nextProps.length) {
-                        while (curObj.length) curObj.pop();
-                    } else {
-                        for (let j = 0; j < curObj.length; j++) {
-                            if (typeof curObj[j] === 'object') { // recurse objects skip everything else
-                                cache.push(curObj[j]);
-                                curObj[j] = pruneJSON(curObj[j], props.slice(i + 1), cache)
-                            }
-                        }
-                    }
-                }
-                return obj; // either way, we expected an array here. any modifications should be done with
-            } else if (typeof prop === 'string') {
-                if (curObj[prop] === undefined) return obj; // we didn't find what we needed
-                if (i === props.length - 1) {
-                    log('uBO-JSON-prune', props.join('.'), obj, curObj[prop])
-                    delete curObj[prop];
-                    return obj; // we made our modification so we are done
-                }
-                curObj = curObj[prop]; // proceed down the tree
-            }
-        }
-        return obj;
-    }
-    const rules = '[].playerResponse.playerAds playerResponse.adPlacements playerResponse.playerAds adPlacements playerAds'
-        .split(' ')
-        .map(rule => parseProps(rule));
+    const rules = 'playerAds adPlacements'
+        .split(' ');
     const parsePrune = function () {
+        return pruneOnly(nextParse.apply(this, arguments));
+    };
+    const pruneAsync = function() {
+        return nextParseFetch.apply(this, arguments)
+            .then((json : any) => pruneOnly(json))
+    }
+    const pruneOnly = (obj: any) => {
         // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
         // therefor they will fail the `instanceof Object` and `instanceof Array` checks that YouTube does
         // Fix is to recreate the resulting objects in the current execution context
-        const res = recontextualize(nextParse.apply(this, arguments))
+        const res = recontextualize(obj);
         try {
             if (block && prune)
-                rules.forEach(rule => pruneJSON(res, rule));
+                rules.forEach(rule => Obj.prune(res, rule));
         } catch (e) {
-            err('uBO-YT-Prune', e)
+            err('uBO-YT-Prune', e, obj)
         }
         return res;
-    };
+    }
 
     try {
         JSON.parse = parsePrune
+        Response.prototype.json = pruneAsync;
         Object.freeze(JSON);
     } catch (e) {
         err('Unable to replace JSON.parse');
@@ -231,6 +204,7 @@ const hookJSON = () => {
     return () => {
         try {
             JSON.parse = uBOParse;
+            Response.prototype.json = uBOParseFetch;
         } catch (e) {
             err('Unable to reset JSON.parse');
         }

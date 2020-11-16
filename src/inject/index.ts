@@ -6,6 +6,7 @@ import AdOptions from './ad-options';
 import { log, err } from './logging';
 import { i18n, seti18n } from './i18n';
 import { hookAdblock } from './adblock';
+import Obj from './objutils';
 
 import {
     Channel, Settings as _Settings,
@@ -732,7 +733,7 @@ class SingleChannelPage {
         const companion = document.querySelector('ytd-companion-slot-renderer');
 
         return companion
-            && oGet(companion, 'data.actionCompanionAdRenderer.adVideoId') === this.currentAd.video_id
+            && Obj.get(companion, 'data.actionCompanionAdRenderer.adVideoId') === this.currentAd.video_id
     }
 
     addBlacklist() {
@@ -842,7 +843,7 @@ class VideoPagePoly extends SingleChannelPage {
     }
     isSubscribed() {
         if (!this.secondaryDataNode) return false;
-        return oGet(this.secondaryDataNode, 'data.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+        return Obj.get(this.secondaryDataNode, 'data.subscribeButton.subscribeButtonRenderer.subscribed') || false;
     }
     getChannelId(container: HTMLElement) {
         let channelId = Channels.empty();
@@ -851,13 +852,13 @@ class VideoPagePoly extends SingleChannelPage {
         if (!container) return null;
         const prevId = this.channelId ? Channels.valid(this.channelId) : null;
 
-        channelId.id = oGet(container, 'data.playerResponse.videoDetails.channelId') || (!prevId ? (window as any).ytplayer?.config?.args?.ucid : null);
-        channelId.display = oGet(container, 'data.playerResponse.videoDetails.author') || (!prevId ? (window as any).ytplayer?.config?.args?.author : null);
+        channelId.id = Obj.get(container, 'data.playerResponse.videoDetails.channelId') || (!prevId ? (window as any).ytplayer?.config?.args?.ucid : null);
+        channelId.display = Obj.get(container, 'data.playerResponse.videoDetails.author') || (!prevId ? (window as any).ytplayer?.config?.args?.author : null);
 
 
-        // channelId.username = Channels.fromURL(oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
-        // channelId.id = oGet(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
-        // channelId.display = oGet(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
+        // channelId.username = Channels.fromURL(Obj.get(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
+        // channelId.id = Obj.get(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
+        // channelId.display = Obj.get(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
 
         return Channels.valid(channelId);
     }
@@ -897,14 +898,14 @@ class ChannelPagePoly extends SingleChannelPage {
         container = this.setDataNode(container);
         if (!container) return null;
 
-        channelId.username = oGet(container, 'data.response.metadata.channelMetadataRenderer.doubleclickTrackingUsername') || '';
-        channelId.display = oGet(container, 'data.response.metadata.channelMetadataRenderer.title') || '';
-        channelId.id = oGet(container, 'data.response.metadata.channelMetadataRenderer.externalId') || '';
+        channelId.username = Obj.get(container, 'data.response.metadata.channelMetadataRenderer.doubleclickTrackingUsername') || '';
+        channelId.display = Obj.get(container, 'data.response.metadata.channelMetadataRenderer.title') || '';
+        channelId.id = Obj.get(container, 'data.response.metadata.channelMetadataRenderer.externalId') || '';
 
         return Channels.valid(channelId);
     }
     isSubscribed() {
-        return oGet(this.dataNode, 'data.response.header.c4TabbedHeaderRenderer.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+        return Obj.get(this.dataNode, 'data.response.header.c4TabbedHeaderRenderer.subscribeButton.subscribeButtonRenderer.subscribed') || false;
     }
 }
 
@@ -942,15 +943,15 @@ class SearchPagePoly {
         settings.toggleWl(channelId, this.isSubscribed(dataNode));
     }
     isSubscribed(dataNode: HTMLElement): boolean {
-        return oGet(dataNode, 'data.subscriptionButton.subscribed') || false;
+        return Obj.get(dataNode, 'data.subscriptionButton.subscribed') || false;
     }
     getChannelId(container: HTMLElement) {
         let channelId = Channels.empty();
         if (!container) throw 'Search element required to get channelId under search mode';
 
-        channelId.display = oGet(container, 'data.title.simpleText') || '';
-        channelId.id = oGet(container, 'data.channelId') || '';
-        channelId.username = Channels.fromURL(oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || '';
+        channelId.display = Obj.get(container, 'data.title.simpleText') || '';
+        channelId.id = Obj.get(container, 'data.channelId') || '';
+        channelId.username = Channels.fromURL(Obj.get(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || '';
 
         return Channels.valid(channelId);
     }
@@ -975,7 +976,7 @@ class ChannelFeedPoly {
             this.instantAnimation();
 
             this.container = document.querySelector('ytd-section-list-renderer');
-            if(!this.container) return settings.whitelisted.suggest(undefined)
+            if (!this.container) return settings.whitelisted.suggest(undefined)
             this.loadedChannels();
         }
     }
@@ -996,15 +997,20 @@ class ChannelFeedPoly {
     }
     loadedChannels() {
         if (!this.capture) return;
+
         const grids = document.querySelectorAll('#grid-container');
         if (!grids) return settings.whitelisted.suggest(undefined);
+
         if (this.timeout) {
             clearTimeout(this.timeout)
             this.timeout = 0;
         }
-        const continuations = oGet(this.container, 'data.continuations') || [];
+
+        const continuations = Obj.get(this.container, 'data.continuations') || [];
         if (continuations.length) {
             log('Fetching next page..')
+            // The following is an absolute hack, for the record. It will break if YouTube decides to update the page..
+            // But since they got rid of the RSS/XML feed, and their JSON api requires special headers, it's the only option we have.
             this.timeout = setTimeout(() => {
                 settings.whitelisted.suggest(undefined);
             }, 4000)
@@ -1027,9 +1033,9 @@ class ChannelFeedPoly {
         const channelId = Channels.empty();
         if (!container) throw 'Channel element required to get channelId';
 
-        channelId.display = oGet(container, 'data.longBylineText.runs[0].text');
-        channelId.username = Channels.fromURL(oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl'))
-        channelId.id = oGet(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+        channelId.display = Obj.get(container, 'data.longBylineText.runs[0].text');
+        channelId.username = Channels.fromURL(Obj.get(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl'))
+        channelId.id = Obj.get(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
 
         return Channels.valid(channelId);
     }
@@ -1227,9 +1233,9 @@ class Page {
         for (let video of videos) {
             if (!forceUpdate && video.data.processed) continue;
 
-            let id = oGet(video, 'data.channelId')
-                || oGet(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
-                || oGet(video, 'data.content.videoRenderer.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+            let id = Obj.get(video, 'data.channelId')
+                || Obj.get(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+                || Obj.get(video, 'data.content.videoRenderer.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
                 || (channelId && channelId.id);
 
             if (id) {
@@ -1254,9 +1260,9 @@ class Page {
                 for (let link of links)
                     link.href = destURL;
 
-                if (oGet(video, 'data.navigationEndpoint.webNavigationEndpointData.url'))
+                if (Obj.get(video, 'data.navigationEndpoint.webNavigationEndpointData.url'))
                     video.data.navigationEndpoint.webNavigationEndpointData.url = destURL;
-                if (oGet(video, 'data.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
+                if (Obj.get(video, 'data.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
                     video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url = destURL;
 
                 video.data.processed = true;
@@ -1357,24 +1363,6 @@ const hookToast = () => {
             toast.classList.remove('paper-toast-open');
         }, 3000);
     }
-}
-
-/**
- * Access deeply nested objects without throwing errors
- * @param object Reference to object literal
- * @param keyString Location to key item
- */
-const oGet = (object: any, keyString: string) => {
-    const props = keyString.split(/[\[\]\.]+/);
-    let current = object;
-
-    for (let prop of props) {
-        if (prop.length === 0) continue;
-        if (current[prop] !== undefined) current = current[prop];
-        else return // console.log('Failed at', level);            
-    }
-
-    return current;
 }
 
 class LoadHastener {
