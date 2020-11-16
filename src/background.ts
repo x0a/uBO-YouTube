@@ -106,7 +106,6 @@ class SettingsManager {
         browser.tabs.query({})
             .then(tabs => tabs
                 .forEach(tab => {
-                    console.log('sending to', tab.id)
                     browser.tabs.sendMessage(tab.id, { action: 'suggestions', channels })
                 }))
 
