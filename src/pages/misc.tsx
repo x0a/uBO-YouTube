@@ -54,7 +54,7 @@ const Import: FunctionComponent<{
     }
     return <>
         <input type='file' ref={inputRef} onChange={onFile} className='d-none' />
-        <button type='button' className='btn btn-primary' onClick={() => inputEl.click()}>
+        <button type='button' className='btn btn-sm btn-primary' onClick={() => inputEl.click()}>
             <FontAwesomeIcon icon={faFileImport} /> {i18n('importBtn')}
         </button>
     </>
@@ -79,7 +79,7 @@ const Export: FunctionComponent<{
         <a download='ublock-youtube.json' href={blobURL} ref={linkRef} className='d-none' />
         <button
             type='button'
-            className={'btn btn-primary ' + className}
+            className={'btn btn-sm btn-primary ' + className}
             onClick={() => linkEl.click()}>
             <FontAwesomeIcon icon={faDownload} /> {alt ? i18n('exportAltBtn') : i18n('exportBtn')}
         </button>
@@ -94,7 +94,7 @@ const Reset: FunctionComponent<{
         .then(() => bMessage('set', 'reset'));
     return <button
         type='button'
-        className={'btn btn-danger ' + className}
+        className={'btn btn-sm btn-danger ' + className}
         title={i18n('resetTooltip')}
         onClick={reset}>
         <FontAwesomeIcon icon={faTrash} /> {i18n('resetBtn')}

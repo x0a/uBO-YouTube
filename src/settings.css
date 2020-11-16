@@ -1,3 +1,6 @@
+:root {
+    --slider-size: 34px;
+}
 body {
     background-color: #f8f9fa !important;
     margin-top: 10px;
@@ -30,31 +33,13 @@ body {
     background-color: white;
 }
 
-.channel {
-    display: flex;
-    flex-direction: row;
-    padding: 5px;
-}
-
 .channel-list {
     margin-bottom: 50px;
 }
 
 .channel-thumb {
-    width: 28px;
-    height: 28px;
-}
-
-.channel-name {
-    margin-left: 5px;
-}
-
-.channel-info {
-    flex-grow: 1;
-}
-
-.channel-desc {
-    font-size: .8em;
+    width: 36px;
+    height: 36px;
 }
 
 .blur {
@@ -128,7 +113,7 @@ button {
     position: relative;
     display: inline-block;
     width: 60px;
-    height: 34px;
+    height: var(--slider-size);
     flex-shrink: 0;
 }
 
@@ -176,7 +161,7 @@ input:checked+.slider:before {
 
 /* Rounded sliders */
 .slider.round {
-    border-radius: 34px;
+    border-radius: var(--slider-size);
 }
 
 .slider.round:before {
@@ -193,7 +178,9 @@ input:checked+.slider:before {
 .flex-grow-1 {
     flex-grow: 1 !important;
 }
-
+.table-hover tbody tr:not(:hover) input:not(:checked){
+    display: none;
+}
 .tooltip-parent {
     display: inline-block;
     position: relative;
@@ -213,6 +200,12 @@ input:checked+.slider:before {
 .tooltip-parent:hover .tooltip {
     display: block;
     opacity: 0.9;
+}
+th{
+    border-bottom-width: 0 !important;
+}
+td a:hover {
+    text-decoration: underline !important;
 }
 
 @media (min-width: 768px) {

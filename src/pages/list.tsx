@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faMinusCircle, faMinus, faCompress, faCompressArrowsAlt, faMinusSquare, faPlusSquare } from '@fortawesome/free-solid-svg-icons'
+import { faMinusCircle, faMinusSquare, faPlusSquare } from '@fortawesome/free-solid-svg-icons'
 import { bMessage, Confirm, fullHeader, popupHeader, i18n, settingsFromList } from './common';
 import { Export } from './misc'
 import { ChannelList, Channel } from '../typings';

@@ -130,12 +130,14 @@ const ChannelSearch: FunctionComponent<{
         {error && <span className='bold'>
             {i18n('searchFailed')}
         </span>}
-        {channels.map((item: any) => <ChannelItem
-            key={item.id.channelId}
-            onClick={toggleWhitelist}
-            full={full}
-            item={item}
-            added={whitelisted.findIndex(channel => channel.id === item.id.channelId) !== -1} />)}
+        <div className='list-group'>
+            {channels.map((item: any) => <ChannelItem
+                key={item.id.channelId}
+                onClick={toggleWhitelist}
+                full={full}
+                item={item}
+                added={whitelisted.findIndex(channel => channel.id === item.id.channelId) !== -1} />)}
+        </div>
         {!!channels.length && <div className='d-flex justify-content-center mt-2'>
             <button
                 onClick={() => setNav({ prev: '', next: '', current: nav.prev })}
@@ -176,16 +178,18 @@ const ChannelItem: FunctionComponent<{
         onClick(channel, !added);
     }
     return <div
-        className={'channel list-group-item'}
+        className={'d-flex flex-row p-2 list-group-item'}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}>
 
-        <div className='channel-thumb-container' >
+        <div>
             <img className='channel-thumb' src={thumbnail} />
         </div>
-        <div className='channel-info p-1'>
-            <a className='channel-name mr-1' href={url}>{title}</a>
-            <span className={full ? 'channel-desc' : 'hidden'}>{description}</span>
+        <div className='flex-grow-1 p-1'>
+            <div>
+                <strong><a href={url}>{title}</a></strong>
+            </div>
+            <small className={full ? '' : 'hidden'}>{description}</small>
         </div>
         <div className={'channel-action ' + (hovering || (!hovering && added) ? '' : 'invisible')}>
             <button

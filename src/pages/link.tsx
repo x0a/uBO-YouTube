@@ -18,7 +18,7 @@ const Link: FunctionComponent<{
             openTab(el.href);
         }
     }
-    return <a href={href} className={className} onClick={onClick}>{children}</a>
+    return <a href={href} className={'text-decoration-none ' + className} onClick={onClick}>{children}</a>
 }
 
 export default Link;

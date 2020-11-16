@@ -1,7 +1,13 @@
 import * as React from 'react';
 import { FunctionComponent, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+
+const realBlur = ({ relatedTarget, currentTarget }: React.FocusEvent) => {
+    return relatedTarget !== currentTarget
+        && !(currentTarget as HTMLElement).contains(relatedTarget as Node)
+}
+
 const Switch: FunctionComponent<{
     checked: boolean;
     onChange: (checked: boolean) => any;
@@ -23,7 +29,7 @@ const DropdownSelection: FunctionComponent<{
     onSelect: (selection: number) => void
 }> = ({ items, selected, onSelect }) => {
     const [show, setShow] = useState(false);
-    return <div className='dropdown'>
+    return <div className='dropdown' onBlur={(e) => realBlur(e) && setShow(false)}>
         <button className='btn btn-secondary dropdown-toggle' onClick={() => setShow(!show)}>
             {items.find(({ value }) => value === selected)?.text}
         </button>
