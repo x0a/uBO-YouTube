@@ -202,7 +202,22 @@ gulp.task('manifest', () => {
 gulp.task('build-start', cb => {
     build = true;
     production = true;
-    return del(['dist/chrome/dist/latest*.zip', 'dist/webext/dist/latest*.zip', 'dist/webext/dist/src.zip']);
+    const readdir = (dir) => new Promise((resolve, reject) => fs.readdir(dir, (err, files) => err
+        ? reject(err)
+        : resolve(files)))
+    const rename = (file, nextFile) => new Promise((resolve, reject) => fs.rename(file, nextFile, resolve));
+
+    const cleanup = filename => filename
+        .split(/latest-?/)
+        .filter(part => part)
+        .join('');
+    const renameAll = (dir) => readdir(dir)
+        .then(filenames => filenames.filter(filename => filename.indexOf('latest') !== -1))
+        .then(filenames => filenames.map(filename => rename(dir + '/' + filename, dir + '/' + cleanup(filename))))
+        .then(promises => Promise.all(promises));
+
+    Promise.all([renameAll('dist/chrome'), renameAll('dist/webext')])
+        .then(() => cb());
 });
 
 gulp.task('build-end', cb => {
@@ -215,7 +230,7 @@ gulp.task('build-end', cb => {
         return mergestream(
             chrome.close('latest-' + codeVersion + '.zip')
                 .pipe(gulp.dest('dist/chrome/')),
-            webext.close('latest' + codeVersion + '.zip')
+            webext.close('latest-' + codeVersion + '.zip')
                 .pipe(gulp.dest('dist/webext/')),
             gulp.src(['gulpfile.js', 'package.json', 'package-lock.json', 'tsconfig.json'])
                 .pipe(src.add())
