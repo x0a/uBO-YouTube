@@ -5,7 +5,8 @@
         "src/content.ts",
         "src/agent.ts",
         "src/browser.ts",
-        "src/pages/main.tsx"
+        "src/pages/main.tsx",
+        "src/inject/domwatch.ts"
     ],
     "compilerOptions": {
         "typeRoots": [

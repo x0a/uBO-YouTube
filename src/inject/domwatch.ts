@@ -19,17 +19,18 @@ class SiteWatch {
             this.currentChecker(muts);
         })
     }
-    private getApplicableComponents(): Array<Component> {
-        const href = document.location.href;
+    private getApplicableComponents(href: string = document.location.href): Array<Component> {
         const nextModules = this.components.filter(({ url }) => url instanceof RegExp ? url.test(href) : href.indexOf(url) !== -1)
         return nextModules.length ? nextModules : undefined
     }
     private applyComponents(nextComponents?: Array<Component>) {
-        const unMount = () => (nextComponents || [])
-            .filter(component => this.currentComponents.indexOf(component) === -1)
+        const _nextComponents = nextComponents || [];
+        const _currentComponents = this.currentComponents || [];
+        const unMount = () => _nextComponents
+            .filter(component => _currentComponents.indexOf(component) === -1 || component.remountOnChange)
             .forEach(component => component.onUmount());
-        const mount = () => (this.currentComponents || [])
-            .filter(component => nextComponents.indexOf(component) === -1)
+        const mount = () => _currentComponents
+            .filter(component => _nextComponents.indexOf(component) === -1 || component.remountOnChange)
             .forEach(component => component.onMount());
         if (!nextComponents) {
             unMount();
@@ -49,33 +50,34 @@ class SiteWatch {
         return (muts: Array<MutationRecord>) => {
             for (let mut of muts) {
                 if (mut.type === 'childList') {
-
-                    for (let node of mut.removedNodes as NodeListOf<HTMLElement>) {
+                    for (const node of mut.removedNodes as NodeListOf<HTMLElement>) {
+                        if(node.nodeType === Node.TEXT_NODE) continue;
                         for (let [query, fns] of allRemovedChecks) {
                             if (node.matches(query)) {
                                 fns.forEach(fn => fn(node))
                             } else {
-                                const child = node.querySelector(query);
+                                const child = node.querySelector(query) as HTMLElement;
                                 if (child) {
-                                    fns.forEach(fn => fn(child as HTMLElement))
+                                    fns.forEach(fn => fn(child))
                                 }
                             }
                         }
                     }
-                    for (let node of mut.addedNodes as NodeListOf<HTMLElement>) {
+                    for (const node of mut.addedNodes as NodeListOf<HTMLElement>) {
+                        if(node.nodeType === Node.TEXT_NODE) continue;
                         for (let [query, fns] of allAddedChecks) {
                             if ((node as HTMLElement).matches(query)) {
                                 fns.forEach(fn => fn(node));
                             } else {
                                 const child = node.querySelector(query) as HTMLElement;
                                 if (child) {
-                                    fns.forEach(fn => fn(node))
+                                    fns.forEach(fn => fn(child))
                                 }
                             }
                         }
                     }
                 }
-                for (let [query, fns] of allModifiedChecks) {
+                for (const [query, fns] of allModifiedChecks) {
                     if ((mut.target as HTMLElement).matches(query))
                         fns.forEach(fn => fn(mut.target as HTMLElement))
                 }
@@ -94,10 +96,8 @@ class SiteWatch {
         this.components.push(page);
     }
     start() {
-        const attribs = this.components.map(page => page.attribs)
-            .reduce((all, attrib) => all.concat(attrib.reduce((unlisted, _attrib) =>
-                all.indexOf(_attrib) === -1 ? unlisted.concat(_attrib) : unlisted)), []);
-        this.currentComponents = this.getApplicableComponents();
+        const attribs = [...new Set(this.components.map(component => component.attribs).flat())];
+        this.applyComponents(this.getApplicableComponents());
         this.lastURL = document.location.href
 
         if (this.currentComponents) {
@@ -131,10 +131,16 @@ class Component {
     checkRemoved: Map<string, () => void>;
     checkAdded: Map<string, (el: HTMLElement) => void>;
     checkModified: Map<string, (el: HTMLElement) => void>;
-    attribs: Array<string>
-    constructor(url: string | RegExp) {
+    attribs: Array<string>;
+    remountOnChange: boolean;
+
+    constructor(url: string | RegExp, remountOnChange = false) {
         this.url = url;
+        this.remountOnChange = remountOnChange;
         this.attribs = [];
+        this.checkRemoved = new Map();
+        this.checkAdded = new Map();
+        this.checkModified = new Map();
     }
     onMount() /* override */ {
 
