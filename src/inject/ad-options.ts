@@ -3,20 +3,20 @@ import { MenuItem } from '../typings';
 import { i18n } from './i18n';
 
 export default class AdOptions {
-    unMuteIcon: Element;
-    muteIcon: Element;
-    playIcon: Element;
-    muteButton: MenuItem;
-    skipButton: MenuItem;
-    blacklistButton: MenuItem;
-    menu: HTMLDivElement;
-    optionsButton: HTMLButtonElement;
-    tooltip: HTMLSpanElement;
+    private unMuteIcon: Element;
+    private muteIcon: Element;
+    private playIcon: Element;
+    private muteButton: MenuItem;
+    private skipButton: MenuItem;
+    private blacklistButton: MenuItem;
+    private menu: HTMLDivElement;
+    private optionsButton: HTMLButtonElement;
+    private tooltip: HTMLSpanElement;
 
-    buttonFocused: boolean;
-    menuFocused: boolean;
-    menuOpen: boolean;
-    overridingTooltip: boolean;
+    private buttonFocused: boolean;
+    private menuFocused: boolean;
+    private menuOpen: boolean;
+    private overridingTooltip: boolean;
     private _muted: boolean;
 
     static uboIcon: string;

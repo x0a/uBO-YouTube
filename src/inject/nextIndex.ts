@@ -57,7 +57,6 @@ class SingleChannelPage extends Component {
         if (this.videoEl !== videoEl) {
             const fn = () => {
                 if (isNaN(videoEl.duration)) return;
-                // if (nextPlayer.getAttribute('src') !== src) return;
 
                 const shouldAutoSkip = settings.autoSkip
                     && videoEl.currentTime > settings.autoSkipSeconds
@@ -90,6 +89,9 @@ class SingleChannelPage extends Component {
     onSkipAvailability(container?: HTMLDivElement) {
         const available = container && container.style.display !== 'none' && container.querySelector('button');
         this.skipEl = available || null;
+        if (this.skipping)
+            this.skipEl.click();
+
     }
     onAdPlayState(playing: boolean, container: HTMLDivElement) {
         if (!this.adPlaying && playing) {
@@ -102,10 +104,16 @@ class SingleChannelPage extends Component {
                 controls.insertBefore(button, controls.firstChild);
             if (!container.contains(menu))
                 container.appendChild(menu);
-
+            this.adOptions.show();
+            this.adOptions.skipOption = true;
             this.applyAdState()
         } else if (this.adPlaying && !playing) {
             this.adPlaying = false;
+            this.adOptions.hide();
+            this.adOptions.reset();
+            this.skipEl = null;
+            this.skipping = false;
+            this.currentAd = null;
         }
     }
     onAdInfo(ad: Ad) {
@@ -118,13 +126,14 @@ class SingleChannelPage extends Component {
         this.applyPageState();
         this.applyAdState();
     }
-    applyPageState(){
-
+    applyPageState() {
+        if(!this.channelId) return;
+        
     }
     applyAdState() {
         if (!this.adPlaying) return;
         if (!this.currentAd) {
-            this.muteTab(settings.muteAll);
+            this.toggleMute(settings.muteAll);
         } else {
             const inMutelist = settings.muted.has(this.currentAd.channelId);
             const muteAll = !!settings.muteAll;
@@ -135,7 +144,7 @@ class SingleChannelPage extends Component {
             // if !muteAll && !inmute should be false
             // All of these conditions are met with muteAll !== inmute
 
-            this.muteTab(muteAll !== inMutelist);
+            this.toggleMute(muteAll !== inMutelist);
         }
 
         if (settings.blacklisted.has(this.currentAd.channelId)) {
@@ -148,6 +157,9 @@ class SingleChannelPage extends Component {
             if (!settings.asWl(this.channelId, this.subscribed))
                 this.forceSkip();
         }
+        this.adOptions.muteOption = true;
+        this.adOptions.blacklistOption = true;
+        this.adOptions.advertiserName = this.currentAd.channelId.display;
     }
     forceSkip() {
         if (!this.adPlaying) return;
@@ -166,21 +178,6 @@ class SingleChannelPage extends Component {
         const target = duration - 1;
         if (videoEl.currentTime < target)
             videoEl.currentTime = target;
-    }
-    muteTab(shouldMute: boolean) {
-        if (shouldMute) {
-            agent.send('mute-tab', true)
-                .then(resp => this.adOptions.muted = true)
-                .catch(error => {
-                    err('Error muting:', error);
-                });
-
-        } else {
-            const done = () => this.adOptions.muted = false;
-            agent.send('mute-tab', false)
-                .then(done)
-                .catch(done); // replicate .finally
-        }
     }
     onBlacklist() {
         if (!this.currentAd.channelId) throw ('Channel ID not available for blacklisting');
