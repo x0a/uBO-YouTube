@@ -208,7 +208,7 @@ class MutationWatcher {
         const target = mutation.target as HTMLElement;
         if (target.matches(selector)) {
             if (mutation.type === 'attributes') {
-                console.log(
+                log(
                     `%c[${selector}].${mutation.attributeName}` +
                     ` = %c"${mutation.oldValue}"` +
                     ` -> %c"${target.getAttribute(mutation.attributeName || "")}"`,
@@ -218,7 +218,7 @@ class MutationWatcher {
                 );
             }
             else {
-                console.log(`%c[${selector}] >`, 'font-weight: bold;', mutation);
+                log(`%c[${selector}] >`, 'font-weight: bold;', mutation);
             }
         }
         else if (mutation.type === 'childList') {
@@ -232,7 +232,7 @@ class MutationWatcher {
                     );
                 }
                 else if (node.querySelector(selector)) {
-                    console.log(
+                    log(
                         `<${this.getSelector(target)}>.addedNodes = [...,` +
                         `%c<${this.getSelector(node)}>%c.querySelector("%c${selector}"%c),...]`,
                         'color: green;',
@@ -246,14 +246,14 @@ class MutationWatcher {
                 if (node.nodeType !== Node.ELEMENT_NODE)
                     continue;
                 if (node.matches(selector)) {
-                    console.log(
+                    log(
                         `<${this.getSelector(target)}>.removedNodes = [..., <%c${selector}%c>, ...]`,
                         'color: red',
                         ''
                     );
                 }
                 else if (node.querySelector(selector)) {
-                    console.log(
+                    log(
                         `<${this.getSelector(target)}>.removedNodes = [..., ` +
                         `%c<${this.getSelector(node)}>.querySelector("${selector}"), ...] `,
                         'color: red'
@@ -269,8 +269,10 @@ class MutationWatcher {
             + (el.id.length ? '#' + el.id : '')
     }
     onMutation(mutations: Array<MutationElement>) {
-
         for (const mutation of mutations) {
+            if (mutation.type === 'attributes' && mutation.target.id === 'movie_player') {
+                log('uBO-player', mutation.target.className);
+            }
             const type = pages.getType();
             // this.findInjection(mutation, 'paper-button.ytd-subscribe-button-renderer yt-formatted-string');
             if (type === PageType.Video) {
@@ -301,7 +303,6 @@ class MutationWatcher {
                 }
             } else if (type === PageType.Subscriptions) {
                 if (this.isChannelGrid(mutation)) {
-                    console.log('channel grid:', mutation)
                     pages.subscriptions.loadedChannels();
                 }
             } else {
@@ -404,7 +405,10 @@ class SingleChannelPage {
     videoError: boolean;
     awaitingSkip: boolean;
     pauseOrigin: boolean;
+    videoId: string;
+    adsPlayed: number;
     skipButton: HTMLButtonElement;
+    pageManager: HTMLDivElement
     _currentPlayer: HTMLVideoElement;
 
     constructor(ButtonFactory: WhitelistButtonFactory) {
@@ -424,6 +428,8 @@ class SingleChannelPage {
         this.awaitingSkip = false;
         this.videoError = false;
         this.skipButton = null;
+        this.adsPlayed = 0;
+        this.videoId = '';
         this.muteTab(false);
         this.onKeyboard = this.onKeyboard.bind(this);
         document.addEventListener('keyup', this.onKeyboard);
@@ -468,16 +474,31 @@ class SingleChannelPage {
         this.updateVideos(whitelisted, forceUpdate);
     }
     set currentPlayer(nextPlayer: HTMLVideoElement) {
+        const checkVideoId = () => {
+            const nextVideoId = this.getVideoId();
+            if (this.videoId !== nextVideoId) {
+                this.videoId = nextVideoId;
+                this.adsPlayed = 0;
+            }
+        }
         if (nextPlayer && this._currentPlayer !== nextPlayer) {
             let src = nextPlayer.getAttribute('src');
             const fn = () => {
                 // if (!src) src = nextPlayer.getAttribute('src');
                 if (isNaN(nextPlayer.duration)) return;
-                // if (nextPlayer.getAttribute('src') !== src) return;
+                if (nextPlayer.getAttribute('src') !== src) {
+                    src = nextPlayer.getAttribute('src');
+                    checkVideoId();
+                    if (this.adPlaying) {
+                        this.adsPlayed++;
+                        log('uBO-limit', this.adsPlayed, this.videoId);
+                    }
+                }
 
-                const shouldAutoSkip = settings.autoSkip
+                const shouldAutoSkip = (settings.autoSkip
                     && nextPlayer.currentTime > settings.autoSkipSeconds
-                    && nextPlayer.duration > settings.autoSkipSeconds
+                    && nextPlayer.duration > settings.autoSkipSeconds)
+                    || (settings.limitAds && this.adsPlayed > settings.limitAdsQty)
 
                 if (this.awaitingSkip) {
                     log('Re-attempting skip')
@@ -711,7 +732,7 @@ class SingleChannelPage {
         // and not some third party
     }
 
-    onVideoPlayable(video: HTMLVideoElement, resolveAnySrc = true) {
+    onVideoPlayable(video: HTMLVideoElement, resolveAnySrc = true): Promise<void> {
         if (!!(video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 2)) // is already playable
             return Promise.resolve();
         const lastSrc = video.src;
@@ -778,10 +799,15 @@ class SingleChannelPage {
             this.whitelistButton.off();
         }
     }
+
+    setPageManager() {
+        return this.pageManager = this.pageManager || document.querySelector('ytd-page-manager');
+    }
     setDataNode(/* override */node?: HTMLElement) { return node }
     insertButton(/* override */button: WhitelistButtonInstance): boolean { return false }
     updateVideos(/* override */whitelisted: boolean, forceUpdate: boolean) { }
     getChannelId(/* override */node: HTMLElement): Channel { return Channels.empty(); }
+    getVideoId(/* override */) { return '' }
     isSubscribed(/* override */): boolean { return false };
 
 }
@@ -845,6 +871,11 @@ class VideoPagePoly extends SingleChannelPage {
         if (!this.secondaryDataNode) return false;
         return Obj.get(this.secondaryDataNode, 'data.subscribeButton.subscribeButtonRenderer.subscribed') || false;
     }
+    getVideoId() {
+        this.setPageManager();
+        if (!this.pageManager) return '';
+        return Obj.get(this.pageManager, 'data.playerResponse.videoDetails.videoId') || '';
+    }
     getChannelId(container: HTMLElement) {
         let channelId = Channels.empty();
         container = this.setDataNode(container);
@@ -903,6 +934,13 @@ class ChannelPagePoly extends SingleChannelPage {
         channelId.id = Obj.get(container, 'data.response.metadata.channelMetadataRenderer.externalId') || '';
 
         return Channels.valid(channelId);
+    }
+    getVideoId() {
+        this.setPageManager();
+        if (!this.pageManager || !(this.pageManager as any).data) return '';
+        const parent = Obj.findParent((this.pageManager as any).data, 'channelVideoPlayerRenderer');
+        if (!parent) return '';
+        return parent.channelVideoPlayerRenderer.videoId;
     }
     isSubscribed() {
         return Obj.get(this.dataNode, 'data.response.header.c4TabbedHeaderRenderer.subscribeButton.subscribeButtonRenderer.subscribed') || false;
@@ -1117,6 +1155,8 @@ class Settings implements _Settings<Channels> {
     autoSkipSeconds: AutoSkipSeconds;
     keyboardSkip: boolean;
     verifyWl: boolean;
+    limitAds: boolean;
+    limitAdsQty: number;
     constructor(settings: _Settings) {
         Object.assign(this, {
             ...settings,
@@ -1156,6 +1196,7 @@ class Page {
     search: SearchPagePoly //| SearchPageBasic;
     subscriptions: ChannelFeedPoly;
     currentURL: string;
+    videosQuery: string;
     mode: number;
     eventExemptions: Array<EventListener>;
 
@@ -1169,6 +1210,13 @@ class Page {
 
         this.currentURL = '';
         this.eventExemptions = [];
+        this.videosQuery = [
+            'ytd-rich-grid-video-renderer',
+            'ytd-grid-video-renderer',
+            'ytd-video-renderer',
+            'ytd-playlist-video-renderer',
+            'ytd-rich-item-renderer'
+        ].join(',');
         this.updateAllVideos = this.updateAllVideos.bind(this);
     }
     static getDesign() {
@@ -1179,11 +1227,11 @@ class Page {
         }
     }
     getType(): PageType {
-        let newURL = location.href;
+        const nextURL = location.href;
 
-        if (newURL !== this.currentURL) {
-            this.currentURL = newURL;
-            return this.mode = this.determineType(newURL);
+        if (nextURL !== this.currentURL) {
+            this.currentURL = nextURL;
+            return this.mode = this.determineType(nextURL);
         } else {
             return this.mode;
         }
@@ -1196,7 +1244,7 @@ class Page {
         } else if (url.indexOf('youtube.com/results?') !== -1) {
             toggleAdblock(true);
             return PageType.Search;
-        } else if (url.indexOf('youtube.com/feed/channels')) {
+        } else if (url.indexOf('youtube.com/feed/channels') !== -1) {
             toggleAdblock(true);
             return PageType.Subscriptions
         } else {
@@ -1270,8 +1318,7 @@ class Page {
         }
     }
     updateAllVideos(forceUpdate?: boolean, channelId?: Channel) {
-        const query = 'ytd-rich-grid-video-renderer,ytd-grid-video-renderer,ytd-video-renderer,ytd-playlist-video-renderer,ytd-rich-item-renderer';
-        const videos = document.querySelectorAll(query) as NodeListOf<VideoPoly>;
+        const videos = document.querySelectorAll(this.videosQuery) as NodeListOf<VideoPoly>;
 
         return this.updateVideos(videos, forceUpdate, channelId);
     }
@@ -1492,6 +1539,12 @@ const [_toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.
     if (settings) {
         agent.send('log-ad', url);
     }
+}, ads => {
+    log('uBO-Replace', ads)
+    if (ads instanceof Array) {
+
+    }
+    return ads;
 });
 const toggleAdblock = (nextBlock: boolean) => _toggleAdblock(nextBlock, !settings.autoWhite)
 const unhookLinks = hookNav(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));

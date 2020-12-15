@@ -142,7 +142,7 @@ const hookElWatch = (): [(nextState: boolean) => void, () => void] => {
     return [onChange, () => watch.disconnect()];
 }
 
-const hookJSON = () => {
+const hookJSON = (onAds: (ads: Array<any>) => Array<any>) => {
     const frame = document.createElement('iframe');
     frame.style.display = 'none';
     document.documentElement.appendChild(frame);
@@ -176,9 +176,9 @@ const hookJSON = () => {
     const parsePrune = function () {
         return pruneOnly(nextParse.apply(this, arguments));
     };
-    const pruneAsync = function() {
+    const pruneAsync = function () {
         return nextParseFetch.apply(this, arguments)
-            .then((json : any) => pruneOnly(json))
+            .then((json: any) => pruneOnly(json))
     }
     const pruneOnly = (obj: any) => {
         // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
@@ -188,6 +188,8 @@ const hookJSON = () => {
         try {
             if (block && prune)
                 rules.forEach(rule => Obj.prune(res, rule));
+            else
+                rules.forEach(rule => Obj.replaceAll(res, rule, onAds))
         } catch (e) {
             err('uBO-YT-Prune', e, obj)
         }
@@ -211,13 +213,13 @@ const hookJSON = () => {
     }
 }
 
-const hookAdblock = (initBlock: boolean, onBlocked: (url: string) => void):
+const hookAdblock = (initBlock: boolean, onBlocked: (url: string) => void, onAds: (ads: Array<any>) => Array<any>):
     [(block: boolean, nextPrune: boolean) => any, () => boolean, () => any] => {
 
     const unhookXhr = hookXhr(onBlocked);
     // const unhookFetch = hookFetch();
     const [onChange, unhookEl] = hookElWatch();
-    const unhookJSON = hookJSON()
+    const unhookJSON = hookJSON(onAds)
 
     const toggleAdblock = (nextBlock: boolean, nextPrune: boolean) => {
         if (block !== nextBlock) {

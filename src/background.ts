@@ -27,6 +27,8 @@ class SettingsManager {
     autoSkipSeconds: AutoSkipSeconds;
     keyboardSkip: boolean;
     verifyWl: boolean;
+    limitAds: boolean;
+    limitAdsQty: number;
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
@@ -42,6 +44,8 @@ class SettingsManager {
         this.autoWhite = settings.autoWhite;
         this.keyboardSkip = settings.keyboardSkip;
         this.verifyWl = settings.verifyWl;
+        this.limitAds = settings.limitAds;
+        this.limitAdsQty = settings.limitAdsQty
     }
 
     static sanitizeSettings(settings?: Settings): Settings {
@@ -61,6 +65,8 @@ class SettingsManager {
         settings.keyboardSkip = settings.keyboardSkip === undefined ? true : !!settings.keyboardSkip;
         settings.autoSkipSeconds = settings.autoSkipSeconds || 30;
         settings.verifyWl = settings.verifyWl === undefined ? true : !!settings.verifyWl;
+        settings.limitAds = !!settings.limitAds;
+        settings.limitAdsQty = !isNaN(settings.limitAdsQty) && settings.limitAdsQty > 0 ? settings.limitAdsQty : 2;
 
         return settings;
     }
@@ -151,6 +157,11 @@ class SettingsManager {
     toggleKeyboardSkip(on: boolean) {
         this.keyboardSkip = !!on;
     }
+    toggleLimitAds(on: boolean, limit: number) {
+        const nextLimit = ~~limit;
+        this.limitAds = !!on;
+        this.limitAdsQty = !isNaN(nextLimit) && nextLimit > 0 ? nextLimit : 2;
+    }
     get(): Settings {
         return {
             whitelisted: this.whitelist.get(),
@@ -165,7 +176,9 @@ class SettingsManager {
             autoSkip: this.autoSkip,
             autoSkipSeconds: this.autoSkipSeconds,
             keyboardSkip: this.keyboardSkip,
-            verifyWl: this.verifyWl
+            verifyWl: this.verifyWl,
+            limitAds: this.limitAds,
+            limitAdsQty: this.limitAdsQty
         };
     }
     getCompressed(): any {
@@ -536,6 +549,7 @@ SettingsManager.getSettings()
             .on('skip-ad-errors', (_, shouldSkip) => settings.toggleSkipAdErrors(shouldSkip))
             .on('pause-after-ad', (_, shouldPause) => settings.togglePauseAfterAd(shouldPause))
             .on('auto-skip', (_, { autoSkip, autoSkipSeconds }) => settings.toggleAutoSkip(autoSkip, autoSkipSeconds))
+            .on('limit-ads', (_, { limitAds, limitAdsQty }) => settings.toggleLimitAds(limitAds, limitAdsQty))
             .on('keyboard-skip', (_, nextKeyboardSkip) => settings.toggleKeyboardSkip(nextKeyboardSkip))
             .on('verify-wl', (_, shouldVerify) => settings.toggleVerifyWl(shouldVerify))
             .onAll(sender => {

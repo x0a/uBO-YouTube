@@ -256,6 +256,9 @@
     "autoWhiteTooltip": {
         "message": "This may result in pre-roll ads when pages are first loading"
     },
+    "limitAdsOption": {
+        "message": "Limit ads per video"
+    },
     "autoSkipOption": {
         "message": "Automatically skip ads"
     },

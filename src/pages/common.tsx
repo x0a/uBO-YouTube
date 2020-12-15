@@ -74,7 +74,9 @@ const defaultSettings = (): Settings => ({
     autoWhite: false,
     autoSkip: false,
     autoSkipSeconds: 30,
-    verifyWl: true
+    verifyWl: true,
+    limitAds: false,
+    limitAdsQty: 2
 })
 const isSettings = (prospect: any): prospect is Settings => {
     return typeof prospect === 'object'
@@ -114,7 +116,9 @@ const canonicalizeSettings = (prospect: Settings, defaults = defaultSettings()):
         autoSkip: prospect.autoSkip === undefined ? defaults.autoSkip : prospect.autoSkip,
         autoSkipSeconds: prospect.autoSkipSeconds === undefined ? defaults.autoSkipSeconds : prospect.autoSkipSeconds,
         keyboardSkip: prospect.keyboardSkip === undefined ? defaults.keyboardSkip : prospect.keyboardSkip,
-        verifyWl: prospect.verifyWl === undefined ? defaults.verifyWl : prospect.verifyWl
+        verifyWl: prospect.verifyWl === undefined ? defaults.verifyWl : prospect.verifyWl,
+        limitAds: prospect.limitAds === undefined ? defaults.limitAds : prospect.limitAds,
+        limitAdsQty: prospect.limitAdsQty === undefined ? defaults.limitAdsQty : prospect.limitAdsQty
     }
 }
 
@@ -135,7 +139,9 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         autoSkip: next.autoSkip,
         autoSkipSeconds: next.autoSkipSeconds,
         keyboardSkip: next.keyboardSkip,
-        verifyWl: next.verifyWl
+        verifyWl: next.verifyWl,
+        limitAds: next.limitAds,
+        limitAdsQty: next.limitAdsQty
     }
 }
 const mergeSettings = (current: Settings, next: Settings): Settings => {
@@ -152,7 +158,9 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         autoSkip: next.autoSkip,
         autoSkipSeconds: next.autoSkipSeconds,
         keyboardSkip: next.keyboardSkip,
-        verifyWl: next.verifyWl
+        verifyWl: next.verifyWl,
+        limitAds: next.limitAds,
+        limitAdsQty: next.limitAdsQty
     }
 }
 const settingsFromList = (list: ChannelList, exportKey: string) => ({

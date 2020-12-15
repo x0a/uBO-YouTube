@@ -30,6 +30,8 @@ interface Settings<T = ChannelList> {
     autoSkipSeconds: AutoSkipSeconds;
     keyboardSkip: boolean;
     verifyWl: boolean;
+    limitAds: boolean;
+    limitAdsQty: number;
 }
 type ReadonlySettings<T = ChannelList> = Readonly<Settings<T>>;
 interface AccessURL {

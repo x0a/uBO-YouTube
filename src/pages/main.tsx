@@ -135,6 +135,26 @@ const Main: FunctionComponent<{
                                         />}
                                     </SwitchableOption>
                                     <SwitchableOption
+                                        checked={settings.limitAds}
+                                        onChange={(checked) => bMessage('set', 'limit-ads', { limitAds: checked, limitAdsQty: settings.limitAdsQty })}
+                                        text={i18n('limitAdsOption')}
+                                    >
+                                        {settings.limitAds && <DropdownSelection
+                                            items={[
+                                                { text: '1', value: 1 },
+                                                { text: '2', value: 2 },
+                                                { text: '4', value: 4 },
+                                                { text: '6', value: 6 },
+                                                { text: '8', value: 8 },
+                                                { text: '10', value: 10 },
+                                            ]}
+                                            onSelect={seconds => {
+                                                bMessage('set', 'limit-ads', { limitAds: settings.limitAds, limitAdsQty: seconds })
+                                            }}
+                                            selected={settings.limitAdsQty}
+                                        />}
+                                    </SwitchableOption>
+                                    <SwitchableOption
                                         checked={settings.keyboardSkip}
                                         onChange={(checked) => bMessage('set', 'keyboard-skip', checked)}
                                         text={i18n('keyboardSkipOption')}
