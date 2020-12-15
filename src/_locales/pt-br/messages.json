@@ -35,7 +35,7 @@
         "message": "Isso excluirá todos os itens permitidos, opções de anúncio e preferências. Se você não quer perder essas configuraçÕes, cancele e clique em \"Download\" antes."
     },
     "whitelistTabTitle": {
-        "message": "Lista Branca",
+        "message": "Lista de permitidos",
         "description": "Appears as title for tab in options page"
     },
     "whitelistTooltip": {
@@ -252,6 +252,9 @@
     },
     "autoWhiteOption": {
         "message": "Permitir canais que você seja inscrito por padrão"
+    },
+    "autoWhiteTooltip": {
+        "message": "Isso pode resultar em anúncios de pré-rolagem quando as páginas forem carregadas pela primeira vez"
     },
     "autoSkipOption": {
         "message": "Pular anúncios automaticamente"
