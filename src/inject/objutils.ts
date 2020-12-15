@@ -96,12 +96,15 @@ class Obj {
         return obj;
     }
     static prune(obj: any, keyName: string): void {
-        for (let parent = this.findParent(obj, keyName); parent; parent = this.findParent(obj, keyName))
+        let parent: any;
+        while (parent = this.findParent(obj, keyName))
             delete parent[keyName];
     }
-    static replaceAll(obj: any, keyName: string, replacement: any): void {
-        for (let parent = this.findParent(obj, keyName); parent; parent = this.findParent(obj, keyName))
-            parent[keyName] = replacement;
+    static replaceAll(obj: any, keyName: string, replacer: (value: any) => any): void {
+        const cache = [] as Array<any>;
+        let parent: any;
+        while (parent = this.findParent(obj, keyName, cache))
+            parent[keyName] = replacer(parent[keyName]);
     }
     static prunePaths(obj: any, paths: string): void {
         const allPaths = paths
