@@ -51,20 +51,20 @@ class SiteWatch {
             for (let mut of muts) {
                 if (mut.type === 'childList') {
                     for (const node of mut.removedNodes as NodeListOf<HTMLElement>) {
-                        if(node.nodeType === Node.TEXT_NODE) continue;
+                        if(node.nodeType !== Node.ELEMENT_NODE) continue;
                         for (let [query, fns] of allRemovedChecks) {
                             if (node.matches(query)) {
                                 fns.forEach(fn => fn(node))
                             } else {
                                 const child = node.querySelector(query) as HTMLElement;
                                 if (child) {
-                                    fns.forEach(fn => fn(child))
+                                    fns.forEach(fn => fn())
                                 }
                             }
                         }
                     }
                     for (const node of mut.addedNodes as NodeListOf<HTMLElement>) {
-                        if(node.nodeType === Node.TEXT_NODE) continue;
+                        if(node.nodeType !== Node.ELEMENT_NODE) continue;
                         for (let [query, fns] of allAddedChecks) {
                             if ((node as HTMLElement).matches(query)) {
                                 fns.forEach(fn => fn(node));
