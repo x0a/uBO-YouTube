@@ -80,6 +80,10 @@
         "message": "Ajouter",
         "description": "Button shown next to channel name, for adding to whitelist"
     },
+    "addedBtn": {
+        "message": "Ajouté",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
     "removeBtn": {
         "message": "Supprimer"
     },
@@ -98,13 +102,27 @@
     "whitelistHeader": {
         "message": "Chaînes dans la Liste Blanche"
     },
+    "excludeHeader": {
+        "message": "Exclure de la liste blanche"
+    },
     "removeWhitelistTooltip": {
         "message": "Enlever la chaîne de la liste blanche"
+    },
+    "removeExcludeTooltip": {
+        "message": "Réautoriser la chaine à être mise en liste blanche si vous êtes abonnés"
     },
     "removeFailed": {
         "message": "Impossible de supprimer les éléments demandés : $error$",
         "placeholders": {
             "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "Êtes-vous sûr de vouloir autoriser \"$channelName$\" à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "placeholders": {
+            "channelName": {
                 "content": "$1"
             }
         }
@@ -119,6 +137,14 @@
     },
     "bulkRemoveWhitelistConfirm": {
         "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "Êtes-vous sûr de vouloir autoriser \"$count$\" objets à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -224,11 +250,35 @@
     "overlaysOption": {
         "message": "Masquer les annonces superposées"
     },
+    "autoWhiteOption": {
+        "message": "Ajouter les chaines auxquelles vous êtes abonnés en liste blanche par défaut"
+    },
+    "autoWhiteTooltip": {
+        "message": "Cela peut entrainer des annonces pre-roll lors du premier chargement des pages"
+    },
+    "autoSkipOption": {
+        "message": "Ignorer automatiquement les annonces"
+    },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
     "adErrorsOption": {
         "message": "Ignorer les erreurs de lecture des annonces"
     },
     "adErrorsOptionTooltip": {
         "message": "Passe à la vidéo si l'annonce ne fonctionne pas, plutôt que d'afficher l'erreur \"Une erreur s'est produite\" avec l'animation de TV statique"
+    },
+    "verifyWlOption": {
+        "message": "Vérifier le statut de la liste blanche"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "Confirme que les annonces ne sont pas bloquées sur les chaînes en liste blanche en simulant le chargement d'une annonce"
     },
     "adBlocked": {
         "message": "Bloqué",
@@ -247,6 +297,15 @@
     "blacklistBtn": {
         "message": "Bloquer cet annonceur"
     },
+    "autoSkipTooltip": {
+        "message": "Ignorer dans $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
     "skipBtn": {
         "message": "Passer l'annonce"
     },
@@ -258,6 +317,9 @@
     },
     "pauseAfterAdTooltip": {
         "message": "Si une annonce muette se termine, et que l'onglet n'est pas actuellement affiché, la vidéo est discrètement mise en pause jusqu'à ce que l'utilisateur y retourne"
+    },
+    "keyboardSkipOption": {
+        "message": "Touche flèche droite pour ignorer une annonce de force"
     },
     "permissionDesc": {
         "message": "Une permission unique est nécessaire pour rechercher des chaînes YouTube"
