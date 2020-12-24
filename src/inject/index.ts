@@ -5,7 +5,7 @@ import icons from './icons';
 import AdOptions from './ad-options';
 import { log, err } from './logging';
 import { i18n, seti18n } from './i18n';
-import { hookAdblock } from './adblock';
+import { AdBlock } from './adblock';
 import Obj from './objutils';
 
 import {
@@ -270,9 +270,6 @@ class MutationWatcher {
     }
     onMutation(mutations: Array<MutationElement>) {
         for (const mutation of mutations) {
-            if (mutation.type === 'attributes' && mutation.target.id === 'movie_player') {
-                log('uBO-player', mutation.target.className);
-            }
             const type = pages.getType();
             // this.findInjection(mutation, 'paper-button.ytd-subscribe-button-renderer yt-formatted-string');
             if (type === PageType.Video) {
@@ -410,7 +407,7 @@ class SingleChannelPage {
     skipButton: HTMLButtonElement;
     pageManager: HTMLDivElement
     _currentPlayer: HTMLVideoElement;
-
+    removeHooks: () => void;
     constructor(ButtonFactory: WhitelistButtonFactory) {
         this.dataNode = null
         this.buttonParent = null;
@@ -432,6 +429,7 @@ class SingleChannelPage {
         this.videoId = '';
         this.muteTab(false);
         this.onKeyboard = this.onKeyboard.bind(this);
+        this.removeHooks = () => { };
         document.addEventListener('keyup', this.onKeyboard);
 
         log('uBO-YT-Log', this);
@@ -453,7 +451,7 @@ class SingleChannelPage {
         }
 
         if (!settings.asWl(this.channelId) && this.adPlaying && !this.awaitingSkip) {
-            log('Ad playing that should not be playing, attempting skip');
+            log('uBO-limit', 'Ad playing that should not be playing, attempting skip');
             this.attemptSkip();
         }
 
@@ -489,27 +487,38 @@ class SingleChannelPage {
                 if (nextPlayer.getAttribute('src') !== src) {
                     src = nextPlayer.getAttribute('src');
                     checkVideoId();
+                    log('uBO-limit', 'Video source:', src, 'VideoID:', this.videoId);
                     if (this.adPlaying) {
                         this.adsPlayed++;
-                        log('uBO-limit', this.adsPlayed, this.videoId);
+                        log('uBO-limit', 'Total Ads:', this.adsPlayed, 'VideoID:', this.videoId);
                     }
                 }
-
-                const shouldAutoSkip = (settings.autoSkip
+                const overPlayLimit = settings.autoSkip
                     && nextPlayer.currentTime > settings.autoSkipSeconds
-                    && nextPlayer.duration > settings.autoSkipSeconds)
-                    || (settings.limitAds && this.adsPlayed > settings.limitAdsQty)
-
+                    && nextPlayer.duration > settings.autoSkipSeconds;
+                const overAdsLimit = settings.limitAds && this.adsPlayed > settings.limitAdsQty;
+                const shouldAutoSkip = overPlayLimit || overAdsLimit;
+                
                 if (this.awaitingSkip) {
-                    log('Re-attempting skip')
+                    log('uBO-limit', 'Re-attempting skip')
                     this.forceAhead(nextPlayer);
                 } else if (this.adPlaying && shouldAutoSkip) {
-                    log('Automatically skipping per settings');
+                    log('uBO-limit', 'Automatically skipping per settings');
+                    if (overAdsLimit) {
+                        log('uBO-limit', 'Adblock enabled for remainder of video')
+                        adblock.toggleNet(true);
+                        adblock.togglePrune(true);
+                    }
                     this.attemptSkip();
                 }
             }
-            nextPlayer.addEventListener('timeupdate', fn)
-            nextPlayer.addEventListener('durationchange', fn)
+            nextPlayer.addEventListener('timeupdate', fn);
+            nextPlayer.addEventListener('durationchange', fn);
+            this.removeHooks();
+            this.removeHooks = () => {
+                nextPlayer.removeEventListener('timeupdate', fn);
+                nextPlayer.removeEventListener('durationchange', fn);
+            }
             this._currentPlayer = nextPlayer;
 
         }
@@ -539,7 +548,7 @@ class SingleChannelPage {
                     // this.adOptions.overrideTooltip(i18n('autoSkipTooltip', settings.autoSkipSeconds));
                 }
 
-                if (checkAdblock() && this.channelId && !settings.asWl(this.channelId)) {
+                if (adblock.enabled() && this.channelId && !settings.asWl(this.channelId)) {
                     this.adPlaying = true;
                     this.attemptSkip();
                 }
@@ -1384,10 +1393,12 @@ class Page {
         })
     }
     destroy() {
+        pages.video.removeHooks();
+        pages.channel.removeHooks();
         document.removeEventListener('keyup', this.video.onKeyboard);
         document.removeEventListener('keyup', this.channel.onKeyboard);
 
-        let nodes = document.querySelectorAll('.UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu');
+        const nodes = document.querySelectorAll('.UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu');
 
         for (let node of nodes) {
             node.remove();
@@ -1521,7 +1532,7 @@ const init = (design: Layout) => {
             pages.updateAd(ad);
         })
         .on('destroy', () => {
-            log('Detaching inject script..');
+            log('uBO-YT', 'Detaching inject script..');
             watcher.destroy();
             pages.destroy();
             agent = null;
@@ -1535,18 +1546,19 @@ const init = (design: Layout) => {
 const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
 (window as any).gev = getEventListeners; // delete me
 
-const [_toggleAdblock, checkAdblock, unhookAdblock] = hookAdblock(location.href.indexOf('&disableadblock=1') === -1, url => {
-    if (settings) {
-        agent.send('log-ad', url);
-    }
-}, ads => {
+const adblock = new AdBlock(location.href.indexOf('&disableadblock=1') === -1)
+adblock.onNet(url => settings && agent.send('log-ad', url));
+adblock.onAds(ads => {
     log('uBO-Replace', ads)
     if (ads instanceof Array) {
 
     }
     return ads;
-});
-const toggleAdblock = (nextBlock: boolean) => _toggleAdblock(nextBlock, !settings.autoWhite)
+})
+const toggleAdblock = (nextBlock: boolean) => {
+    adblock.toggleAll(nextBlock);
+    adblock.togglePrune(nextBlock && !settings.autoWhite);
+}
 const unhookLinks = hookNav(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
 
 filterEventListeners("visibilitychange", (target, { fn }) => pages
@@ -1556,12 +1568,12 @@ filterEventListeners("visibilitychange", (target, { fn }) => pages
 agent = new MessageAgent('uBOWL-message', true);
 agent
     .on('destroy', () => {
-        log('Detaching all hooks and destroying agent')
+        log('uBO-YT', 'Detaching all hooks and destroying agent');
         unhookEvents();
-        unhookAdblock();
+        adblock.destroy();
         unhookLinks();
         agent.destroy();
-        log('Destroyed')
+        log('uBO-YT', 'Gone.')
     })
     .send('get-settings')
     .then(response => {
