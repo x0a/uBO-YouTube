@@ -2,30 +2,37 @@ import log, { err } from './logging';
 import Obj from './objutils';
 
 const jsonRules = 'playerAds adPlacements';
-const netFilters = [
+const globals = ['ytInitialPlayerResponse'];
+const netFilters = Object.freeze([
     'generate_204',
     'doubleclick.net',
     '/pagead',
     /get_video_info.+=adunit/g,
     'get_midroll_info'
-];
-const domFilters = ['#masthead-ad',
+]);
+const domFilters = Object.freeze(['#masthead-ad',
     'ytd-action-companion-ad-renderer',
     'ytd-promoted-sparkles-text-search-renderer',
     'ytd-player-legacy-desktop-watch-ads-renderer',
     'ytd-promoted-sparkles-web-renderer',
-    //'ytd-rich-item-item-renderer:has(ytd-display-ad-renderer)',
-    'ytd-display-ad-renderer'];
+    'ytd-rich-item-renderer:has(ytd-display-ad-renderer)']);
 
 class AdBlock {
     private prune: boolean;
     private xhr: boolean;
     private dom: boolean;
     private fetch: boolean;
+
+    private matches: (el: HTMLElement) => HTMLElement;
+    private queryAllFilters: () => Array<HTMLElement>;
     private onNetListener: (url: string) => void;
     private onAdsListener: (ads: Array<any>) => Array<any>;
     private unhookAll: () => void;
+
     constructor(block: boolean) {
+        const [queryAllFilters, matches] = this.parseDOMFilters();
+        this.queryAllFilters = queryAllFilters;
+        this.matches = matches;
         this.onNetListener = () => { };
         this.onAdsListener = ads => ads;
         this.toggleAll(block);
@@ -39,7 +46,7 @@ class AdBlock {
         this.togglePrune(block);
         this.toggleDOM(block);
     }
-    toggleNet(block: boolean){
+    toggleNet(block: boolean) {
         this.xhr = block;
         this.fetch = block;
     }
@@ -48,8 +55,8 @@ class AdBlock {
     }
     toggleDOM(block: boolean) {
         if (!this.dom && block) {
-            document.querySelectorAll(domFilters.join(','))
-                .forEach(el => this.forceRemove(el as HTMLElement));
+            this.queryAllFilters()
+                .forEach(el => this.forceRemove(el));
         }
         this.dom = block;
     }
@@ -85,6 +92,10 @@ class AdBlock {
         document.documentElement.removeChild(frame);
 
         const recontextualize = (obj: any, cache: Map<any, any> = new Map()) => {
+            // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
+            // therefor they will fail the `instanceof Object` and `instanceof Array` checks that YouTube does
+            // Fix is to recreate the resulting objects in the current execution context
+
             if (obj instanceof nextWindow.Array) {
                 if (cache.has(obj)) return cache.get(obj);
                 const nextObj: any = [...obj].map(item => recontextualize(item, cache));
@@ -104,31 +115,38 @@ class AdBlock {
         const rules = jsonRules
             .split(' ');
         const parsePrune = function () {
-            return pruneOnly(nextParse.apply(this, arguments));
+            return pruneWithinContext(nextParse.apply(this, arguments));
         };
         const pruneAsync = function () {
             return nextParseFetch.apply(this, arguments)
-                .then((json: any) => pruneOnly(json))
+                .then((json: any) => pruneWithinContext(json))
+        }
+        const pruneWithinContext = (obj: any) => {
+            const res = recontextualize(obj);
+            return pruneOnly(res);
         }
         const pruneOnly = (obj: any) => {
-            // Objects created by nextWindow.JSON.parse will be instances of nextWindow.Object/nextwindow.Array
-            // therefor they will fail the `instanceof Object` and `instanceof Array` checks that YouTube does
-            // Fix is to recreate the resulting objects in the current execution context
-            const res = recontextualize(obj);
             try {
                 if (this.prune)
-                    rules.forEach(rule => Obj.prune(res, rule));
+                    rules.forEach(rule => Obj.prune(obj, rule));
                 else
-                    rules.forEach(rule => Obj.replaceAll(res, rule, this.onAdsListener))
+                    rules.forEach(rule => Obj.replaceAll(obj, rule, this.onAdsListener))
             } catch (e) {
                 err('uBO-YT-Prune', e, obj)
             }
-            return res;
+            return obj;
         }
 
         try {
             JSON.parse = parsePrune
             Response.prototype.json = pruneAsync;
+            for (const global of globals) {
+                this.hookGlobal(global, obj => {
+                    if (this.prune)
+                        pruneOnly(obj);
+                    return obj;
+                })
+            }
             Object.freeze(JSON);
         } catch (e) {
             err('Unable to replace JSON.parse');
@@ -142,7 +160,18 @@ class AdBlock {
             }
         }
     }
-
+    private hookGlobal(name: string, fn: (incoming: any) => any): void {
+        let outgoing: any;
+        Object.defineProperty(window, name, {
+            set: incoming => {
+                outgoing = fn(incoming);
+                return outgoing;
+            },
+            get: () => {
+                return outgoing;
+            }
+        })
+    }
     private hookXHR() {
         const origOpen = XMLHttpRequest.prototype.open;
         const origSend = XMLHttpRequest.prototype.send;
@@ -196,17 +225,67 @@ class AdBlock {
             lengthComputable: false,
         })
     }
-    private hookDOM() {
-        const check = (el: HTMLElement) => {
-            return !!domFilters.find(query => el.nodeType === Node.ELEMENT_NODE && el.matches(query));
+    private parseDOMFilters(): [() => Array<HTMLElement>, (el: HTMLElement) => HTMLElement] {
+        // this function creates two arrays, one of the css selector to actually search for
+        // the other of the function to run to find the actual target
+        // for most css selectors, the target will be the same as the element returned by the selector
+        // for special selectors such as target-selector:has(child-selector),
+        // the child will be searched for first, then the target parent must be found
+        // the function will run .closest(target) for those
+        const same = (el: HTMLElement) => el;
+        const targeters = new Array(domFilters.length) as Array<(el: HTMLElement) => HTMLElement>;
+        const queries = new Array(domFilters.length) as Array<string>;
+
+        for (let i = 0; i < domFilters.length; i++) {
+            const filter = domFilters[i];
+            const condition = filter.match(/([^:]+):([^\(]+)\(([^\)]+)\)/);
+            if (condition) {
+                const [, target, method, query] = condition;
+                if (method !== 'has') {
+                    err('uBO-DOM', 'Method', method, 'is currently not supported');
+                    queries[i] = query;
+                    targeters[i] = same;
+                    continue;
+                } else {
+                    queries[i] = query;
+                    targeters[i] = (el: HTMLElement) => el.closest(target);
+                }
+            } else {
+                queries[i] = filter;
+                targeters[i] = same;
+            }
         }
+
+        const queryAllFilters = () => {
+            const all = [];
+            for (let i = 0; i < queries.length; i++) {
+                const next = Array.from(document.querySelectorAll(queries[i]))
+                    .map(el => targeters[i](el as HTMLElement))
+                    .filter(el => el);
+                all.push(next);
+            }
+            return all.flat()
+        }
+
+        const matches = (el: HTMLElement) => {
+            const i = queries.findIndex(query => el.nodeType === Node.ELEMENT_NODE && el.matches(query));
+            return i !== -1 ? targeters[i](el) : null;
+        }
+
+        return [queryAllFilters, matches];
+    }
+    private hookDOM() {
         const watch = new MutationObserver(muts => this.dom && muts.forEach(mut => {
             if (mut.type === 'childList') {
-                mut.addedNodes.forEach((el: HTMLElement) => check(el) && this.forceRemove(el));
+                mut.addedNodes.forEach((el: HTMLElement) => {
+                    const target = this.matches(el);
+                    if (target)
+                        this.forceRemove(target);
+                });
             } else {
-                if (check(mut.target as HTMLElement)) {
-                    this.forceRemove(mut.target as HTMLElement);
-                }
+                const target = this.matches(mut.target as HTMLElement);
+                if (target)
+                    this.forceRemove(target);
             }
         }))
         watch.observe(document.documentElement, {

@@ -561,7 +561,7 @@ SettingsManager.getSettings()
         listener.onAction('get')
             .on('settings', () => settings.get())
             .on('ads', () => ads.get());
-
+        listener.onAction('')
         listener.onAction('tab')
             .on('settings', (sender, tab) =>
                 browser.tabs.create({
