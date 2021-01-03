@@ -9,6 +9,7 @@ import {
 import apiKeys from '../shared/api'
 
 const [apiKey] = apiKeys;
+const instance = Math.random().toString(36).substring(7);
 
 let settings: SettingsManager;
 let ads: AdManager;
@@ -76,8 +77,9 @@ class SettingsManager {
     // With raw JSON, you quickly start running into problems if you try to import subscriptions
     // The solution is to both compress JSON-serialized settings, and to split it into multiple items
 
-    static getSettings(): Promise<Settings> {
+    static getSettings(throwOnOrigin = false): Promise<Settings> {
         return browser.storage.sync.get(null).then(store => {
+            if (throwOnOrigin && (!store.instance || store.instance === instance)) throw 'The changes originated from same instance or are incomplete';
             if (store.algorithm === 'lz' && store.totalKeys) {
                 let compressedStr = '';
                 for (let i = 0; i < store.totalKeys; i++) {
@@ -97,7 +99,7 @@ class SettingsManager {
 
         })
     }
-    updateAll(originTab: browser.tabs.Tab) {
+    updateAll(originTab?: browser.tabs.Tab) {
         browser.tabs.query({})
             .then(tabs => tabs
                 .filter(({ id }) => id !== undefined) // we don't want popup.html
@@ -189,17 +191,16 @@ class SettingsManager {
 
         for (let i = 0; i < times; i++) {
             store['lz_' + i] = compressed.substring(i * max, (i + 1) * max);
-
         }
         store.algorithm = 'lz';
         store.totalKeys = times;
-
+        store.instance = instance; // should always be last
         return store;
     }
     async save() {
         const compressed = this.getCompressed();
         const keys = Object.keys(compressed);
-
+        const start = performance.now();
         await browser.storage.sync.clear();
 
         for (let key of keys) {
@@ -207,6 +208,9 @@ class SettingsManager {
             t[key] = compressed[key];
             await browser.storage.sync.set(t);
         }
+
+        const end = performance.now();
+        console.log('Save duration:', end - start)
     }
 }
 
@@ -561,7 +565,7 @@ SettingsManager.getSettings()
         listener.onAction('get')
             .on('settings', () => settings.get())
             .on('ads', () => ads.get());
-        listener.onAction('')
+
         listener.onAction('tab')
             .on('settings', (sender, tab) =>
                 browser.tabs.create({
@@ -585,7 +589,15 @@ SettingsManager.getSettings()
 
             return { cancel };
 
-        }, { urls: ['*://www.youtube.com/get_video_info?*'] }, ['blocking'])
+        }, { urls: ['*://www.youtube.com/get_video_info?*'] }, ['blocking']);
+
+        browser.storage.onChanged.addListener(() => {
+            SettingsManager.getSettings(true)
+                .then(nextSettings => {
+                    settings = new SettingsManager(nextSettings)
+                    settings.updateAll()
+                })
+        })
     });
 
 SettingsManager.injectAll();
@@ -606,7 +618,7 @@ if (Development && Development.detectedDevMode()) { // set to false in productio
     client.connect();
 
     (window as any).dev = (() => client.originalLog('Started', (Date.now() - started) / 60000, 'minutes ago')) as any;
-    console.log('[', started, ']: Development mode');
+    console.log('[', started, ']: Development mode. Instance', instance);
 }
 
 function cloneObject<T>(obj: T): T {
