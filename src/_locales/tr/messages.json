@@ -253,8 +253,23 @@
     "autoWhiteOption": {
         "message": "Abone olunan kanalları izin listesine otomatikman ekle"
     },
+    "autoWhiteTooltip": {
+        "message": "This may result in pre-roll ads when pages are first loading"
+    },
+    "limitAdsOption": {
+        "message": "Video başına reklamı sınırla"
+    },
     "autoSkipOption": {
         "message": "Reklamları otomatikman atla"
+    },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
     },
     "adErrorsOption": {
         "message": "Reklam oynatma hatalarını atla"
@@ -286,7 +301,8 @@
         "message": "Reklamvereni engelle"
     },
     "autoSkipTooltip": {
-        "message": "$number saniye sonra atlanacak",
+        "message": "$number$ içinde geçiliyor",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
                 "content": "$1"
@@ -304,6 +320,9 @@
     },
     "pauseAfterAdTooltip": {
         "message": "Başka bir sekmedeki susturulmuş reklam bittikten sonra video duraklatılır, kullanıcı o sekmeye dönünce video oynatılır"
+    },
+    "keyboardSkipOption": {
+        "message": "Reklamları atlamaya zorlamak için sağ ok tuşu"
     },
     "permissionDesc": {
         "message": "YouTube kanallarını aramak için tek seferlik bir izin gerekir"
