@@ -208,7 +208,7 @@ class MutationWatcher {
         const target = mutation.target as HTMLElement;
         if (target.matches(selector)) {
             if (mutation.type === 'attributes') {
-                log(
+                console.log(
                     `%c[${selector}].${mutation.attributeName}` +
                     ` = %c"${mutation.oldValue}"` +
                     ` -> %c"${target.getAttribute(mutation.attributeName || "")}"`,
@@ -218,7 +218,7 @@ class MutationWatcher {
                 );
             }
             else {
-                log(`%c[${selector}] >`, 'font-weight: bold;', mutation);
+                console.log(`%c[${selector}] >`, 'font-weight: bold;', mutation);
             }
         }
         else if (mutation.type === 'childList') {
@@ -232,7 +232,7 @@ class MutationWatcher {
                     );
                 }
                 else if (node.querySelector(selector)) {
-                    log(
+                    console.log(
                         `<${this.getSelector(target)}>.addedNodes = [...,` +
                         `%c<${this.getSelector(node)}>%c.querySelector("%c${selector}"%c),...]`,
                         'color: green;',
@@ -246,14 +246,14 @@ class MutationWatcher {
                 if (node.nodeType !== Node.ELEMENT_NODE)
                     continue;
                 if (node.matches(selector)) {
-                    log(
+                    console.log(
                         `<${this.getSelector(target)}>.removedNodes = [..., <%c${selector}%c>, ...]`,
                         'color: red',
                         ''
                     );
                 }
                 else if (node.querySelector(selector)) {
-                    log(
+                    console.log(
                         `<${this.getSelector(target)}>.removedNodes = [..., ` +
                         `%c<${this.getSelector(node)}>.querySelector("${selector}"), ...] `,
                         'color: red'
@@ -271,7 +271,7 @@ class MutationWatcher {
     onMutation(mutations: Array<MutationElement>) {
         for (const mutation of mutations) {
             const type = pages.getType();
-            // this.findInjection(mutation, 'paper-button.ytd-subscribe-button-renderer yt-formatted-string');
+            this.findInjection(mutation, 'ytd-section-list-renderer');
             if (type === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
 
@@ -498,7 +498,7 @@ class SingleChannelPage {
                     && nextPlayer.duration > settings.autoSkipSeconds;
                 const overAdsLimit = settings.limitAds && this.adsPlayed > settings.limitAdsQty;
                 const shouldAutoSkip = overPlayLimit || overAdsLimit;
-                
+
                 if (this.awaitingSkip) {
                     log('uBO-limit', 'Re-attempting skip')
                     this.forceAhead(nextPlayer);
@@ -1011,20 +1011,19 @@ class ChannelFeedPoly {
     capture: boolean;
     container: HTMLElement;
     timeout: number;
+    debug: boolean;
     constructor() {
         this.capture = false;
     }
     updatePage(force: boolean = false) {
         if (this.capture) return;
         if (location.href.indexOf('?uBO-YT-extract') !== -1) {
+            this.debug = location.href.indexOf('&debug=true') !== -1;
+
             log('Capturing channels...');
-            this.capture = true;
             this.insertCSS();
             this.instantAnimation();
-
-            this.container = document.querySelector('ytd-section-list-renderer');
-            if (!this.container) return settings.whitelisted.suggest(undefined)
-            this.loadedChannels();
+            this.capture = true;
         }
     }
     insertCSS() {
@@ -1046,20 +1045,32 @@ class ChannelFeedPoly {
         if (!this.capture) return;
 
         const grids = document.querySelectorAll('#grid-container');
-        if (!grids) return settings.whitelisted.suggest(undefined);
+        if (!grids) {
+            log('YT-uBO-Channels', 'Could not find grid containers');
+            if (!this.debug) settings.whitelisted.suggest(undefined);
+            return;
+        }
 
         if (this.timeout) {
             clearTimeout(this.timeout)
             this.timeout = 0;
         }
-
+        if (!this.container) {
+            this.container = document.querySelector('ytd-section-list-renderer');
+            if (!this.container) {
+                log('uBO-YT-Channels', 'Found grids but parent container likely changed. No way to gauge page length');
+                if (!this.debug) settings.whitelisted.suggest(undefined);
+                return;
+            }
+        }
         const continuations = Obj.get(this.container, 'data.continuations') || [];
         if (continuations.length) {
             log('Fetching next page..')
             // The following is an absolute hack, for the record. It will break if YouTube decides to update the page..
             // But since they got rid of the RSS/XML feed, and their JSON api requires special headers, it's the only option we have.
             this.timeout = setTimeout(() => {
-                settings.whitelisted.suggest(undefined);
+                log('uBO-YT-Channels', 'Timed out');
+                if (!this.debug) settings.whitelisted.suggest(undefined);
             }, 4000)
             document.querySelectorAll('yt-next-continuation').forEach(el => {
                 console.log(el);
