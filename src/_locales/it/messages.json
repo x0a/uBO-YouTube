@@ -1,21 +1,21 @@
 {
     "okBtn": {
-        "message": "OK",
+        "message": "Ok",
         "description": "Appears as button in confirmation dialog"
     },
     "cancelBtn": {
-        "message": "Annuler",
+        "message": "Annulla",
         "description": "Appears as button in confirmation dialog"
     },
     "optionsBtn": {
-        "message": "Options",
+        "message": "Opzioni",
         "description": "For a button in the popup page, when clicked opens the full settings page"
     },
     "adOptionsDefaultTooltip": {
-        "message": "Options pour cet annonceur"
+        "message": "Opzioni per questo inserzionista"
     },
     "adOptionsTooltip": {
-        "message": "Gérer les annonces provenant de \"$title$\"",
+        "message": "Gestisci gli annunci da \"$title$",
         "placeholders": {
             "title": {
                 "content": "$1"
@@ -23,96 +23,96 @@
         }
     },
     "reset": {
-        "message": "Restaurer les paramètres par défaut"
+        "message": "Ripristina le impostazioni predefinite"
     },
     "import": {
-        "message": "Importer les réglages depuis un fichier"
+        "message": "Importa impostazioni da un file"
     },
     "export": {
-        "message": "Exporter les réglages vers un fichier"
+        "message": "Esporta opzioni in un file"
     },
     "resetConfirm": {
-        "message": "Ceci effacera tous les éléments de la liste blanche, les options d'annonce et les préférences. Si vous ne voulez pas perdre vos paramètres, annulez et cliquez d'abord sur \"Télécharger\"."
+        "message": "Questo cancellerà tutti gli elementi della whitelist, le opzioni pubblicitarie e le preferenze. Se non vuoi perdere le impostazioni, annulla e clicca prima su \"Scarica\"."
     },
     "whitelistTabTitle": {
-        "message": "Liste blanche",
+        "message": "Whitelist",
         "description": "Appears as title for tab in options page"
     },
     "whitelistTooltip": {
-        "message": "Activer les annonces pour cette chaîne"
+        "message": "Abilita pubblicità per questo canale"
     },
     "whitelistedTooltip": {
-        "message": "Annonces activées pour cette chaîne"
+        "message": "Annunci abilitati per questo canale"
     },
     "adsTabTitle": {
-        "message": "Annonces",
+        "message": "Pubblicità",
         "description": "Appears as title for tab in options page"
     },
     "adsEnableBtn": {
-        "message": "Annonces",
+        "message": "Pubblicità",
         "description": "Shown next to channels, short for 'Enable ads for this channel'"
     },
     "miscTabTitle": {
-        "message": "Divers",
+        "message": "Altro",
         "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
     },
     "channelColumn": {
-        "message": "Chaîne",
+        "message": "Canale",
         "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
     },
     "advertiserColumn": {
-        "message": "Annonceur",
+        "message": "Inserzionista",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
     },
     "videoColumn": {
-        "message": "Vidéo",
+        "message": "Video",
         "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
     },
     "statusColumn": {
-        "message": "État",
+        "message": "Stato",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
     },
     "actionColumn": {
-        "message": "Action",
+        "message": "Azione",
         "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
     },
     "addBtn": {
-        "message": "Ajouter",
+        "message": "Aggiungi",
         "description": "Button shown next to channel name, for adding to whitelist"
     },
     "addedBtn": {
-        "message": "Ajouté",
+        "message": "Aggiunto",
         "description": "Shown next to channel search results that are already in whitelist"
     },
     "removeBtn": {
-        "message": "Supprimer"
+        "message": "Rimuovi"
     },
     "bulkRemoveBtn": {
-        "message": "Supprimer les éléments sélectionnés"
+        "message": "Rimuovi selezionati"
     },
     "adsStillBlocked": {
-        "message": "Les annonces peuvent toujours être bloquées, assurez-vous d'avoir ajouté la règle suivante à votre liste blanche d'uBlock Origin"
+        "message": "Gli annunci potrebbero ancora essere bloccati, assicurati di aver aggiunto la seguente regola alla tua whitelist di uBlock Origin"
     },
     "adsHeaderLong": {
-        "message": "Annonceurs récemment détectés"
+        "message": "Inserzionisti rilevati di recente"
     },
     "adsHeaderShort": {
-        "message": "Annonces récentes"
+        "message": "Annunci recenti"
     },
     "whitelistHeader": {
-        "message": "Chaînes dans la Liste Blanche"
+        "message": "Canali nella whitelist"
     },
     "excludeHeader": {
-        "message": "Exclure de la liste blanche"
+        "message": "Escludi dalla whitelist"
     },
     "removeWhitelistTooltip": {
-        "message": "Enlever la chaîne de la liste blanche"
+        "message": "Rimuovi canale dalla whitelist"
     },
     "removeExcludeTooltip": {
-        "message": "Réautoriser la chaine à être mise en liste blanche si vous êtes abonnés"
+        "message": "Consenti nuovamente al canale di essere inserito nella whitelist se iscritto"
     },
     "removeFailed": {
-        "message": "Impossible de supprimer les éléments demandés : $error$",
+        "message": "Impossibile rimuovere gli elementi richiesti: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -120,7 +120,7 @@
         }
     },
     "removeExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$channelName$\" à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "Sei sicuro di voler consentire che \"$channelName$\" sia automaticamente aggiuntu alla whitelist (se iscritto)?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -128,7 +128,7 @@
         }
     },
     "removeWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "Sei sicuro di voler rimuovere \"$channelName$\" dalla whitelist?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -136,7 +136,7 @@
         }
     },
     "bulkRemoveWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "Sei sicuro di voler rimuovere $count$ elementi dalla whitelist?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -144,7 +144,7 @@
         }
     },
     "bulkRemoveExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$count$\" objets à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "Sei sicuro di voler consentire che $count$ elementi siano automaticamente aggiuntu alla whitelist (se iscritto)?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -152,13 +152,13 @@
         }
     },
     "blacklistHeader": {
-        "message": "Liste noire d'Annonceurs"
+        "message": "Inserzionisti Blacklist"
     },
     "removeBlacklistTooltip": {
-        "message": "Enlever la chaîne de la liste noire"
+        "message": "Rimuovi canale dalla blacklist"
     },
     "removeBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "Sei sicuro di voler rimuovere \"$channelName$\" dalla blacklist?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -166,7 +166,7 @@
         }
     },
     "bulkRemoveBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "Sei sicuro di voler rimuovere $count$ elementi dalla blacklist?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -174,13 +174,13 @@
         }
     },
     "unmutedHeader": {
-        "message": "Annonceurs non muets"
+        "message": "Inserzionisti non mutati"
     },
     "muteBtn": {
-        "message": "Muter l'annonceur"
+        "message": "Silenzia inserzionista"
     },
     "removeUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour \"$channelName$\" ?",
+        "message": "Sei sicuro di voler riprendere il muting per \"$channelName$\"?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -188,7 +188,7 @@
         }
     },
     "bulkRemoveUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour $count$ éléments ?",
+        "message": "Sei sicuro di voler riprendere il muting per $count$ elementi?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -196,16 +196,16 @@
         }
     },
     "mutelistHeader": {
-        "message": "Annonceurs muets"
+        "message": "Inserzionisti silenziati"
     },
     "removeMuteBtn": {
-        "message": "Dé-muter l'annonceur"
+        "message": "Riattiva l'inserzionista"
     },
     "removeMuteTooltip": {
-        "message": "Supprimer l'annonceur de la liste des annonceurs muets"
+        "message": "Rimuovi inserzionista dalla lista mute"
     },
     "removeMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste des annonceurs muets ?",
+        "message": "Sei sicuro di voler rimuovere \"$channelName$\" dalla lista mute?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -213,7 +213,7 @@
         }
     },
     "bulkRemoveMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste des annonceurs muets ?",
+        "message": "Sei sicuro di voler rimuovere $count$ elementi dalla lista mute?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -221,46 +221,46 @@
         }
     },
     "resetBtn": {
-        "message": "Réinitialiser"
+        "message": "Reimposta"
     },
     "resetTooltip": {
-        "message": "Effacer tous les paramètres"
+        "message": "Cancella tutte le impostazioni"
     },
     "emptyList": {
-        "message": "Vide"
+        "message": "Nessuno"
     },
     "importBtn": {
-        "message": "Sélectionner un fichier..."
+        "message": "Seleziona il file..."
     },
     "exportBtn": {
-        "message": "Télécharger"
+        "message": "Scarica"
     },
     "exportAltBtn": {
-        "message": "Exporter"
+        "message": "Esporta"
     },
     "channelSearchHeader": {
-        "message": "Trouver des chaînes"
+        "message": "Trova canali"
     },
     "adOptionsHeader": {
-        "message": "Options d'annonce"
+        "message": "Opzioni pubblicità"
     },
     "muteOption": {
-        "message": "Muter les annonces par défaut"
+        "message": "Muta gli annunci per impostazione predefinita"
     },
     "overlaysOption": {
-        "message": "Masquer les annonces superposées"
+        "message": "Nascondi le sovrapposizioni degli annunci"
     },
     "autoWhiteOption": {
-        "message": "Ajouter les chaines auxquelles vous êtes abonnés en liste blanche par défaut"
+        "message": "Autorizza i canali a cui sei iscritto per prrdefinito"
     },
     "autoWhiteTooltip": {
-        "message": "Cela peut entrainer des annonces pre-roll lors du premier chargement des pages"
+        "message": "Questo può risultare in annunci pre-roll quando le pagine sono caricati per la prima volta"
     },
     "limitAdsOption": {
-        "message": "Limiter les annonces par vidéo"
+        "message": "Limita gli annunci per video"
     },
     "autoSkipOption": {
-        "message": "Ignorer automatiquement les annonces"
+        "message": "Salta automaticamente gli annunci"
     },
     "autoSkipValue": {
         "message": "$number$s",
@@ -272,36 +272,36 @@
         }
     },
     "adErrorsOption": {
-        "message": "Ignorer les erreurs de lecture des annonces"
+        "message": "Salta gli errori di riproduzione dell'annuncio"
     },
     "adErrorsOptionTooltip": {
-        "message": "Passe à la vidéo si l'annonce ne fonctionne pas, plutôt que d'afficher l'erreur \"Une erreur s'est produite\" avec l'animation de TV statique"
+        "message": "Passa al video se l'annuncio non riesce a riprodurrsi, invece di mostrare 'Si è verificato un errore' con la TV statica"
     },
     "verifyWlOption": {
-        "message": "Vérifier le statut de la liste blanche"
+        "message": "Verifica lo stato della whitelist"
     },
     "verifyWlOptionTooltip": {
-        "message": "Confirme que les annonces ne sont pas bloquées sur les chaînes en liste blanche en simulant le chargement d'une annonce"
+        "message": "Confermare che gli annunci non sono bloccati sui canali whitelist simulando il caricamento di un annuncio"
     },
     "adBlocked": {
-        "message": "Bloqué",
+        "message": "Bloccato",
         "description": "Shown next to ads that were blocked"
     },
     "adAllowed": {
-        "message": "Autorisé",
+        "message": "Consentito",
         "description": "Shown next to ads that were allowed through"
     },
     "muteAdvertiserTooltip": {
-        "message": "Muter automatiquement toutes les annonces de cet annonceur"
+        "message": "Silenzia automaticamente tutti gli annunci da questo inserzionista"
     },
     "blacklistAdvertiserTooltip": {
-        "message": "Bloquer toutes les annonces de cet annonceur"
+        "message": "Blocca tutti gli annunci da questo inserzionista"
     },
     "blacklistBtn": {
-        "message": "Bloquer cet annonceur"
+        "message": "Blocca inserzionista"
     },
     "autoSkipTooltip": {
-        "message": "Ignorer dans $number$",
+        "message": "Saltare al $number$",
         "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
@@ -310,48 +310,48 @@
         }
     },
     "skipBtn": {
-        "message": "Passer l'annonce"
+        "message": "Forzare il salto"
     },
     "skipTooltip": {
-        "message": "Tente de forcer le passage de l'annonce"
+        "message": "Tentativo di saltare questo anuncio"
     },
     "pauseAfterAdOption": {
-        "message": "Mode Anti-Sursaut"
+        "message": "Modalità Anti-Avvio"
     },
     "pauseAfterAdTooltip": {
-        "message": "Si une annonce muette se termine, et que l'onglet n'est pas actuellement affiché, la vidéo est discrètement mise en pause jusqu'à ce que l'utilisateur y retourne"
+        "message": "Se un annuncio silenziato finisce la riproduzione, e la scheda non è attualmente in messa a fuoco, il video verrá silenziosamente in pausa in background fino a quando l'utente torna a quello"
     },
     "keyboardSkipOption": {
-        "message": "Touche flèche droite pour ignorer une annonce de force"
+        "message": "Tasto freccia destra per forzare gli annunci"
     },
     "permissionDesc": {
-        "message": "Une permission unique est nécessaire pour rechercher des chaînes YouTube"
+        "message": "È necessaria un'autorizzazione unica per cercare i canali YouTube"
     },
     "permissionBtn": {
-        "message": "Accorder l’autorisation"
+        "message": "Dai il permesso"
     },
     "searchDesc": {
-        "message": "Entrez du texte pour rechercher une chaîne ou",
+        "message": "Digita per cercare un canale youtube o",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
     },
     "searchPlaceholder": {
-        "message": "Rechercher une chaîne...",
+        "message": "Nome del canale..",
         "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },
     "searching": {
-        "message": "Recherche en cours..."
+        "message": "Ricerca in corso..."
     },
     "searchFailed": {
-        "message": "Impossible de charger les résultats. Hors ligne ?"
+        "message": "Impossibile caricare i risultati. Magari sei Offline?"
     },
     "importSubsBtn": {
-        "message": "Importer depuis les Abonnements"
+        "message": "Importa da Abbonamenti di Youtube"
     },
     "importSubsFailed": {
-        "message": "Impossible de récupérer les abonnements. Assurez-vous d'être connecté à YouTube."
+        "message": "Impossibile recuperare le iscrizioni. Assicurati di aver effettuato l'accesso a YouTube."
     },
     "importSubsConfirm": {
-        "message": "$total$ abonnements trouvés, dont $new$ ne sont pas dans la liste. Ajouter ces $new$ éléments à la liste blanche ?",
+        "message": "Trovati $total$ abbonamenti, di cui $new$ non sono nella lista. Aggiungere $new$ elementi alla whitelist?",
         "placeholders": {
             "total": {
                 "content": "$1"
@@ -362,7 +362,7 @@
         }
     },
     "updateFailed": {
-        "message": "Impossible de définir les paramètres, erreur rencontrée : $error$",
+        "message": "Impossibile modificare le impostazioni, é successo errore: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -370,7 +370,7 @@
         }
     },
     "wrongFormat": {
-        "message": "Le fichier doit être de type \"$expected$\", mais un fichier \"$encountered$\" a été détecté",
+        "message": "Il file deve essere di tipo \"$expected$\", ma abbiamo uno del tipo \"$encountered$\" invece",
         "placeholders": {
             "expected": {
                 "content": "application/json"
@@ -381,13 +381,13 @@
         }
     },
     "parseFailed": {
-        "message": "Impossible d'analyser en tant que JSON. Le fichier n'est probablement pas en JSON, ou il est corrompu."
+        "message": "Impossibile analizzare il JSON file. Il file probabilmente non è JSON o è danneggiato."
     },
     "noNew": {
-        "message": "Aucun nouvel élément à ajouter"
+        "message": "Nessun nuovo elemento da aggiungere"
     },
     "confirmImport": {
-        "message": "Ajouter $whitelisted$ éléments à la liste blanche, $blacklisted$ éléments à la liste noire, et $muted$ éléments à la liste des annonceurs mutés ?",
+        "message": "Aggiungere $whitelisted$ elementi alla whitelist, $blacklisted$ elementi alla blacklist e $muted$ elementi alla lista mute?",
         "placeholders": {
             "whitelisted": {
                 "content": "$1"

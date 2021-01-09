@@ -253,8 +253,23 @@
     "autoWhiteOption": {
         "message": "Abonnierte Kanäle automatisch auf die Whitelist setzen"
     },
+    "autoWhiteTooltip": {
+        "message": "Dies kann zu Pre-Roll Ads führen, wenn Seiten zum ersten mal geladen werden"
+    },
+    "limitAdsOption": {
+        "message": "Werbung pro Video begrenzen"
+    },
     "autoSkipOption": {
         "message": "Werbung automatisch überspringen"
+    },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
     },
     "adErrorsOption": {
         "message": "Fehler bei der Werbungswiedergabe überspringen"
@@ -286,7 +301,8 @@
         "message": "Werbetreibenden sperren"
     },
     "autoSkipTooltip": {
-        "message": "Überspringt in $number Sekunden",
+        "message": "Überspringen in $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
                 "content": "$1"
@@ -304,6 +320,9 @@
     },
     "pauseAfterAdTooltip": {
         "message": "Wenn eine stummgeschaltene Anzeige fertig abgespielt wurde, und der Tab gerade nicht angesehen wird, wird das Video pausiert bis der Benutzer wieder zum Tab zurückkehrt"
+    },
+    "keyboardSkipOption": {
+        "message": "Rechtspfeil, um Werbung überspringen zu erzwingen"
     },
     "permissionDesc": {
         "message": "Eine einmalige Berechtigung wird benötigt, um nach YouTube-Kanälen suchen zu können"
