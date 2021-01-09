@@ -1021,10 +1021,19 @@ class ChannelFeedPoly {
             this.debug = location.href.indexOf('&debug=true') !== -1;
 
             log('Capturing channels...');
+
+            this.insertUnload();
             this.insertCSS();
             this.instantAnimation();
             this.capture = true;
         }
+    }
+    insertUnload() {
+        window.addEventListener('beforeunload', () => {
+            if (!this.capture) {
+                settings.whitelisted.suggest(undefined);
+            }
+        })
     }
     insertCSS() {
         const nextCSS = document.createElement('style');
@@ -1327,7 +1336,8 @@ class Page {
 
                 for (let link of links)
                     link.href = destURL;
-
+                if (Obj.get(video, 'data.content.videoRenderer.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
+                    video.data.content.videoRenderer.navigationEndpoint.commandMetadata.webCommandMetadata.url = destURL
                 if (Obj.get(video, 'data.navigationEndpoint.webNavigationEndpointData.url'))
                     video.data.navigationEndpoint.webNavigationEndpointData.url = destURL;
                 if (Obj.get(video, 'data.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
