@@ -196,6 +196,18 @@ const Alert: FunctionComponent<AlertProps> = ({ text, danger, confirm, onConfirm
             alertRef.current.style.top = (window.innerHeight / 2 - height / 2) + 'px';
             okBtn.current.focus();
         }
+        const fn = (event: KeyboardEvent) => {
+            console.log('hey', event.key)
+            if (show && event.key === 'Escape') {
+                if (confirm) {
+                    onCancel();
+                } else {
+                    onConfirm();
+                }
+            }
+        }
+        document.addEventListener('keyup', fn);
+        return () => document.removeEventListener('keyup', fn);
     }, [show]);
 
     return <div className={show ? '' : 'd-none'}>
