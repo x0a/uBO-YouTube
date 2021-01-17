@@ -18,10 +18,15 @@ const ImportSubscriptions: FunctionComponent<{
         onSuggestions(channels => resolver && resolver(channels));
     }, [settings])
     const importSubscriptions = () => {
+
         const awaitImport = new Promise(resolve => {
             resolver = resolve;
             setImporting(true)
-            openTab('https://www.youtube.com/feed/channels?uBO-YT-extract', false);
+
+            fetch('https://www.youtube.com/account?pbj=1')
+                .then(resp => resp.text())
+                .then(() => openTab('https://www.youtube.com/feed/channels?uBO-YT-extract', false))
+                .catch(err => resolve(null));
         }) as Promise<Array<Channel>>;
 
         awaitImport
@@ -51,6 +56,8 @@ const ImportSubscriptions: FunctionComponent<{
                             skipAdErrors: settings.skipAdErrors,
                             pauseAfterAd: settings.pauseAfterAd,
                             autoSkip: settings.autoSkip,
+                            limitAds: settings.limitAds,
+                            limitAdsQty: settings.limitAdsQty,
                             autoSkipSeconds: settings.autoSkipSeconds,
                             keyboardSkip: settings.keyboardSkip
                         })
