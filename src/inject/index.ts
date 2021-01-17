@@ -271,7 +271,7 @@ class MutationWatcher {
     onMutation(mutations: Array<MutationElement>) {
         for (const mutation of mutations) {
             const type = pages.getType();
-            this.findInjection(mutation, 'ytd-section-list-renderer');
+            //this.findInjection(mutation, 'ytd-section-list-renderer');
             if (type === PageType.Video) {
                 let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
 
