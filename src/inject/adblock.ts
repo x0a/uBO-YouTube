@@ -1,6 +1,12 @@
 import log, { err } from './logging';
 import Obj from './objutils';
 
+const enum Action {
+    Remove,
+    Hide
+}
+type ElAction = [HTMLElement, (el: HTMLElement) => void];
+
 const jsonRules = 'playerAds adPlacements';
 const globals = ['ytInitialPlayerResponse'];
 const netFilters = Object.freeze([
@@ -10,27 +16,34 @@ const netFilters = Object.freeze([
     /get_video_info.+=adunit/g,
     'get_midroll_info'
 ]);
-const domFilters = Object.freeze(['#masthead-ad',
+const filter = (selector: string, action: Action) => {
+    return { selector, action };
+}
+const domFilters = ['#masthead-ad',
     'ytd-action-companion-ad-renderer',
     'ytd-promoted-sparkles-text-search-renderer',
     'ytd-player-legacy-desktop-watch-ads-renderer',
-    'ytd-promoted-sparkles-web-renderer',
-    'ytd-rich-item-renderer:has(ytd-display-ad-renderer)']);
+    'ytd-promoted-sparkles-web-renderer']
+    .map(selector => filter(selector, Action.Remove));
+
+domFilters.push(filter('ytd-rich-item-renderer:has(ytd-display-ad-renderer)', Action.Hide));
 
 class AdBlock {
     private prune: boolean;
     private xhr: boolean;
     private dom: boolean;
     private fetch: boolean;
+    public immutableBlock: boolean;
 
-    private matches: (el: HTMLElement) => HTMLElement;
-    private queryAllFilters: () => Array<HTMLElement>;
+    private matches: (el: HTMLElement) => ElAction;
+    private queryAllFilters: () => Array<ElAction>;
     private onNetListener: (url: string) => void;
     private onAdsListener: (ads: Array<any>) => Array<any>;
     private unhookAll: () => void;
 
     constructor(block: boolean) {
         const [queryAllFilters, matches] = this.parseDOMFilters();
+        this.immutableBlock = false;
         this.queryAllFilters = queryAllFilters;
         this.matches = matches;
         this.onNetListener = () => { };
@@ -56,7 +69,7 @@ class AdBlock {
     toggleDOM(block: boolean) {
         if (!this.dom && block) {
             this.queryAllFilters()
-                .forEach(el => this.forceRemove(el));
+                .forEach(([el, action]) => action(el));
         }
         this.dom = block;
     }
@@ -127,10 +140,13 @@ class AdBlock {
         }
         const pruneOnly = (obj: any) => {
             try {
-                if (this.prune)
-                    rules.forEach(rule => Obj.prune(obj, rule));
-                else
+                if (this.prune) {
+                    if (rules.map(rule => Obj.prune(obj, rule)).some(found => found)) {
+                        this.immutableBlock = true;
+                    }
+                } else {
                     rules.forEach(rule => Obj.replaceAll(obj, rule, this.onAdsListener))
+                }
             } catch (e) {
                 err('uBO-YT-Prune', e, obj)
             }
@@ -225,7 +241,7 @@ class AdBlock {
             lengthComputable: false,
         })
     }
-    private parseDOMFilters(): [() => Array<HTMLElement>, (el: HTMLElement) => HTMLElement] {
+    private parseDOMFilters(): [() => Array<ElAction>, (el: HTMLElement) => ElAction] {
         // this function creates two arrays, one of the css selector to actually search for
         // the other of the function to run to find the actual target
         // for most css selectors, the target will be the same as the element returned by the selector
@@ -235,41 +251,48 @@ class AdBlock {
         const same = (el: HTMLElement) => el;
         const targeters = new Array(domFilters.length) as Array<(el: HTMLElement) => HTMLElement>;
         const queries = new Array(domFilters.length) as Array<string>;
+        const actions = new Array(domFilters.length) as Array<(el: HTMLElement) => void>;
 
         for (let i = 0; i < domFilters.length; i++) {
-            const filter = domFilters[i];
-            const condition = filter.match(/([^:]+):([^\(]+)\(([^\)]+)\)/);
+            const { selector, action } = domFilters[i];
+            const condition = selector.match(/([^:]+):([^\(]+)\(([^\)]+)\)/);
             if (condition) {
                 const [, target, method, query] = condition;
                 if (method !== 'has') {
                     err('uBO-DOM', 'Method', method, 'is currently not supported');
                     queries[i] = query;
                     targeters[i] = same;
-                    continue;
                 } else {
                     queries[i] = query;
                     targeters[i] = (el: HTMLElement) => el.closest(target);
                 }
             } else {
-                queries[i] = filter;
+                queries[i] = selector;
                 targeters[i] = same;
             }
+            if (action === Action.Hide) {
+                actions[i] = AdBlock.forceHide;
+            } else if (action === Action.Remove) {
+                actions[i] = AdBlock.forceRemove;
+            }
+
         }
 
-        const queryAllFilters = () => {
+        const queryAllFilters = (): Array<ElAction> => {
             const all = [];
             for (let i = 0; i < queries.length; i++) {
                 const next = Array.from(document.querySelectorAll(queries[i]))
                     .map(el => targeters[i](el as HTMLElement))
-                    .filter(el => el);
+                    .filter(el => el)
+                    .map(el => [el, actions[i]] as ElAction)
                 all.push(next);
             }
             return all.flat()
         }
 
-        const matches = (el: HTMLElement) => {
+        const matches = (el: HTMLElement): ElAction | null => {
             const i = queries.findIndex(query => el.nodeType === Node.ELEMENT_NODE && el.matches(query));
-            return i !== -1 ? targeters[i](el) : null;
+            return i !== -1 ? [targeters[i](el), actions[i]] : null;
         }
 
         return [queryAllFilters, matches];
@@ -278,14 +301,16 @@ class AdBlock {
         const watch = new MutationObserver(muts => this.dom && muts.forEach(mut => {
             if (mut.type === 'childList') {
                 mut.addedNodes.forEach((el: HTMLElement) => {
-                    const target = this.matches(el);
-                    if (target)
-                        this.forceRemove(target);
+                    const match = this.matches(el);
+                    if (!match) return;
+                    const [target, action] = match;
+                    action(target);
                 });
             } else {
-                const target = this.matches(mut.target as HTMLElement);
-                if (target)
-                    this.forceRemove(target);
+                const match = this.matches(mut.target as HTMLElement);
+                if (!match) return;
+                const [target, action] = match;
+                action(target);
             }
         }))
         watch.observe(document.documentElement, {
@@ -294,20 +319,25 @@ class AdBlock {
         })
         return () => { watch.disconnect() };
     }
-    private forceRemove(el: HTMLElement) {
-        log('uBO-YT-DOM', el);
+    static forceHide(el: HTMLElement, shouldLog = true) {
+        if (shouldLog) log('uBO-YT-DOM', 'Hiding', el);
         el.style.setProperty('display', 'none', '!important');
         el.classList.add('force-hide');
-        el.remove(); // also just get rid of it
+    }
+    static forceRemove(el: HTMLElement) {
+        log('uBO-YT-DOM', 'Removing', el)
+        AdBlock.forceHide(el, false);
+        el.remove();
     }
     private hookFetch() {
         const origFetch = window.fetch;
+        const self = this;
         window.fetch = function () {
             const [req] = arguments;
 
             const url = req instanceof Request ? req.url : req;
 
-            if (netFilters.some(filter => url.indexOf(filter) !== -1)) {
+            if (self.fetch && netFilters.some(filter => url.indexOf(filter) !== -1)) {
                 log('uBO-YT-Fetch', url);
                 return Promise.reject(new TypeError('Failed to fetch'));
             } else
