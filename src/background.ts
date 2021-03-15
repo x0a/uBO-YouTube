@@ -30,6 +30,7 @@ class SettingsManager {
     verifyWl: boolean;
     limitAds: boolean;
     limitAdsQty: number;
+    forceWhite: boolean;
     constructor(settings: Settings) {
         settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
@@ -47,6 +48,7 @@ class SettingsManager {
         this.verifyWl = settings.verifyWl;
         this.limitAds = settings.limitAds;
         this.limitAdsQty = settings.limitAdsQty
+        this.forceWhite = settings.forceWhite;
     }
 
     static sanitizeSettings(settings?: Settings): Settings {
@@ -68,6 +70,7 @@ class SettingsManager {
         settings.verifyWl = settings.verifyWl === undefined ? true : !!settings.verifyWl;
         settings.limitAds = !!settings.limitAds;
         settings.limitAdsQty = !isNaN(settings.limitAdsQty) && settings.limitAdsQty > 0 ? settings.limitAdsQty : 2;
+        settings.forceWhite = !!settings.forceWhite;
 
         return settings;
     }
@@ -152,6 +155,9 @@ class SettingsManager {
     toggleVerifyWl(on: boolean) {
         this.verifyWl = !!on;
     }
+    toggleForceWl(on: boolean) {
+        this.forceWhite = !!on;
+    }
     toggleAutoSkip(on: boolean, seconds: AutoSkipSeconds) {
         this.autoSkip = !!on;
         this.autoSkipSeconds = seconds === undefined ? 30 : ~~seconds as AutoSkipSeconds;
@@ -180,7 +186,8 @@ class SettingsManager {
             keyboardSkip: this.keyboardSkip,
             verifyWl: this.verifyWl,
             limitAds: this.limitAds,
-            limitAdsQty: this.limitAdsQty
+            limitAdsQty: this.limitAdsQty,
+            forceWhite: this.forceWhite
         };
     }
     getCompressed(): any {
@@ -556,6 +563,7 @@ SettingsManager.getSettings()
             .on('limit-ads', (_, { limitAds, limitAdsQty }) => settings.toggleLimitAds(limitAds, limitAdsQty))
             .on('keyboard-skip', (_, nextKeyboardSkip) => settings.toggleKeyboardSkip(nextKeyboardSkip))
             .on('verify-wl', (_, shouldVerify) => settings.toggleVerifyWl(shouldVerify))
+            .on('force-wl', (_, shouldForce) => settings.toggleForceWl(shouldForce))
             .onAll(sender => {
                 settings.save();
                 settings.updateAll(sender.tab);

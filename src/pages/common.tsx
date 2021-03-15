@@ -76,7 +76,8 @@ const defaultSettings = (): Settings => ({
     autoSkipSeconds: 30,
     verifyWl: true,
     limitAds: false,
-    limitAdsQty: 2
+    limitAdsQty: 2,
+    forceWhite: false
 })
 const isSettings = (prospect: any): prospect is Settings => {
     return typeof prospect === 'object'
@@ -118,7 +119,8 @@ const canonicalizeSettings = (prospect: Settings, defaults = defaultSettings()):
         keyboardSkip: prospect.keyboardSkip === undefined ? defaults.keyboardSkip : prospect.keyboardSkip,
         verifyWl: prospect.verifyWl === undefined ? defaults.verifyWl : prospect.verifyWl,
         limitAds: prospect.limitAds === undefined ? defaults.limitAds : prospect.limitAds,
-        limitAdsQty: prospect.limitAdsQty === undefined ? defaults.limitAdsQty : prospect.limitAdsQty
+        limitAdsQty: prospect.limitAdsQty === undefined ? defaults.limitAdsQty : prospect.limitAdsQty,
+        forceWhite: prospect.forceWhite === undefined ? defaults.forceWhite : prospect.forceWhite
     }
 }
 
@@ -141,7 +143,8 @@ const diffSettings = (current: Settings, next: Settings): Settings => {
         keyboardSkip: next.keyboardSkip,
         verifyWl: next.verifyWl,
         limitAds: next.limitAds,
-        limitAdsQty: next.limitAdsQty
+        limitAdsQty: next.limitAdsQty,
+        forceWhite: next.forceWhite
     }
 }
 const mergeSettings = (current: Settings, next: Settings): Settings => {
@@ -160,7 +163,8 @@ const mergeSettings = (current: Settings, next: Settings): Settings => {
         keyboardSkip: next.keyboardSkip,
         verifyWl: next.verifyWl,
         limitAds: next.limitAds,
-        limitAdsQty: next.limitAdsQty
+        limitAdsQty: next.limitAdsQty,
+        forceWhite: next.forceWhite
     }
 }
 const settingsFromList = (list: ChannelList, exportKey: string) => ({

@@ -95,11 +95,14 @@ class Obj {
         }
         return obj;
     }
-    static prune(obj: any, keyName: string): void {
+    static prune(obj: any, keyName: string): boolean {
         let parent: any;
+        let found = false;
         while (parent = this.findParent(obj, keyName)){
             delete parent[keyName];
+            found = true;
         }
+        return found;
     }
     static replaceAll(obj: any, keyName: string, replacer: (value: any) => any): void {
         const cache = [] as Array<any>;

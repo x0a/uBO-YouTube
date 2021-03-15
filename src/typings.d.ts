@@ -32,6 +32,7 @@ interface Settings<T = ChannelList> {
     verifyWl: boolean;
     limitAds: boolean;
     limitAdsQty: number;
+    forceWhite: boolean;
 }
 type ReadonlySettings<T = ChannelList> = Readonly<Settings<T>>;
 interface AccessURL {

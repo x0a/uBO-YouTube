@@ -113,6 +113,12 @@ const Main: FunctionComponent<{
                                         tooltip={i18n('verifyWlOptionTooltip')}
                                     />
                                     <SwitchableOption
+                                        checked={settings.forceWhite}
+                                        onChange={(checked) => bMessage('set', 'force-wl', checked)}
+                                        text={i18n('forceWlOption')}
+                                        tooltip={i18n('forceWlOptionTooltip')}
+                                    />
+                                    <SwitchableOption
                                         checked={settings.skipOverlays}
                                         onChange={(checked) => bMessage('set', 'skip-overlays', checked)}
                                         text={i18n('overlaysOption')}
