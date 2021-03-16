@@ -1,0 +1,403 @@
+{
+    "okBtn": {
+        "message": "حسنًا",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "إلغاء",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "الخيارات",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "خيارات لهذا المعلن"
+    },
+    "adOptionsTooltip": {
+        "message": "إدارة الإعلانات من \"$title$\"",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "إعادة تعيين إلى الإعدادات الافتراضية"
+    },
+    "import": {
+        "message": "استيراد الإعدادات من الملف"
+    },
+    "export": {
+        "message": "تصدير الإعدادات إلى ملف"
+    },
+    "resetConfirm": {
+        "message": "سيؤدي هذا إلى محو جميع العناصر المدرجة في القائمة البيضاء وخيارات الإعلانات والإعدادات. إذا كنت لا تريد فقدان الإعدادات الخاصة بك، قم بإلغاء وانقر \"تنزيل\" أولاً."
+    },
+    "whitelistTabTitle": {
+        "message": "القائمة البيضاء",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "السماح بالإعلانات على هذا القناة"
+    },
+    "whitelistedTooltip": {
+        "message": "تم تمكين الإعلانات لهذه القناة"
+    },
+    "adsTabTitle": {
+        "message": "الإعلانات",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "إعلانات",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "اخرى",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "القناة",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "المُعلن",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "الفيديو",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "الحالة",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "الإجراء",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "اضف",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "تمت الاضافة",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "إزالة"
+    },
+    "bulkRemoveBtn": {
+        "message": "إزالة المحدد"
+    },
+    "adsStillBlocked": {
+        "message": "قد لا يزال يتم حظر الإعلانات، تأكد من إضافة القاعدة التالية إلى القائمة البيضاء الخاصة بك على uBlock Origin"
+    },
+    "adsHeaderLong": {
+        "message": "المعلنون المكتشفون مؤخرا"
+    },
+    "adsHeaderShort": {
+        "message": "الإعلانات الأخيرة"
+    },
+    "whitelistHeader": {
+        "message": "قنوات القائمة البيضاء"
+    },
+    "excludeHeader": {
+        "message": "استبعاد من القائمة البيضاء"
+    },
+    "removeWhitelistTooltip": {
+        "message": "إزالة القناة من القائمة البيضاء"
+    },
+    "removeExcludeTooltip": {
+        "message": "إعادة السماح للقناة بأن تكون مضافه في القائمة البيضاء إذا اشتركت"
+    },
+    "removeFailed": {
+        "message": "تعذر إزالة العناصر المطلوبة: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "هل أنت متأكد من أنك تريد السماح ل \"$channelName$\" أن يكون تلقائياً في القائمة البيضاء (إذا اشتركت)؟",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "هل أنت متأكد من أنك تريد إزالة \"$channelName$\" من القائمة البيضاء؟",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "هل أنت متأكد من أنك تريد إزالة $count$ عنصر من القائمة البيضاء؟",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "هل أنت متأكد من أنك تريد السماح لـ $count$ عناصر لتكون تلقائيًا في القائمة البيضاء (إذا اشتركت)؟",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "المعلنون في القائمة السوداء"
+    },
+    "removeBlacklistTooltip": {
+        "message": "إزالة القناة من القائمة السوداء"
+    },
+    "removeBlacklistConfirm": {
+        "message": "هل أنت متأكد من أنك تريد إزالة \"$channelName$\" من القائمة السوداء؟",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "هل أنت متأكد من أنك تريد إزالة $count$ عنصر من القائمة السوداء؟",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "المعلنون غير المكتومين"
+    },
+    "muteBtn": {
+        "message": "كتم المعلن"
+    },
+    "removeUnmuteConfirm": {
+        "message": "هل أنت متأكد من أنك تريد استئناف الكتم ل\"$channelName$\"؟",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "هل أنت متأكد من رغبتك في استئناف كتم الصوت لـ $count$ عناصر؟",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "المعلنون المكتومين"
+    },
+    "removeMuteBtn": {
+        "message": "إلغاء كتم المعلن"
+    },
+    "removeMuteTooltip": {
+        "message": "إزالة المعلن من قائمة الكتم"
+    },
+    "removeMuteConfirm": {
+        "message": "هل أنت متأكد من أنك تريد إزالة \"$channelName$\" من قائمة الكتم؟",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "هل أنت متأكد من أنك تريد إزالة $count$ عنصر من قائمة الكتم؟",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "إعادة تعيين"
+    },
+    "resetTooltip": {
+        "message": "مسح كافة الإعدادات"
+    },
+    "emptyList": {
+        "message": "لا يوجد"
+    },
+    "importBtn": {
+        "message": "اختر ملفّ..."
+    },
+    "exportBtn": {
+        "message": "تنزيل"
+    },
+    "exportAltBtn": {
+        "message": "تصدير"
+    },
+    "channelSearchHeader": {
+        "message": "البحث عن القنوات"
+    },
+    "adOptionsHeader": {
+        "message": "خيارات الإعلانات"
+    },
+    "muteOption": {
+        "message": "كتم صوت الإعلانات تلقائيا"
+    },
+    "overlaysOption": {
+        "message": "إخفاء طبقات الإعلانات"
+    },
+    "autoWhiteOption": {
+        "message": "القائمة البيضاء للقنوات المشتركة بشكل تلقائي"
+    },
+    "autoWhiteTooltip": {
+        "message": "قد ينتج عن هذا إعلانات ما قبل التشغيل عند تحميل الصفحات لأول مرة"
+    },
+    "limitAdsOption": {
+        "message": "حد الإعلانات لكل فيديو"
+    },
+    "autoSkipOption": {
+        "message": "تخطي الإعلانات تلقائياً"
+    },
+    "autoSkipValue": {
+        "message": "$number$ث",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "adErrorsOption": {
+        "message": "تخطي أخطاء تشغيل الإعلانات"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "تخطي الفيديو إذا فشل تشغيل الإعلان، بدلاً من إظهار \"خطأ حدث\" مع التلفزيون الثابت"
+    },
+    "verifyWlOption": {
+        "message": "التحقق من حالة القائمة البيضاء"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "تأكيد أن الإعلانات غير محظورة على القنوات المدرجة في القائمة البيضاء عن طريق محاكاة تحميل إعلان"
+    },
+    "adBlocked": {
+        "message": "محجوب",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "تم السماح",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "كتم جميع الإعلانات من هذا المعلن تلقائياً"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "حظر جميع الإعلانات من هذا المعلن"
+    },
+    "blacklistBtn": {
+        "message": "حظر المعلن"
+    },
+    "autoSkipTooltip": {
+        "message": "سيتم التخطي في $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "تخطي إجباري"
+    },
+    "skipTooltip": {
+        "message": "محاولة تخطي هذا الإعلان"
+    },
+    "pauseAfterAdOption": {
+        "message": "وضع عدم الذعر"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "إذا انتهى تشغيل إعلان تم كتم صوته، ولم تكن علامة التبويب قيد التركيز حاليًا، فسيتم إيقاف الفيديو في الخلفية حتى يعود المستخدم إليه"
+    },
+    "keyboardSkipOption": {
+        "message": "مفتاح السهم الأيمن لفرض تخطي الإعلانات"
+    },
+    "permissionDesc": {
+        "message": "مطلوب إذن لمرة واحدة للبحث عن قنوات يوتيوب"
+    },
+    "permissionBtn": {
+        "message": "منح الإذن"
+    },
+    "searchDesc": {
+        "message": "اكتب للبحث عن قناة يوتيوب أو",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "اسم القناة..",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "جاري البحث..."
+    },
+    "searchFailed": {
+        "message": "تعذر تحميل النتائج. هل انت متصل بالانترنت؟"
+    },
+    "importSubsBtn": {
+        "message": "استيراد من الاشتراكات"
+    },
+    "importSubsFailed": {
+        "message": "تعذر جلب الاشتراكات. تأكد من تسجيل الدخول إلى اليوتيوب."
+    },
+    "importSubsConfirm": {
+        "message": "تم العثور على $total$ اشتراكات، $new$ منها ليست في القائمة. إضافة $new$ عناصر إلى القائمة البيضاء؟",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "تعذر تعيين الإعدادات، واجهت خطأ: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "يجب أن يكون الملف من نوع \"$expected$\"، تم العثور على \"$encountered$\" بدلاً من ذلك",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "فشل في تحليل ملف JSON. من الارجح أن يكون الملف فاسدا او ليس JSON."
+    },
+    "noNew": {
+        "message": "لا توجد عناصر جديدة لإضافتها"
+    },
+    "confirmImport": {
+        "message": "إضافة $whitelisted$ عناصر إلى القائمة البيضاء، $blacklisted$ عناصر للقائمة السوداء، و $muted$ عناصر للقائمة الصامته؟",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    }
+}
