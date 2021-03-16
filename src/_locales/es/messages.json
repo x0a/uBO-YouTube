@@ -253,8 +253,23 @@
     "autoWhiteOption": {
         "message": "Añadir canales suscritos a la lista blanca por defecto"
     },
+    "autoWhiteTooltip": {
+        "message": "Esto puede resultar en anuncios antes del video cuando las página se carguen por primera vez"
+    },
+    "limitAdsOption": {
+        "message": "Limitar anuncios por video"
+    },
     "autoSkipOption": {
         "message": "Saltar anuncios automáticamente"
+    },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
     },
     "adErrorsOption": {
         "message": "Omitir errores de reproducción de anuncios"
@@ -286,7 +301,8 @@
         "message": "Bloquear anunciante"
     },
     "autoSkipTooltip": {
-        "message": "Omitiendo en $number segundos",
+        "message": "Saltando en $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
                 "content": "$1"
@@ -304,6 +320,9 @@
     },
     "pauseAfterAdTooltip": {
         "message": "Si un anuncio silenciado termina de reproducir, y la pestaña no está enfocada actualmente, el vídeo será pausado silenciosamente en segundo plano hasta que el usuario regrese a él"
+    },
+    "keyboardSkipOption": {
+        "message": "Tecla de flecha derecha para forzar saltar anuncios"
     },
     "permissionDesc": {
         "message": "Se necesita un permiso (solo una vez) para buscar canales de YouTube"
