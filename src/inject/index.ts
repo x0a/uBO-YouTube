@@ -459,10 +459,10 @@ class SingleChannelPage {
             // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
             if (this.firstRun) {
                 if (settings.forceWhite && whitelisted && adblock.immutableBlock) {
-                    log('uBO-reload', 'An irreversible change was made before status could be determined. Should reload...')
+                    log('uBO-reload', 'An irreversible change was made before status could be determined. Will reload...')
                     location.reload();
                 }
-                console.log(settings.forceWhite, whitelisted, adblock.immutableBlock)
+                log('uBO-reload', settings.forceWhite, whitelisted, adblock.immutableBlock)
 
                 let player = document.querySelector('#movie_player') as HTMLElement;
 
