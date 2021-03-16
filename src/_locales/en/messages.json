@@ -271,6 +271,12 @@
             }
         }
     },
+    "forceWlOption": {
+        "message": "Force whitelist on first load"
+    },
+    "forceWlOptionTooltip": {
+        "message": "This might reload the page if ads are irreversibly removed before channel information was available"
+    },
     "adErrorsOption": {
         "message": "Skip ad playback errors"
     },
