@@ -1,0 +1,409 @@
+{
+    "okBtn": {
+        "message": "OK",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Peruuta",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Asetukset",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "Valinnat tälle mainostajalle"
+    },
+    "adOptionsTooltip": {
+        "message": "Hallitse mainoksia kohteesta \"$title$\"",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "Palauta oletusasetukset"
+    },
+    "import": {
+        "message": "Tuo asetukset tiedostosta"
+    },
+    "export": {
+        "message": "Vie asetukset tiedostoon"
+    },
+    "resetConfirm": {
+        "message": "Tämä poistaa kaikki sallitut kohteet, mainosten valinnat ja asetukset. Jos et halua menettää asetuksiasi, peruuta ja klikkaa ensin \"Lataa\"."
+    },
+    "whitelistTabTitle": {
+        "message": "Sallitut",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "Salli mainokset tällä kanavalla"
+    },
+    "whitelistedTooltip": {
+        "message": "Mainokset sallittu tällä kanavalla"
+    },
+    "adsTabTitle": {
+        "message": "Mainokset",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "Mainokset",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "Muut",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "Kanava",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Mainostaja",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Video",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "Tila",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "Toiminnot",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "Lisää",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "Lisätty",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "Poista"
+    },
+    "bulkRemoveBtn": {
+        "message": "Poista valitut"
+    },
+    "adsStillBlocked": {
+        "message": "Mainoksia voidaan edelleen estää, varmista että olet lisännyt seuraavan säännön uBlock Origin -valkolistalle"
+    },
+    "adsHeaderLong": {
+        "message": "Äskettäin havaitut mainostajat"
+    },
+    "adsHeaderShort": {
+        "message": "Viimeisimmät mainokset"
+    },
+    "whitelistHeader": {
+        "message": "Sallitut kanavat"
+    },
+    "excludeHeader": {
+        "message": "Jätä pois sallittujen listalta"
+    },
+    "removeWhitelistTooltip": {
+        "message": "Poista kanava sallittujen listalta"
+    },
+    "removeExcludeTooltip": {
+        "message": "Salli kanava uudelleen jos tilattu"
+    },
+    "removeFailed": {
+        "message": "Pyydettyjä kohteita ei voitu poistaa: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "Haluatko varmasti sallia kanavan \"$channelName$\" automaattisesti (jos tilattu)?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "Haluatko varmasti poistaa kanavan \"$channelName$\" sallituista?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "Haluatko varmasti poistaa $count$ kohdetta sallituista?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "Haluatko varmasti sallia \"$count$\" kanavaa automaattisesti (jos tilattu)?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "Estetyt mainostajat"
+    },
+    "removeBlacklistTooltip": {
+        "message": "Poista kanava estetyistä"
+    },
+    "removeBlacklistConfirm": {
+        "message": "Haluatko varmasti poistaa kanavan \"$channelName$\" estetyistä?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "Haluatko varmasti poistaa \"$count$\" kanavaa estetyistä?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "Ei-hiljennetyt mainostajat"
+    },
+    "muteBtn": {
+        "message": "Hiljennä mainostaja"
+    },
+    "removeUnmuteConfirm": {
+        "message": "Haluatko varmasti jatkaa hiljennystä kanavalle \"$channelName$\"?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "Haluatko varmasti jatkaa hiljennystä $count$:lle kanavalle?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "Hiljennetyt mainostajat"
+    },
+    "removeMuteBtn": {
+        "message": "Poista mainostajan hiljennys"
+    },
+    "removeMuteTooltip": {
+        "message": "Poista mainostaja hiljennyslistalta"
+    },
+    "removeMuteConfirm": {
+        "message": "Haluatko varmasti poistaa kanavan \"$channelName$\" hiljennetyistä?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "Haluatko varmasti poistaa $count$ kohdetta hiljennetyistä?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "Palauta"
+    },
+    "resetTooltip": {
+        "message": "Poista kaikki asetukset"
+    },
+    "emptyList": {
+        "message": "Ei mitään"
+    },
+    "importBtn": {
+        "message": "Valitse tiedosto..."
+    },
+    "exportBtn": {
+        "message": "Lataa"
+    },
+    "exportAltBtn": {
+        "message": "Vie"
+    },
+    "channelSearchHeader": {
+        "message": "Etsi kanavia"
+    },
+    "adOptionsHeader": {
+        "message": "Mainosvalinnat"
+    },
+    "muteOption": {
+        "message": "Hiljennä mainokset oletuksena"
+    },
+    "overlaysOption": {
+        "message": "Piilota mainosten peittokuvat"
+    },
+    "autoWhiteOption": {
+        "message": "Salli tilatut kanavat oletuksena"
+    },
+    "autoWhiteTooltip": {
+        "message": "Tämä voi johtaa alkumainoksiin, kun sivua ladataan"
+    },
+    "limitAdsOption": {
+        "message": "Rajoita videon mainosmäärää"
+    },
+    "autoSkipOption": {
+        "message": "Ohita mainokset automaattisesti"
+    },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "forceWlOption": {
+        "message": "Pakota sallittujen lista ensimmäisellä latauksella"
+    },
+    "forceWlOptionTooltip": {
+        "message": "Tämä saattaa ladata sivun uudelleen, jos mainokset poistetaan ennen kuin kanavan tiedot olivat saatavilla"
+    },
+    "adErrorsOption": {
+        "message": "Ohita mainosten toistovirheet"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "Siirry videoon jos mainos ei toimi, sen sijaan että näytetään virheilmoitus"
+    },
+    "verifyWlOption": {
+        "message": "Vahvista sallittujen tila"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "Vahvista, että mainoksia ei ole estetty sallituilla kanavilla simuloimalla mainoksen lataamista"
+    },
+    "adBlocked": {
+        "message": "Estetty",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "Sallittu",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "Automaattisesti hiljennä kaikki mainokset tältä mainostajalta"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "Estä kaikki mainokset tältä mainostajalta"
+    },
+    "blacklistBtn": {
+        "message": "Estä mainostaja"
+    },
+    "autoSkipTooltip": {
+        "message": "Ohitetaan $number$ sekunnissa",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "Pakota ohitus"
+    },
+    "skipTooltip": {
+        "message": "Yritä ohittaa tämä mainos"
+    },
+    "pauseAfterAdOption": {
+        "message": "Ei säikytystä -tila"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "Jos hiljennetty mainos päättyy ja välilehti ei ole valittuna, video pysäytetään taustalla kunnes käyttäjä palaa siihen"
+    },
+    "keyboardSkipOption": {
+        "message": "Mainosten ohitus oikealla nuolinäppäimellä"
+    },
+    "permissionDesc": {
+        "message": "YouTube-kanavien etsimiseen tarvitaan kertaluonteinen käyttöoikeus"
+    },
+    "permissionBtn": {
+        "message": "Myönnä käyttöoikeus"
+    },
+    "searchDesc": {
+        "message": "Kirjoita hakeaksesi youtube-kanavaa tai",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "Kanavan nimi..",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "Haetaan..."
+    },
+    "searchFailed": {
+        "message": "Tuloksia ei voitu ladata. Offline?"
+    },
+    "importSubsBtn": {
+        "message": "Tuo tilauksista"
+    },
+    "importSubsFailed": {
+        "message": "Tilauksia ei voitu noutaa. Varmista, että olet kirjautunut YouTubeen."
+    },
+    "importSubsConfirm": {
+        "message": "Löytyi $total$ tilausta, joista $new$ ei ole listalla. Lisää $new$ kohdetta sallittuihin?",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "Asetuksia ei voitu asettaa, virhe: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "Tiedoston täytyy olla tyyppiä \"$expected$\", havaittu \"$encountered$\" sen sijaan",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "Ei voitu jäsentää JSON-nimellä. Tiedosto ei todennäköisesti ole JSON tai on vioittunut."
+    },
+    "noNew": {
+        "message": "Ei uusia kohteita lisättäväksi"
+    },
+    "confirmImport": {
+        "message": "Lisää $whitelisted$ kohdetta sallittuihin listalle, $blacklisted$ kohdetta estettyihin ja $muted$ kohdetta hiljennettyihin?",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    }
+}
