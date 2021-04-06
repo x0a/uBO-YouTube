@@ -425,12 +425,18 @@ class AdManager {
 
         if (request.status === 200) {
             const ad = ads.parseURL('?' + request.responseText).params;
-
+            if (ad.player_response) {
+                try {
+                    ad.player_response = JSON.parse(ad.player_response);
+                } catch (e) { }
+            }
             ad.channelId = {
-                id: ad.ucid || ads.getChannelFromURL(ad.channel_url),
+                id: ad.ucid || ads.getChannelFromURL(ad.channel_url) || ad.player_response?.videoDetails?.channelId,
                 display: '',
                 username: ''
             };
+            
+            ad.title = ad.title || ad.player_response?.videoDetails?.title;
 
             if (ad.channelId.id) {
                 if (ad.author) {
