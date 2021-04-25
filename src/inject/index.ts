@@ -556,6 +556,7 @@ class SingleChannelPage {
 
                 if (adblock.enabled() && this.channelId && !settings.asWl(this.channelId)) {
                     this.adPlaying = true;
+                    log('uBO-Ads', 'Skipping ad due to adblock being enabled and channel not passing the whitelist test')
                     this.attemptSkip();
                 }
                 this.onVideoPlayable(this.currentPlayer)
@@ -618,8 +619,10 @@ class SingleChannelPage {
     onVideoError(error: boolean) {
         this.videoError = error;
 
-        if (this.videoError && this.adPlaying && this.skipButton && settings.skipAdErrors)
+        if (this.videoError && this.adPlaying && this.skipButton && settings.skipAdErrors) {
+            log('uBO-Ads', 'Skipping ad due to ad failing to load')
             this.attemptSkip(false);
+        }
     }
     updateAdInformation(ad: Ad) {
         if (this.currentAd && this.currentAd.video_id !== ad.video_id) {
@@ -686,6 +689,7 @@ class SingleChannelPage {
             this.muteTab(muteAll !== inMutelist);
 
             if (settings.blacklisted.has(this.currentAd.channelId)) {
+                log('uBO-Ads', 'Skipping ad due to advertiser being in blacklist');
                 this.attemptSkip();
             }
         } else if (this.adPlaying && this.currentPlayer) {
@@ -888,7 +892,11 @@ class VideoPagePoly extends SingleChannelPage {
     }
     getVideoId() {
         this.setPageManager();
-        if (!this.pageManager) return '';
+        if (!this.pageManager) {
+            err('uBO-Limit', 'Could not find page manager')
+            return '';
+        }
+
         return Obj.get(this.pageManager, 'data.playerResponse.videoDetails.videoId') || '';
     }
     getChannelId(container: HTMLElement) {
@@ -954,7 +962,10 @@ class ChannelPagePoly extends SingleChannelPage {
         this.setPageManager();
         if (!this.pageManager || !(this.pageManager as any).data) return '';
         const parent = Obj.findParent((this.pageManager as any).data, 'channelVideoPlayerRenderer');
-        if (!parent) return '';
+        if (!parent) {
+            err('uBO-Limit', 'Could not find current video ID owner under page-manager')
+            return '';
+        }
         return parent.channelVideoPlayerRenderer.videoId;
     }
     isSubscribed() {
