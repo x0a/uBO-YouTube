@@ -19,7 +19,7 @@
     display: flex;
     justify-content: center;
     flex-direction: column;
-    margin-right: 2px;
+    margin-right: 4px;
 }
 
 .UBO-wl-btn.UBO-wl-poly:not(.yt-uix-button-toggled) {

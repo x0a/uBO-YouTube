@@ -90,23 +90,14 @@ class MutationWatcher {
     }
 
     isPolyUserInfo(mutation: MutationElement): HTMLElement {
-        if (
-            (
-                mutation.target.id === 'owner-name'
-                && mutation.addedNodes.length
-            ) || (
-                mutation.type === 'attributes'
-                && mutation.attributeName === 'href'
-                && mutation.target.parentNode
-                && (mutation.target.parentNode as HTMLElement).localName === 'ytd-video-owner-renderer'
-            )
-        ) {
-            return mutation.target.closest('ytd-video-owner-renderer') as HTMLElement;
-        } else if (mutation.target.localName === 'ytd-video-owner-renderer') {
-            return mutation.target;
-        } else {
-            return null;
+        if (mutation.target.localName === 'yt-formatted-string'
+            && mutation.target.classList.contains('ytd-channel-name')
+            && mutation.addedNodes.length) {
+            const container = mutation.target.closest('#top-row ytd-video-owner-renderer');
+            if (container)
+                return container as HTMLElement;
         }
+        return null;
     }
 
     isRelatedUpdate(mutation: MutationElement) {
@@ -218,7 +209,7 @@ class MutationWatcher {
                 );
             }
             else {
-                console.log(`%c[${selector}] >`, 'font-weight: bold;', mutation);
+                console.log(`%c[${selector}] >`, 'font-weight: bold;', mutation.type, mutation);
             }
         }
         else if (mutation.type === 'childList') {
@@ -271,10 +262,10 @@ class MutationWatcher {
     onMutation(mutations: Array<MutationElement>) {
         for (const mutation of mutations) {
             const type = pages.getType();
-            //this.findInjection(mutation, 'ytd-section-list-renderer');
+            // this.findInjection(mutation, '#top-row ytd-video-owner-renderer .ytd-channel-name');
+            let userInfo;
             if (type === PageType.Video) {
-                let player, userInfo, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
-
+                let player, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
                 if (userInfo = this.isPolyUserInfo(mutation)) {
                     pages.video.setParentNode(userInfo)
                     pages.video.updatePage();
@@ -316,6 +307,10 @@ class MutationWatcher {
                     } else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
                         pages.channel.updatePage();
                     }
+                }
+                if (userInfo = this.isPolyUserInfo(mutation)) {
+                    pages.video.setParentNode(userInfo)
+                    pages.video.updatePage();
                 }
                 if (this.hasNewItems(mutation)) { // new items in videolist
                     if (type === PageType.Channel) {
@@ -436,10 +431,15 @@ class SingleChannelPage {
     }
 
     updatePage(forceUpdate?: boolean, verify?: boolean) {
-        if (!this.dataNode && !this.setDataNode()) return // console.error('Container not available');
+        if (!this.dataNode && !this.setDataNode()) {
+            log('uBO-wl', 'Page update requested, but container not available yet');
+            return;
+        }
         this.channelId = this.getChannelId(this.dataNode);
-        if (!this.channelId) return err('Channel ID not available');
-
+        if (!this.channelId) {
+            log('uBO-wl', 'Page update requested, but channel ID not available yet');
+            return;
+        }
         const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
 
         pages.updateURL(whitelisted, verify);
@@ -784,6 +784,7 @@ class SingleChannelPage {
     }
     muteTab(shouldMute: boolean) {
         if (shouldMute) {
+            // log('uBO-mute', 'Requesting tab mute')
             agent.send('mute-tab', true)
                 .then(resp => this.adOptions.muted = true)
                 .catch(error => {
@@ -791,6 +792,7 @@ class SingleChannelPage {
                 });
 
         } else {
+            log('uBO-mute', 'Requesting tab unmute')
             const done = () => this.adOptions.muted = false;
             agent.send('mute-tab', false)
                 .then(done)
@@ -840,17 +842,21 @@ class VideoPagePoly extends SingleChannelPage {
         this.updateVideos = this.updateVideos.bind(this);
     }
 
-    setDataNode(container: HTMLElement) {
+    setDataNode(container?: HTMLElement) {
         this.secondaryDataNode = document.querySelector('ytd-video-secondary-info-renderer');
         return this.dataNode = container || this.dataNode || document.querySelector('ytd-app');
     }
 
     setParentNode(parent?: HTMLElement) {
-        return this.buttonParent = parent || this.buttonParent || document.querySelector('ytd-video-owner-renderer');
+        this.setDataNode();
+        return this.buttonParent = parent || this.buttonParent || document.querySelector('#top-row ytd-video-owner-renderer');
     }
     insertButton(button: WhitelistButtonInstance): boolean {
         this.setParentNode();
-        if (!this.buttonParent) return false;
+        if (!this.buttonParent) {
+            err('uBO-wl', 'Tried to add WL button, but target parent not found');
+            return false;
+        }
 
         if (this.buttonParent.nextSibling) {
             this.buttonParent.parentElement.insertBefore(button.render(), this.buttonParent.nextSibling);
@@ -899,7 +905,7 @@ class VideoPagePoly extends SingleChannelPage {
 
         return Obj.get(this.pageManager, 'data.playerResponse.videoDetails.videoId') || '';
     }
-    getChannelId(container: HTMLElement) {
+    getChannelId(container?: HTMLElement) {
         let channelId = Channels.empty();
         container = this.setDataNode(container);
 
@@ -908,12 +914,9 @@ class VideoPagePoly extends SingleChannelPage {
 
         channelId.id = Obj.get(container, 'data.playerResponse.videoDetails.channelId') || (!prevId ? (window as any).ytplayer?.config?.args?.ucid : null);
         channelId.display = Obj.get(container, 'data.playerResponse.videoDetails.author') || (!prevId ? (window as any).ytplayer?.config?.args?.author : null);
-
-
         // channelId.username = Channels.fromURL(Obj.get(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
         // channelId.id = Obj.get(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
         // channelId.display = Obj.get(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
-
         return Channels.valid(channelId);
     }
 }
@@ -938,7 +941,11 @@ class ChannelPagePoly extends SingleChannelPage {
     }
     insertButton(button: WhitelistButtonInstance): boolean {
         this.setParentNode();
-        if (!this.buttonParent) return false;
+        if (!this.buttonParent) {
+            err('uBO-wl', 'Tried to add WL button, but target parent not found');
+            return false;
+        }
+
         this.buttonParent.appendChild(button.render());
         return true;
     }
