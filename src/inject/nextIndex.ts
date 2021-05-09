@@ -340,6 +340,10 @@ class Settings implements _Settings<Channels> {
     autoSkipSeconds: AutoSkipSeconds;
     keyboardSkip: boolean;
     verifyWl: boolean;
+    limitAds: boolean;
+    limitAdsQty: number;
+    forceWhite: boolean;
+    
     constructor(settings: _Settings) {
         Object.assign(this, {
             ...settings,
