@@ -90,9 +90,15 @@ class MutationWatcher {
     }
 
     isPolyUserInfo(mutation: MutationElement): HTMLElement {
-        if (mutation.target.localName === 'yt-formatted-string'
+        const isParent = mutation.target.localName === 'yt-formatted-string'
             && mutation.target.classList.contains('ytd-channel-name')
-            && mutation.addedNodes.length) {
+            && mutation.addedNodes.length;
+        const isChild = isParent
+            || (mutation.target.localName === 'a'
+                && mutation.addedNodes.length
+                && mutation.target.classList.contains('yt-formatted-string')
+                && mutation.target.parentElement.classList.contains('ytd-channel-name'))
+        if (isChild) {
             const container = mutation.target.closest('#top-row ytd-video-owner-renderer');
             if (container)
                 return container as HTMLElement;
