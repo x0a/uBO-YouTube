@@ -39,12 +39,15 @@ class SingleChannelPage extends Component {
     skipping: boolean;
     adOptions: AdOptions
     wlButton: WhitelistButton;
-
+    videoId: string;
+    adsPlayed: number;
     constructor(url: string | RegExp, WlConstructor: typeof WhitelistButton) {
         super(url);
         this.adPlaying = false;
         this.subscribed = null;
         this.skipping = false;
+        this.videoId = '';
+        this.adsPlayed = 0;
         this.adOptions = new AdOptions(this.onBlacklist.bind(this), this.toggleMute.bind(this), this.forceSkip.bind(this));
         this.wlButton = new WlConstructor(this.toggleWhitelist.bind(this), false);
         this.onTree('video', this.onVideoElement.bind(this));
@@ -53,14 +56,33 @@ class SingleChannelPage extends Component {
         this.onAll('paper-button.ytd-subscribe-button-renderer', this.onSubscribeBtn.bind(this))
 
     }
+
     onVideoElement(videoEl?: HTMLVideoElement) {
+        const checkVideoId = () => {
+            const nextVideoId = this.getVideoId();
+            if (this.videoId !== nextVideoId) {
+                this.videoId = nextVideoId;
+                this.adsPlayed = 0;
+            }
+        }
+        let src = videoEl.getAttribute('src');
         if (this.videoEl !== videoEl) {
             const fn = () => {
                 if (isNaN(videoEl.duration)) return;
-
-                const shouldAutoSkip = settings.autoSkip
+                if (videoEl.getAttribute('src') !== src) {
+                    src = videoEl.getAttribute('src');
+                    checkVideoId();
+                    log('uBO-limit', 'Video source:', src, 'VideoID:', this.videoId);
+                    if (this.adPlaying) {
+                        this.adsPlayed++;
+                        log('uBO-limit', 'Total Ads:', this.adsPlayed, 'VideoID:', this.videoId);
+                    }
+                }
+                const overPlayLimit = settings.autoSkip
                     && videoEl.currentTime > settings.autoSkipSeconds
-                    && videoEl.duration > settings.autoSkipSeconds
+                    && videoEl.duration > settings.autoSkipSeconds;
+                const overAdsLimit = settings.limitAds && this.adsPlayed > settings.limitAdsQty;
+                const shouldAutoSkip = overPlayLimit || overAdsLimit;
 
                 if (this.skipping) {
                     log('Re-attempting skip')
@@ -80,6 +102,11 @@ class SingleChannelPage extends Component {
         const playing = container && container.classList.contains('ad-showing');
         this.onAdPlayState(playing || false, container);
     }
+
+    getVideoId(): string /** override */ {
+        return '';
+    }
+
     onSubscribeBtn(button?: HTMLButtonElement) {
         if (!button) return this.subscribed = null;
         this.subscribed = !!button.getAttribute('subscribed');
@@ -121,14 +148,22 @@ class SingleChannelPage extends Component {
         // apply to adoptions
         this.applyAdState();
     }
-    onChannelId(channelId: Channel) {
-        this.channelId = channelId;
-        this.applyPageState();
-        this.applyAdState();
+    /** This should be triggered by changing channel name, changing user info, etc. */
+    possibleChannelChange(channelId: Channel) {
+        const nextChannel = this.getChannelId();
+
+        if (nextChannel.id !== this.channelId.id) {
+            this.channelId = nextChannel
+            this.applyPageState();
+            this.applyAdState();
+        }
+    }
+    getChannelId(): Channel /** override */ {
+        return Channels.empty();
     }
     applyPageState() {
-        if(!this.channelId) return;
-        
+        if (!this.channelId) return;
+
     }
     applyAdState() {
         if (!this.adPlaying) return;
@@ -343,7 +378,7 @@ class Settings implements _Settings<Channels> {
     limitAds: boolean;
     limitAdsQty: number;
     forceWhite: boolean;
-    
+
     constructor(settings: _Settings) {
         Object.assign(this, {
             ...settings,
