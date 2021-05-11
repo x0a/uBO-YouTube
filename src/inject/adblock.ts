@@ -55,6 +55,9 @@ class AdBlock {
         return this.xhr;
     }
     toggleAll(block: boolean) {
+        if (this.enabled() !== block) {
+            log('uBO-block', 'Next adblock state:', block)
+        }
         this.toggleNet(block);
         this.togglePrune(block);
         this.toggleDOM(block);
