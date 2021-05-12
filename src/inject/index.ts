@@ -1541,9 +1541,9 @@ const hookNav = (onURL: (url: string) => any) => {
                 onURL(href);
             }
         }
-        document.addEventListener('click', listener)
+        document.addEventListener('click', listener, true)
         return () => {
-            document.removeEventListener('click', listener);
+            document.removeEventListener('click', listener, true);
         }
     }
     const hookHistory = (onURL: (url: string) => any) => {
