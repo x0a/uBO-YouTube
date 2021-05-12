@@ -55,18 +55,19 @@ class AdBlock {
         return this.xhr;
     }
     toggleAll(block: boolean) {
-        if (this.enabled() !== block) {
-            log('uBO-block', 'Next adblock state:', block)
-        }
         this.toggleNet(block);
         this.togglePrune(block);
         this.toggleDOM(block);
     }
     toggleNet(block: boolean) {
+        if (this.xhr !== block || this.fetch !== block)
+            log('uBO-Block', 'Net filter:', block);
         this.xhr = block;
         this.fetch = block;
     }
     togglePrune(block: boolean) {
+        if (this.prune !== block)
+            log('uBO-Block', 'JSON-prune:', block);
         this.prune = block;
     }
     toggleDOM(block: boolean) {
@@ -145,6 +146,7 @@ class AdBlock {
             try {
                 if (this.prune) {
                     if (rules.map(rule => Obj.prune(obj, rule)).some(found => found)) {
+                        log('uBO-YT-Prune', 'Pruned a JSON object');
                         this.immutableBlock = true;
                     }
                 } else {
