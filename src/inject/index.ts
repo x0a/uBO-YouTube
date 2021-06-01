@@ -6,6 +6,7 @@ import AdOptions from './ad-options';
 import { log, err } from './logging';
 import { i18n, seti18n } from './i18n';
 import { AdBlock } from './adblock';
+import getMetadata from './fauxapi';
 import Obj from './objutils';
 
 import {
@@ -397,6 +398,7 @@ class SingleChannelPage {
     adOptions: AdOptions;
     channelId?: Channel;
     currentAd: Ad;
+    adVideoId: string;
     firstRun: boolean;
     adPlaying: boolean;
     adConfirmed: boolean;
@@ -408,7 +410,9 @@ class SingleChannelPage {
     skipButton: HTMLButtonElement;
     pageManager: HTMLDivElement
     _currentPlayer: HTMLVideoElement;
+    removeNet: () => void;
     removeHooks: () => void;
+
     constructor(ButtonFactory: WhitelistButtonFactory) {
         this.dataNode = null
         this.buttonParent = null;
@@ -428,8 +432,10 @@ class SingleChannelPage {
         this.skipButton = null;
         this.adsPlayed = 0;
         this.videoId = '';
+        this.adVideoId = '';
         this.muteTab(false);
         this.onKeyboard = this.onKeyboard.bind(this);
+        this.removeNet = adblock.onNet(this.onNet.bind(this));
         this.removeHooks = () => { };
         document.addEventListener('keyup', this.onKeyboard);
 
@@ -482,6 +488,18 @@ class SingleChannelPage {
 
         this.updateAdButton();
         this.updateVideos(whitelisted, forceUpdate);
+    }
+    onNet(url: string) {
+        if (url.indexOf('/api/stats/ads') !== -1) {
+            const [, adVideoId] = url.match(/&ad_v=([^&]+)&/) || [, ''];
+            if (adVideoId && this.adVideoId !== adVideoId) {
+                this.adVideoId = adVideoId;
+                log('uBO-video', adVideoId, this.getVideoId());
+                // TO DO -- convert this to an ad object and send up to background
+                getMetadata(adVideoId)
+                    .then(metadata => console.log(metadata));
+            }
+        }
     }
     set currentPlayer(nextPlayer: HTMLVideoElement) {
         const checkVideoId = () => {
@@ -790,7 +808,7 @@ class SingleChannelPage {
     }
     muteTab(shouldMute: boolean) {
         if (shouldMute) {
-            // log('uBO-mute', 'Requesting tab mute')
+            log('uBO-mute', 'Requesting tab mute')
             agent.send('mute-tab', true)
                 .then(resp => this.adOptions.muted = true)
                 .catch(error => {
@@ -802,7 +820,7 @@ class SingleChannelPage {
             const done = () => this.adOptions.muted = false;
             agent.send('mute-tab', false)
                 .then(done)
-                .catch(done); // replicate .finally
+                .catch(done); // replicate .finally 
         }
     }
     toggleMute() {
@@ -1599,7 +1617,7 @@ const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents
 (window as any).gev = getEventListeners; // delete me
 
 const adblock = new AdBlock(location.href.indexOf('&disableadblock=1') === -1)
-adblock.onNet(url => settings && agent.send('log-ad', url));
+
 adblock.onAds(ads => {
     log('uBO-Replace', ads)
     if (ads instanceof Array) {

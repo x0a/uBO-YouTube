@@ -33,11 +33,12 @@ class AdBlock {
     private xhr: boolean;
     private dom: boolean;
     private fetch: boolean;
+    private img: boolean;
     public immutableBlock: boolean;
 
     private matches: (el: HTMLElement) => ElAction;
     private queryAllFilters: () => Array<ElAction>;
-    private onNetListener: (url: string) => void;
+    private netListeners: Array<(url: string) => void>;
     private onAdsListener: (ads: Array<any>) => Array<any>;
     private unhookAll: () => void;
 
@@ -46,7 +47,7 @@ class AdBlock {
         this.immutableBlock = false;
         this.queryAllFilters = queryAllFilters;
         this.matches = matches;
-        this.onNetListener = () => { };
+        this.netListeners = [];
         this.onAdsListener = ads => ads;
         this.toggleAll(block);
         this.unhookAll = this.hookAll();
@@ -64,6 +65,7 @@ class AdBlock {
             log('uBO-Block', 'Net filter:', block);
         this.xhr = block;
         this.fetch = block;
+        this.img = block;
     }
     togglePrune(block: boolean) {
         if (this.prune !== block)
@@ -78,22 +80,32 @@ class AdBlock {
         this.dom = block;
     }
     onNet(fn: (url: string) => void) {
-        this.onNetListener = fn;
+        this.netListeners.push(fn);
+        return () => {
+            const i = this.netListeners.indexOf(fn);
+            this.netListeners.splice(i, 1);
+        }
     }
     onAds(fn: (ads: Array<any>) => Array<any>) {
         this.onAdsListener = fn;
+    }
+    private onNetListener(url: string): void {
+        this.netListeners.forEach(fn => fn(url));
     }
     private hookAll(): () => void {
         const unhookJSON = this.hookJSON();
         const unhookXHR = this.hookXHR();
         const unhookDOM = this.hookDOM();
         const unhookFetch = this.hookFetch();
+        const unhookImg = this.hookImg();
+
         return () => {
             this.toggleAll(false)
             unhookJSON();
             unhookXHR();
             unhookDOM();
             unhookFetch();
+            unhookImg();
         }
     }
     private hookJSON(): any {
@@ -193,6 +205,27 @@ class AdBlock {
             }
         })
     }
+    private hookImg() {
+        const self = this;
+        Object.defineProperty(Image.prototype, "src", {
+            set: function (url) {
+                self.onNetListener(url);
+                const shouldBlock = this.img && netFilters.some(filter => filter instanceof RegExp
+                    ? url.match(filter)
+                    : url.indexOf(filter) !== -1)
+                if (shouldBlock) log('uBO-img', 'Blocking', url);
+                if (!shouldBlock)
+                    this.realSrc = url
+            },
+            get: function () {
+                return this.realSrc
+            }
+        })
+
+        return () => {
+            delete Image.prototype.src;
+        }
+    }
     private hookXHR() {
         const origOpen = XMLHttpRequest.prototype.open;
         const origSend = XMLHttpRequest.prototype.send;
@@ -204,11 +237,9 @@ class AdBlock {
                 ? url.match(filter)
                 : url.indexOf(filter) !== -1)
 
+            self.onNetListener(url);
+
             if (shouldBlock) {
-                log('uBO-YT-XHR', url);
-                if (url.indexOf('/get_video_info') !== -1) {
-                    self.onNetListener(url);
-                }
                 blocked.push(this);
             }
             return origOpen.apply(this, [method,
