@@ -34,6 +34,7 @@ class AdBlock {
     private dom: boolean;
     private fetch: boolean;
     private img: boolean;
+    private ping: boolean;
     public immutableBlock: boolean;
 
     private matches: (el: HTMLElement) => ElAction;
@@ -66,6 +67,7 @@ class AdBlock {
         this.xhr = block;
         this.fetch = block;
         this.img = block;
+        this.ping = block;
     }
     togglePrune(block: boolean) {
         if (this.prune !== block)
@@ -97,6 +99,7 @@ class AdBlock {
         const unhookXHR = this.hookXHR();
         const unhookDOM = this.hookDOM();
         const unhookFetch = this.hookFetch();
+        const unhookPing = this.hookPing();
         const unhookImg = this.hookImg();
 
         return () => {
@@ -105,6 +108,7 @@ class AdBlock {
             unhookXHR();
             unhookDOM();
             unhookFetch();
+            unhookPing();
             unhookImg();
         }
     }
@@ -193,6 +197,11 @@ class AdBlock {
             }
         }
     }
+    private shouldBlock(url: string) {
+        return netFilters.some(filter => filter instanceof RegExp
+            ? url.match(filter)
+            : url.indexOf(filter) !== -1)
+    }
     private hookGlobal(name: string, fn: (incoming: any) => any): void {
         let outgoing: any;
         Object.defineProperty(window, name, {
@@ -205,25 +214,48 @@ class AdBlock {
             }
         })
     }
-    private hookImg() {
+    private hookPing() {
+        const orig = Navigator.prototype.sendBeacon;
         const self = this;
-        Object.defineProperty(Image.prototype, "src", {
-            set: function (url) {
-                self.onNetListener(url);
-                const shouldBlock = this.img && netFilters.some(filter => filter instanceof RegExp
-                    ? url.match(filter)
-                    : url.indexOf(filter) !== -1)
-                if (shouldBlock) log('uBO-img', 'Blocking', url);
-                if (!shouldBlock)
-                    this.realSrc = url
-            },
-            get: function () {
-                return this.realSrc
-            }
-        })
+        Navigator.prototype.sendBeacon = function (url: string, data?: BodyInit): boolean {
+            self.onNetListener(url);
+            if (self.ping && self.shouldBlock(url))
+                return false;
+            else
+                return orig.call(this, url, data);
+        }
 
         return () => {
-            delete Image.prototype.src;
+            Navigator.prototype.sendBeacon = orig;
+        }
+    }
+    private hookImg() {
+        const self = this;
+        const origImage = window.Image;
+
+        (window as any).Image = function (width?: number, height?: number) {
+            const nextImage = new origImage(...arguments);
+            Object.defineProperty(nextImage, 'src', {
+                configurable: true,
+                set: function (url) {
+                    self.onNetListener(url);
+                    const shouldBlock = self.img && self.shouldBlock(url);
+
+                    if (!shouldBlock) {
+                        delete nextImage.src;
+                        nextImage.src = url;
+                    }
+                },
+                get: function () {
+                    return undefined
+                }
+            })
+            return nextImage;
+        }
+
+
+        return () => {
+            window.Image = origImage;
         }
     }
     private hookXHR() {
@@ -233,9 +265,7 @@ class AdBlock {
         const self = this;
         XMLHttpRequest.prototype.open = function () {
             const [method, url, async, user, password] = arguments;
-            const shouldBlock = self.xhr && netFilters.some(filter => filter instanceof RegExp
-                ? url.match(filter)
-                : url.indexOf(filter) !== -1)
+            const shouldBlock = self.xhr && self.shouldBlock(url);
 
             self.onNetListener(url);
 

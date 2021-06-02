@@ -328,7 +328,10 @@ class AdManager {
 
         return [resolver, rejector];
     }
-
+    echo(tabId: number, ad: Ad) {
+        this.push(ad);
+        this.sendToTab(tabId, ad)
+    }
     get(): Promise<Array<Ad>> {
         const pending = this.pending.map(({ promise }) => promise);
 
@@ -435,7 +438,7 @@ class AdManager {
                 display: '',
                 username: ''
             };
-            
+
             ad.title = ad.title || ad.player_response?.videoDetails?.title;
 
             if (ad.channelId.id) {
@@ -589,7 +592,7 @@ SettingsManager.getSettings()
                     .then(() => browser.tabs.remove(sender.tab.id)))
             .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
             .on('last-ad', sender => ads.getLastAdFromTab(sender.tab.id))
-            .on('log-ad', (sender, url) => ads.processDetails({ url, tabId: sender.tab.id }, true))
+            .on('echo-ad', (sender, ad) => ads.echo(sender.tab.id, ad))
             .on('highlight', sender => settings.highlightTab(sender.tab));
 
         listener.onAction('permission')

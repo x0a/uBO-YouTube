@@ -6,7 +6,7 @@ import AdOptions from './ad-options';
 import { log, err } from './logging';
 import { i18n, seti18n } from './i18n';
 import { AdBlock } from './adblock';
-import getMetadata from './fauxapi';
+import { getMetadata, getVideoData } from './fauxapi';
 import Obj from './objutils';
 
 import {
@@ -490,6 +490,7 @@ class SingleChannelPage {
         this.updateVideos(whitelisted, forceUpdate);
     }
     onNet(url: string) {
+        if (!this.adPlaying) return;
         if (url.indexOf('/api/stats/ads') !== -1) {
             const [, adVideoId] = url.match(/&ad_v=([^&]+)&/) || [, ''];
             if (adVideoId && this.adVideoId !== adVideoId) {
@@ -497,7 +498,15 @@ class SingleChannelPage {
                 log('uBO-video', adVideoId, this.getVideoId());
                 // TO DO -- convert this to an ad object and send up to background
                 getMetadata(adVideoId)
-                    .then(metadata => console.log(metadata));
+                    .then(metadata => {
+                        log('uBO-Ads', 'Received metadata', metadata);
+                        return getVideoData(adVideoId, metadata);
+                    })
+                    .then(ad => {
+                        agent.send('echo-ad', ad);
+                        console.log('uBO-Ads', 'Found an ad', ad);
+                    })
+                    .catch(_err => err('uBO-Ads', 'Could not get ad details', _err));
             }
         }
     }

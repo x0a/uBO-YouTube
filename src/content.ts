@@ -160,7 +160,7 @@ if (location.pathname === "/ubo-yt") {
     browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
 } else if (!finishedLoading && location.href.indexOf('&disableadblock=1') === -1) {
     // first load should contain flag to prevent new uBO rules from removing important metadata
-    
+
     // window.history.replaceState(null, null, reflectURLFlag(location.href, true));
     // window.location.reload();
 }
@@ -186,7 +186,7 @@ agent
     .on('get-settings', () => hook.getSettings())
     .on('set-settings', ({ type, param }) => intermediary('set', type, param))
     .on('recent-ad', () => intermediary('tab', 'last-ad'))
-    .on('log-ad', url => intermediary('tab', 'log-ad', url))
+    .on('echo-ad', ad => intermediary('tab', 'echo-ad', ad))
     .on('mute-tab', (shouldMute: boolean) => intermediary('tab', 'mute', shouldMute || false))
     .on('highlight-tab', () => intermediary('tab', 'highlight'));
 

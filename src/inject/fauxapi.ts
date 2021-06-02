@@ -1,3 +1,4 @@
+import { Ad } from 'src/typings';
 import { log, err } from './logging';
 import Obj from './objutils';
 
@@ -49,16 +50,44 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const getMetadata = (videoId: string) => fetch('https://www.youtube.com/watch?v=' + videoId)
     .then(res => res.text())
     .then(text => inexactParse(text));
+
+const getVideoData = (videoId: string, metadata: any): Ad => {
+    const primary = Obj.findParent(metadata, 'videoPrimaryInfoRenderer')?.videoPrimaryInfoRenderer;
+    const secondary = Obj.findParent(metadata, 'videoSecondaryInfoRenderer')?.videoSecondaryInfoRenderer;
+
+    if (!primary || !secondary) throw 'Could not find primary or secondary video information';
+
+
+    const title = Obj.get(primary, '.title.runs[0].text') || '';
+    const ucid = Obj.get(secondary, '.owner.videoOwnerRenderer.title.runs[0].navigationEndpoint.browseEndpoint.browseId') || ''
+    const author = Obj.get(secondary, ".owner.videoOwnerRenderer.title.runs[0].text") || '';
+    const channelURL = Obj.get(secondary, ".owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl") || '';
+
+    const channelId = { id: '', display: '', username: '' };
+    channelId.id = ucid;
+    channelId.display = author;
+
+    if (!channelId.id) throw 'Could not find appropriate channel ID for the ad';
+
+    return {
+        details: {},
+        channelId,
+        video_id: videoId,
+        channel_url: channelURL,
+        length_seconds: 0,
+        player_response: '',
+        ucid,
+        author,
+        blocked: false,
+        title,
+        timestamp: Date.now() + '',
+    } as Ad;
+}
 const getVideoId = (ad: any) => {
     const owner = Obj.findParent(ad, 'adVideoId');
     if (owner)
         return owner.adVideoId;
     return '';
 }
-const fetchAllVideoIds = (ads: Array<any>) => {
-    return ads
-        .map(ad => getVideoId(ad))
-        .filter(id => id)
-}
 
-export default getMetadata;
+export {getMetadata, getVideoData};
