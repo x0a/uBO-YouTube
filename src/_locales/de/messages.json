@@ -271,6 +271,12 @@
             }
         }
     },
+    "forceWlOption": {
+        "message": "Whitelist beim ersten Laden erzwingen"
+    },
+    "forceWlOptionTooltip": {
+        "message": "Dies könnte die Seite neu laden, wenn Werbung unwiderruflich entfernt wird, bevor Kanalinformationen verfügbar waren"
+    },
     "adErrorsOption": {
         "message": "Fehler bei der Werbungswiedergabe überspringen"
     },

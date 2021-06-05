@@ -271,6 +271,12 @@
             }
         }
     },
+    "forceWlOption": {
+        "message": "Forcer la whitelist au premier chargement"
+    },
+    "forceWlOptionTooltip": {
+        "message": "Cela pourrait recharger la page si les publicités sont irréversiblement supprimées avant que les informations de la chaîne ne soient disponibles"
+    },
     "adErrorsOption": {
         "message": "Ignorer les erreurs de lecture des annonces"
     },
