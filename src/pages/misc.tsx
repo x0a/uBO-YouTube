@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { FunctionComponent, useState, useCallback, useEffect, FormEvent } from 'react';
+import { FunctionComponent, useState, useCallback, useEffect, FormEvent, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDownload, faFileImport, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faDownload, faFileImport, faTrash, faCopy } from '@fortawesome/free-solid-svg-icons'
 import SwitchableOption from './switch';
 import { Settings } from '../typings';
 import {
@@ -102,8 +102,9 @@ const Reset: FunctionComponent<{
 }
 const ListGroupItem: FunctionComponent<{
     children: JSX.Element | Array<JSX.Element | string> | string
-}> = ({ children }) =>
-        <div className='list-group-item d-flex w-100 justify-content-between'>
+    flex?: boolean
+}> = ({ children, flex = true }) =>
+        <div className={'list-group-item w-100 justify-content-between ' + (flex && 'd-flex')}>
             {children}
         </div>
 const SettingsPage = () => <button
@@ -114,7 +115,43 @@ const SettingsPage = () => <button
     }}>
     <FontAwesomeIcon icon={faTrash} /> {i18n('optionsBtn')}
 </button>
+const CopyableInput: FunctionComponent<{
+    text: string
+}> = ({ text }) => {
+    const inputField = useRef(null as HTMLInputElement);
+    const [copied, setCopied] = useState(false);
+    const selectAll = () => {
+        inputField.current.select();
+    }
+    const copy = () => {
+        inputField.current.select()
+        inputField.current.setSelectionRange(0, 99999);
+        document.execCommand('copy');
 
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    return <div>
+        <div className='input-group'>
+            <input type="text" ref={inputField} onClick={selectAll} className="form-control" value={text} readOnly={true} />
+            <div className="input-group-append">
+                <button
+                    className="btn btn-outline-secondary ml-0"
+                    type="button"
+                    onClick={copy}
+                    disabled={copied}>
+                    <div className='tooltip-parent'>
+                        <FontAwesomeIcon icon={faCopy} />
+                        <div className='tooltip'>
+                            <div className='tooltip-inner'>{copied ? i18n('copied') : i18n('copy')}</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+}
 const Options: FunctionComponent<{
     settings: Settings,
     alert: Confirm,
@@ -150,6 +187,16 @@ const Options: FunctionComponent<{
         </div>
         <div className='d-sm-none d-md-block col-md-6'>
             <div className='list-group list-group-flush'>
+                <ListGroupItem flex={false}>
+                    <div className='row'>
+                        <div className='col'>
+                            Trusted string
+                    </div>
+                        <div className='col'>
+                            <CopyableInput text={'*youtube.com/*&disableadblock=1'} />
+                        </div>
+                    </div>
+                </ListGroupItem>
                 <ListGroupItem>
                     Version
                     <div>

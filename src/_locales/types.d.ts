@@ -21,5 +21,6 @@ type locals = "okBtn" | "cancelBtn" | "optionsBtn" | "adOptionsDefaultTooltip"
     | "keyboardSkipOption" | "permissionDesc" | "permissionBtn" | "searchDesc"
     | "searchPlaceholder" | "searching" | "searchFailed" | "importSubsBtn"
     | "importSubsFailed" | "importSubsConfirm" | "updateFailed" | "wrongFormat"
-    | "parseFailed" | "noNew" | "confirmImport";
+    | "parseFailed" | "noNew" | "confirmImport" | "skipWarning"
+    | "copy" | "copied";
 export default locals

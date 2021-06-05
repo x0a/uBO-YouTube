@@ -405,5 +405,14 @@
                 "content": "$3"
             }
         }
+    },
+    "skipWarning": {
+        "message": "This may deprive your favorite channels of revenue"
+    },
+    "copy": {
+        "message": "Copy"
+    },
+    "copied": {
+        "message": "Copied"
     }
 }
