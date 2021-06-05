@@ -130,9 +130,11 @@ const Main: FunctionComponent<{
                                     >
                                         {settings.autoSkip && <DropdownSelection
                                             items={[
-                                                { text: '5s', value: 5 },
-                                                { text: '15s', value: 15 },
-                                                { text: '30s', value: 30 }
+                                                { text: '5s', value: 5, warning: i18n('skipWarning') },
+                                                { text: '15s', value: 15, warning: i18n('skipWarning') },
+                                                { text: '30s', value: 30 },
+                                                { text: '1m', value: 60 }, 
+                                                { text: '2m', value: 180 }
                                             ]}
                                             onSelect={seconds => {
                                                 bMessage('set', 'auto-skip', { autoSkip: settings.autoSkip, autoSkipSeconds: seconds })

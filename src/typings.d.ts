@@ -15,7 +15,7 @@ interface ClientMessage {
     error: string;
     response: any;
 }
-type AutoSkipSeconds = 0 | 5 | 30
+type AutoSkipSeconds = 0 | 5 | 30 | 60
 interface Settings<T = ChannelList> {
     whitelisted: T;
     blacklisted: T;

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 const realBlur = ({ relatedTarget, currentTarget }: React.FocusEvent) => {
     return relatedTarget !== currentTarget
@@ -23,25 +23,31 @@ const Switch: FunctionComponent<{
 const DropdownSelection: FunctionComponent<{
     items: Array<{
         text: string,
-        value: number
+        value: number,
+        warning?: string
     }>,
     selected: number;
     onSelect: (selection: number) => void
 }> = ({ items, selected, onSelect }) => {
-    const [show, setShow] = useState(false);
+    const [show, setShow] = useState(items.length < 6);
     return <div className='dropdown' onBlur={(e) => realBlur(e) && setShow(false)}>
         <button className='btn btn-secondary dropdown-toggle' onClick={() => setShow(!show)}>
             {items.find(({ value }) => value === selected)?.text}
         </button>
         <div className={'dropdown-menu ' + (show ? 'show' : '')}>
-            {items.map(({ text, value }) => <a
+            {items.map(({ text, value, warning }) => <a
                 className='dropdown-item'
                 href='#'
                 key={value}
                 onClick={() => {
                     setShow(false);
                     onSelect(value);
-                }}>{text}</a>)}
+                }}>{text + ' '}{warning && <span className='float-right tooltip-parent'>
+                    <FontAwesomeIcon icon={faExclamationTriangle} />
+                    <div className='tooltip'>
+                        <div className='tooltip-inner'>{warning}</div>
+                    </div>
+                </span>}</a>)}
         </div>
     </div>
 }
