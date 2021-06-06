@@ -269,7 +269,7 @@ class MutationWatcher {
     onMutation(mutations: Array<MutationElement>) {
         for (const mutation of mutations) {
             const type = pages.getType();
-            // this.findInjection(mutation, '#top-row ytd-video-owner-renderer .ytd-channel-name');
+            this.findInjection(mutation, 'ytd-subscribe-button-renderer');
             let userInfo;
             if (type === PageType.Video) {
                 let player, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
