@@ -29,7 +29,7 @@ const DropdownSelection: FunctionComponent<{
     selected: number;
     onSelect: (selection: number) => void
 }> = ({ items, selected, onSelect }) => {
-    const [show, setShow] = useState(items.length < 6);
+    const [show, setShow] = useState(false);
     return <div className='dropdown' onBlur={(e) => realBlur(e) && setShow(false)}>
         <button className='btn btn-secondary dropdown-toggle' onClick={() => setShow(!show)}>
             {items.find(({ value }) => value === selected)?.text}
