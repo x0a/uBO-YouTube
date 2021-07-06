@@ -39,6 +39,16 @@ interface ChannelElement extends HTMLDivElement {
 let settings: Settings;
 let pages: Page, watcher: MutationWatcher, agent: MessageAgent, toast: (text: string) => void;
 
+const ifOrNull = (tester: (val: any) => boolean, val: any) => tester(val) ? val : null;
+const awaitData = (el: HTMLElement) => new Promise(resolve => {
+    const _el = el as any;
+    if (_el.data) return resolve(_el.data);
+    const i = setInterval(() => {
+        if (_el.data) resolve(_el.data);
+        clearInterval(i);
+    }, 200);
+})
+
 class MutationWatcher {
 
     watcher: MutationObserver;
@@ -168,6 +178,13 @@ class MutationWatcher {
             && mutation.target.id === 'contents'
             && Array.from(mutation.addedNodes).some(el => el.localName === 'ytd-item-section-renderer');
     }
+    isNextVideo(mutation: MutationElement): Array<HTMLAnchorElement> | null {
+        return mutation.type === 'childList'
+            && mutation.target.id === 'movie_player'
+            && mutation.addedNodes.length
+            && Array.from(mutation.addedNodes).some(el => el.classList.contains('ytp-ce-video'))
+            && Array.from(mutation.target.querySelectorAll('.ytp-ce-covering-overlay'));
+    }
     static adSkipButton(container: HTMLElement): HTMLButtonElement {
         return container.style.display !== 'none'
             && container.querySelector('button');
@@ -202,7 +219,7 @@ class MutationWatcher {
         }
     }
     //** For debugging: Helps identify where/when element was added, removed, or changed */
-    findInjection(mutation: MutationRecord, selector: string) {
+    findInjection(mutation: MutationRecord, selector: string, cb: (el: HTMLElement) => void = () => { }) {
         const target = mutation.target as HTMLElement;
         if (target.matches(selector)) {
             if (mutation.type === 'attributes') {
@@ -218,6 +235,7 @@ class MutationWatcher {
             else {
                 console.log(`%c[${selector}] >`, 'font-weight: bold;', mutation.type, mutation);
             }
+            cb(target);
         }
         else if (mutation.type === 'childList') {
             for (let node of mutation.addedNodes as NodeListOf<HTMLElement>) {
@@ -228,6 +246,7 @@ class MutationWatcher {
                         `<${this.getSelector(target)}>.addedNodes = [...,` +
                         `%c<${selector}>%c, ...]`, 'color: green;', mutation
                     );
+                    cb(node);
                 }
                 else if (node.querySelector(selector)) {
                     console.log(
@@ -238,6 +257,7 @@ class MutationWatcher {
                         'color: green; font-weight: bold;',
                         mutation
                     );
+                    cb(node.querySelector(selector));
                 }
             }
             for (let node of mutation.removedNodes as NodeListOf<HTMLElement>) {
@@ -249,6 +269,7 @@ class MutationWatcher {
                         'color: red',
                         ''
                     );
+                    cb(node);
                 }
                 else if (node.querySelector(selector)) {
                     console.log(
@@ -256,6 +277,7 @@ class MutationWatcher {
                         `%c<${this.getSelector(node)}>.querySelector("${selector}"), ...] `,
                         'color: red'
                     );
+                    cb(node.querySelector(selector));
                 }
             }
         }
@@ -269,8 +291,9 @@ class MutationWatcher {
     onMutation(mutations: Array<MutationElement>) {
         for (const mutation of mutations) {
             const type = pages.getType();
-            this.findInjection(mutation, 'ytd-subscribe-button-renderer');
+            //this.findInjection(mutation, '.ytp-ce-covering-overlay', el => console.log(el.parentElement.outerHTML));
             let userInfo;
+            let suggestions;
             if (type === PageType.Video) {
                 let player, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
                 if (userInfo = this.isPolyUserInfo(mutation)) {
@@ -282,6 +305,9 @@ class MutationWatcher {
                     if (!pages.video.channelId) {
                         pages.video.updatePage();
                     }
+                } else if (suggestions = this.isNextVideo(mutation)) {
+                    console.log(mutation);
+                    pages.video.onEndscreen(suggestions);
                 } else if (player = this.isPlayerUpdate(mutation)) {
                     pages.video.updateAdPlaying(player, player.classList.contains('ad-showing'));
                     let errorState = this.isPlayerErrorChange(mutation);
@@ -408,7 +434,8 @@ class SingleChannelPage {
     videoId: string;
     adsPlayed: number;
     skipButton: HTMLButtonElement;
-    pageManager: HTMLDivElement
+    pageManager: HTMLDivElement;
+    pageApp: HTMLDivElement;
     _currentPlayer: HTMLVideoElement;
     removeNet: () => void;
     removeHooks: () => void;
@@ -649,6 +676,30 @@ class SingleChannelPage {
             this.attemptSkip();
         }
     }
+    onEndscreen(links: Array<HTMLAnchorElement>) {
+        log('uBO-suggestions', links)
+        this.setPageManager();
+
+        links.forEach(link => {
+            const videoId = (link.href.match(/[\?\&]v=([^&]+)/) || [, ''])[1];
+            if (!videoId) throw 'Could not get videoID for' + link.href;
+            getMetadata(videoId)
+                .then(metadata => getVideoData(videoId, metadata))
+                .then(({ channelId }) => {
+                    link.href = pages.reflectURLFlag(link.href, settings.asWl(channelId, false));
+                    awaitData(this.pageApp)
+                        .then(data => {
+                            const renderers = Obj.findParent(data, 'endscreenRenderer')?.endscreenRenderer?.elements;
+                            
+                            renderers.find((renderer: any) => renderer.endscreenElementRenderer.endpoint.watchEndpoint?.videoId === videoId)
+                                .endscreenElementRenderer.endpoint.commandMetadata.webCommandMetadata.url += (settings.asWl(channelId) ? '&disableadblock=1' : '')
+                        })
+                        .catch(err => console.error('fuck', err))
+
+
+                })
+        })
+    }
     onVideoError(error: boolean) {
         this.videoError = error;
 
@@ -855,7 +906,9 @@ class SingleChannelPage {
     }
 
     setPageManager() {
-        return this.pageManager = this.pageManager || document.querySelector('ytd-page-manager');
+        this.pageManager = this.pageManager = this.pageManager || document.querySelector('ytd-page-manager');
+        this.pageApp = this.pageApp || document.querySelector('ytd-app');
+        return this.pageManager;
     }
     setDataNode(/* override */node?: HTMLElement) { return node }
     insertButton(/* override */button: WhitelistButtonInstance): boolean { return false }
