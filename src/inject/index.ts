@@ -1379,7 +1379,7 @@ class Page {
     determineType(url = location.href): PageType {
         if (url.indexOf('youtube.com/watch?') !== -1) {
             return PageType.Video;
-        } else if (url.indexOf('youtube.com/channel/') !== -1 || url.indexOf('youtube.com/user/') !== -1) {
+        } else if (url.indexOf('youtube.com/channel/') !== -1 || url.indexOf('youtube.com/user/') !== -1 || url.indexOf('youtube.com/c/') !== -1) {
             return PageType.Channel;
         } else if (url.indexOf('youtube.com/results?') !== -1) {
             toggleAdblock(true);
