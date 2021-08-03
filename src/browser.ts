@@ -67,6 +67,12 @@ const getWebExtensionsAPI = (): typeof browser => {
                     get: promisify(chrome.storage.sync, 'get'),
                     set: promisify(chrome.storage.sync, 'set'),
                     clear: promisify(chrome.storage.sync, 'clear')
+                },
+                local: {
+                    ...chrome.storage.local,
+                    get: promisify(chrome.storage.sync, 'get'),
+                    set: promisify(chrome.storage.sync, 'set'),
+                    clear: promisify(chrome.storage.sync, 'clear')
                 }
             } as typeof browser.storage
         }

@@ -54,6 +54,8 @@ class InjectHook {
             agent.send('settings-update', { settings: message.settings, initiator: message.initiator });
         } else if (message.action === 'ad-update') {
             agent.send('ad-update', message.ad);
+        } else if (message.action === 'subscriptions-update') {
+            agent.send('subscriptions-update', { subscriptions: message.subscriptions, initiator: message.initiator });
         } else if (message.action === 'toggle-basic') {
             const turnOn = message.on;
             browser.cookies.get({ url: 'youtube.com', name: 'f6' })
@@ -67,11 +69,12 @@ class InjectHook {
         }
     }
     retrieveSettings() {
-        return browser.runtime.sendMessage({ action: 'get', subaction: 'settings' }).then((message: any) => {
+        return browser.runtime.sendMessage({ action: 'get', subaction: 'settings+subs' }).then((message: any) => {
             if (message.error) throw message.error;
 
             return {
-                settings: message.response,
+                settings: message.response.settings,
+                subscriptions: message.response.subscriptions,
                 accessURLs: {
                     ICO: browser.runtime.getURL('img/icon_16.png')
                 },
@@ -185,6 +188,7 @@ agent
     })
     .on('get-settings', () => hook.getSettings())
     .on('set-settings', ({ type, param }) => intermediary('set', type, param))
+    .on('cache', ({ type, param }) => intermediary('cache', type, param))
     .on('recent-ad', () => intermediary('tab', 'last-ad'))
     .on('echo-ad', ad => intermediary('tab', 'echo-ad', ad))
     .on('mute-tab', (shouldMute: boolean) => intermediary('tab', 'mute', shouldMute || false))

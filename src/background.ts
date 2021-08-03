@@ -31,7 +31,8 @@ class SettingsManager {
     limitAds: boolean;
     limitAdsQty: number;
     forceWhite: boolean;
-    constructor(settings: Settings) {
+    subscriptions: Channels;
+    constructor(settings: Settings, subscriptions: ChannelList) {
         settings = SettingsManager.sanitizeSettings(settings);
         this.whitelist = new Channels(settings.whitelisted);
         this.blacklist = new Channels(settings.blacklisted);
@@ -49,6 +50,7 @@ class SettingsManager {
         this.limitAds = settings.limitAds;
         this.limitAdsQty = settings.limitAdsQty
         this.forceWhite = settings.forceWhite;
+        this.subscriptions = new Channels(subscriptions);
     }
 
     static sanitizeSettings(settings?: Settings): Settings {
@@ -80,36 +82,47 @@ class SettingsManager {
     // With raw JSON, you quickly start running into problems if you try to import subscriptions
     // The solution is to both compress JSON-serialized settings, and to split it into multiple items
 
-    static getSettings(throwOnOrigin = false): Promise<Settings> {
-        return browser.storage.sync.get(null).then(store => {
-            if (throwOnOrigin && (!store.instance || store.instance === instance)) throw 'The changes originated from same instance or are incomplete';
-            if (store.algorithm === 'lz' && store.totalKeys) {
-                let compressedStr = '';
-                for (let i = 0; i < store.totalKeys; i++) {
-                    compressedStr += store['lz_' + i];
-                }
+    static async getSettings(throwOnOrigin = false): Promise<[Settings, ChannelList]> {
+        const store = await browser.storage.sync.get(null);
+        const localStore = await browser.storage.local.get(null);
 
-                try {
-                    const decompressed = decompressFromBase64(compressedStr)
-                    const parsed = JSON.parse(decompressed) as Settings;
-                    return parsed;
-                } catch (e) {
-                    return {} as Settings;
-                }
-            } else {
-                return (store || {}) as any as Settings; // not encrypted
+        const subscriptions = (localStore?.subscriptions as ChannelList) || [] as ChannelList;
+
+        if (throwOnOrigin && (!store.instance || store.instance === instance)) throw 'The changes originated from same instance or are incomplete';
+        if (store.algorithm === 'lz' && store.totalKeys) {
+            let compressedStr = '';
+            for (let i = 0; i < store.totalKeys; i++) {
+                compressedStr += store['lz_' + i];
             }
 
-        })
+            try {
+                const decompressed = decompressFromBase64(compressedStr)
+                const parsed = JSON.parse(decompressed) as Settings;
+                return [parsed, subscriptions];
+            } catch (e) {
+                return [{} as Settings, subscriptions];
+            }
+        } else {
+            return [(store || {}) as any as Settings, subscriptions]; // not encrypted
+        }
+
     }
-    updateAll(originTab?: browser.tabs.Tab) {
+    updateAll(originTab?: browser.tabs.Tab, subscriptionsOnly = false) {
         browser.tabs.query({})
             .then(tabs => tabs
                 .filter(({ id }) => id !== undefined) // we don't want popup.html
                 .forEach(({ id }) => {
                     const isOrigin: boolean = !!(originTab && originTab.id === id);
-                    browser.tabs.sendMessage(id, { action: 'update', settings: settings.get(), initiator: isOrigin })
-                        .catch(() => { });
+                    if (subscriptionsOnly) {
+                        browser.tabs.sendMessage(id, { action: 'subscriptions-update', subscriptions: settings.subscriptions.get(), initiator: isOrigin })
+                            .catch(() => { });
+
+                    } else {
+                        console.log('sending', settings.get())
+                        browser.tabs.sendMessage(id, { action: 'update', settings: settings.get(), initiator: isOrigin })
+                            .catch(() => { });
+                    }
+
                 })
             );
     }
@@ -218,6 +231,12 @@ class SettingsManager {
 
         const end = performance.now();
         console.log('Save duration:', end - start)
+    }
+    async saveLocal() {
+        browser.storage.local.set({
+            instance,
+            subscriptions: this.subscriptions.get()
+        })
     }
 }
 
@@ -538,9 +557,10 @@ class AdManager {
     }
 }
 
+browser.storage.local.get({})
 SettingsManager.getSettings()
-    .then((_settings: Settings) => {
-        settings = new SettingsManager(_settings);
+    .then(([_settings, _subscriptions]) => {
+        settings = new SettingsManager(_settings, _subscriptions);
         ads = new AdManager();
         const listener = new MessageListener();
 
@@ -561,8 +581,8 @@ SettingsManager.getSettings()
                 settings.suggest(channels);
                 browser.tabs.remove(sender.tab.id);
             })
-            .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings))
-            .on('reset', () => settings = new SettingsManager({} as Settings))
+            .on('bulk', (_, nextSettings: Settings) => settings = new SettingsManager(nextSettings, settings.subscriptions.get()))
+            .on('reset', () => settings = new SettingsManager({} as Settings, []))
             .on('mute-all', (_, shouldMute) => settings.toggleMuteAll(shouldMute))
             .on('auto-whitelist', (_, shouldAutoWhite) => settings.toggleAutoWhite(shouldAutoWhite))
             .on('skip-overlays', (_, shouldSkip) => settings.toggleSkipOverlays(shouldSkip))
@@ -578,9 +598,19 @@ SettingsManager.getSettings()
                 settings.updateAll(sender.tab);
                 return settings.get();
             });
-
+        listener.onAction('cache')
+            .on('suggest-subscriptions', (_, channels: Array<Channel>) => {
+                settings.subscriptions = new Channels(channels);
+            })
+            .on('add-subscriptions', (_, channelId: Channel) => settings.subscriptions.add(channelId))
+            .on('remove-subscriptions', (_, channelId: Channel) => settings.subscriptions.remove(channelId.id))
+            .onAll(sender => {
+                settings.updateAll(undefined, true);
+                return settings.saveLocal();
+            })
         listener.onAction('get')
             .on('settings', () => settings.get())
+            .on('settings+subs', () => ({ settings: settings.get(), subscriptions: settings.subscriptions.get() }))
             .on('ads', () => ads.get());
 
         listener.onAction('tab')
@@ -610,8 +640,8 @@ SettingsManager.getSettings()
 
         browser.storage.onChanged.addListener(() => {
             SettingsManager.getSettings(true)
-                .then(nextSettings => {
-                    settings = new SettingsManager(nextSettings)
+                .then(([nextSettings, nextSubscriptions]) => {
+                    settings = new SettingsManager(nextSettings, nextSubscriptions)
                     settings.updateAll()
                 })
         })

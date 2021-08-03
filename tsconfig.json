@@ -1,5 +1,6 @@
 {
     "files": [
+        "src/inject/nextIndex.ts",
         "src/inject/index.ts",
         "src/background.ts",
         "src/content.ts",

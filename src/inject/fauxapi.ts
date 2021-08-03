@@ -52,6 +52,7 @@ const getMetadata = (videoId: string) => fetch('https://www.youtube.com/watch?v=
     .then(text => inexactParse(text));
 
 const getVideoData = (videoId: string, metadata: any): Ad => {
+    console.log(metadata);
     const primary = Obj.findParent(metadata, 'videoPrimaryInfoRenderer')?.videoPrimaryInfoRenderer;
     const secondary = Obj.findParent(metadata, 'videoSecondaryInfoRenderer')?.videoSecondaryInfoRenderer;
 

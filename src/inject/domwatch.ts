@@ -1,17 +1,20 @@
-
 class SiteWatch {
     components: Array<Component>;
     currentComponents?: Array<Component>;
     currentChecker?: (muts: Array<MutationRecord>) => void;
     observer: MutationObserver;
     lastURL: string;
+    urlWatchers: Array<(url: string) => void>;
     constructor() {
         this.components = [];
+        this.urlWatchers = [];
         this.currentComponents = this.getApplicableComponents();
         this.lastURL = document.location.href
         this.observer = new MutationObserver(muts => {
             if (document.location.href !== this.lastURL) {
                 this.applyComponents(this.getApplicableComponents());
+                this.lastURL = document.location.href;
+                this.urlWatchers.forEach(fn => fn(this.lastURL));
             }
 
             if (!this.currentComponents) return;
@@ -20,18 +23,19 @@ class SiteWatch {
         })
     }
     private getApplicableComponents(href: string = document.location.href): Array<Component> {
-        const nextModules = this.components.filter(({ url }) => url instanceof RegExp ? url.test(href) : href.indexOf(url) !== -1)
+        const nextModules = this.components.filter(({ url: query }) => typeof query === 'string' ? href.indexOf(query) !== -1 : query(href))
         return nextModules.length ? nextModules : undefined
     }
     private applyComponents(nextComponents?: Array<Component>) {
         const _nextComponents = nextComponents || [];
         const _currentComponents = this.currentComponents || [];
-        const unMount = () => _nextComponents
-            .filter(component => _currentComponents.indexOf(component) === -1 || component.remountOnChange)
-            .forEach(component => component.onUmount());
-        const mount = () => _currentComponents
+        const unMount = () => _currentComponents
             .filter(component => _nextComponents.indexOf(component) === -1 || component.remountOnChange)
+            .forEach(component => component.onUmount());
+        const mount = () => _nextComponents
+            .filter(component => _currentComponents.indexOf(component) === -1 || component.remountOnChange)
             .forEach(component => component.onMount());
+
         if (!nextComponents) {
             unMount();
             this.currentComponents = undefined;
@@ -39,6 +43,7 @@ class SiteWatch {
         } else {
             unMount();
             mount();
+            console.log('Mounted', nextComponents);
             this.currentComponents = nextComponents;
             this.currentChecker = this.getCheckAll(nextComponents);
         }
@@ -51,7 +56,7 @@ class SiteWatch {
             for (let mut of muts) {
                 if (mut.type === 'childList') {
                     for (const node of mut.removedNodes as NodeListOf<HTMLElement>) {
-                        if(node.nodeType !== Node.ELEMENT_NODE) continue;
+                        if (node.nodeType !== Node.ELEMENT_NODE) continue;
                         for (let [query, fns] of allRemovedChecks) {
                             if (node.matches(query)) {
                                 fns.forEach(fn => fn(node))
@@ -64,7 +69,7 @@ class SiteWatch {
                         }
                     }
                     for (const node of mut.addedNodes as NodeListOf<HTMLElement>) {
-                        if(node.nodeType !== Node.ELEMENT_NODE) continue;
+                        if (node.nodeType !== Node.ELEMENT_NODE) continue;
                         for (let [query, fns] of allAddedChecks) {
                             if ((node as HTMLElement).matches(query)) {
                                 fns.forEach(fn => fn(node));
@@ -79,13 +84,13 @@ class SiteWatch {
                 }
                 for (const [query, fns] of allModifiedChecks) {
                     if ((mut.target as HTMLElement).matches(query))
-                        fns.forEach(fn => fn(mut.target as HTMLElement))
+                        fns.forEach(fn => fn(mut.target as HTMLElement, mut))
                 }
             }
         }
     }
-    private mergeChecks(allChecks: Array<Map<string, (el?: HTMLElement) => void>>) {
-        const nextChecks = new Map() as Map<string, Array<(el?: HTMLElement) => void>>;
+    private mergeChecks(allChecks: Array<Map<string, (el?: HTMLElement, mutation?: MutationRecord) => void>>) {
+        const nextChecks = new Map() as Map<string, Array<(el?: HTMLElement, mutation?: MutationRecord) => void>>;
         for (const check of allChecks)
             for (const [query, fn] of check) {
                 nextChecks.set(query, (nextChecks.get(query) || []).concat(fn))
@@ -95,6 +100,9 @@ class SiteWatch {
     add(page: Component) {
         this.components.push(page);
     }
+    onURLUpdate(fn: (url: string) => void) {
+        this.urlWatchers.push(fn);
+    }
     start() {
         const attribs = [...new Set(this.components.map(component => component.attribs).flat())];
         this.applyComponents(this.getApplicableComponents());
@@ -102,6 +110,7 @@ class SiteWatch {
 
         if (this.currentComponents) {
             this.currentComponents.forEach(component => {
+
                 component.onMount();
                 for (let [query, fn] of component.checkAdded) {
                     const el = document.querySelector(query) as HTMLElement;
@@ -118,23 +127,27 @@ class SiteWatch {
             attributeFilter: attribs
         })
     }
+    update(...args: Array<any>) {
+        this.currentComponents?.forEach(component => component.update(...args));
+    }
     destroy() {
         this.observer.disconnect();
+        this.components.forEach(component => component.destroy());
         this.components = [];
         this.currentComponents = undefined;
         this.currentChecker = undefined
     }
 }
 
-class Component {
-    url: string | RegExp;
+abstract class Component {
+    url: string | ((url: string) => boolean);
     checkRemoved: Map<string, () => void>;
     checkAdded: Map<string, (el: HTMLElement) => void>;
-    checkModified: Map<string, (el: HTMLElement) => void>;
+    checkModified: Map<string, (el: HTMLElement, mutation: MutationRecord) => void>;
     attribs: Array<string>;
     remountOnChange: boolean;
 
-    constructor(url: string | RegExp, remountOnChange = false) {
+    constructor(url: string | ((url: string) => boolean), remountOnChange = false) {
         this.url = url;
         this.remountOnChange = remountOnChange;
         this.attribs = [];
@@ -142,10 +155,10 @@ class Component {
         this.checkAdded = new Map();
         this.checkModified = new Map();
     }
-    onMount() /* override */ {
+    onMount() /* optional override */ {
 
     }
-    onUmount() /* override */ {
+    onUmount() /* optional override */ {
 
     }
 
@@ -157,11 +170,13 @@ class Component {
             this.checkModified.set(query, fn);
         }
     }
+    //** added or removed from DOM - when removed, function call will be empty */
     onTree(query: string, fn: (el?: HTMLElement) => void) {
         this.checkAdded.set(query, fn);
         this.checkRemoved.set(query, fn);
     }
-    onModified(query: string, fn: (el: HTMLElement) => void, attribs: Array<string>) {
+    // ** element has had attribute changes or subtree changes  **/
+    onModified(query: string, fn: (el: HTMLElement, mutation?: MutationRecord) => void, attribs: Array<string> = []) {
         this.checkModified.set(query, fn);
         this.appendAttribs(attribs)
     }
@@ -172,6 +187,8 @@ class Component {
             }
         }
     }
+    abstract update(...args: Array<any>): void;
+    abstract destroy(): void;
 }
 
 export { SiteWatch, Component }

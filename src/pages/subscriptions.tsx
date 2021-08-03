@@ -59,7 +59,8 @@ const ImportSubscriptions: FunctionComponent<{
                             limitAds: settings.limitAds,
                             limitAdsQty: settings.limitAdsQty,
                             autoSkipSeconds: settings.autoSkipSeconds,
-                            keyboardSkip: settings.keyboardSkip
+                            keyboardSkip: settings.keyboardSkip,
+                            forceWhite: settings.forceWhite
                         })
                         bMessage('set', 'bulk', nextSettings);
                     })

@@ -40,6 +40,7 @@ class AdBlock {
     private matches: (el: HTMLElement) => ElAction;
     private queryAllFilters: () => Array<ElAction>;
     private netListeners: Array<(url: string) => void>;
+    private fetchIntercept: Array<(url: string | Request, response: Response) => Promise<void>>;
     private onAdsListener: (ads: Array<any>) => Array<any>;
     private unhookAll: () => void;
 
@@ -49,6 +50,7 @@ class AdBlock {
         this.queryAllFilters = queryAllFilters;
         this.matches = matches;
         this.netListeners = [];
+        this.fetchIntercept = [];
         this.onAdsListener = ads => ads;
         this.toggleAll(block);
         this.unhookAll = this.hookAll();
@@ -87,6 +89,9 @@ class AdBlock {
             const i = this.netListeners.indexOf(fn);
             this.netListeners.splice(i, 1);
         }
+    }
+    onFetch(fn: (url: string | Request, res: Response) => Promise<void>) {
+        this.fetchIntercept.push(fn);
     }
     onAds(fn: (ads: Array<any>) => Array<any>) {
         this.onAdsListener = fn;
@@ -406,8 +411,11 @@ class AdBlock {
             if (self.fetch && netFilters.some(filter => url.indexOf(filter) !== -1)) {
                 log('uBO-YT-Fetch', url);
                 return Promise.reject(new TypeError('Failed to fetch'));
-            } else
-                return origFetch.apply(this, arguments);
+            } else {
+                const req = origFetch.apply(this, arguments);
+                self.fetchIntercept.forEach(fn => fn(arguments[0], req))
+                return req;
+            }
         }
 
         return () => {

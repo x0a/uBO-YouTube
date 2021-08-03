@@ -489,7 +489,7 @@ class SingleChannelPage {
             // toast("Channel added to whitelist");
         }
 
-        if (!settings.asWl(this.channelId) && this.adPlaying && !this.awaitingSkip) {
+        if (!settings.asWl(this.channelId, this.isSubscribed()) && this.adPlaying && !this.awaitingSkip) {
             log('uBO-limit', 'Ad playing that should not be playing, attempting skip');
             this.attemptSkip();
         }
@@ -614,7 +614,7 @@ class SingleChannelPage {
                     // this.adOptions.overrideTooltip(i18n('autoSkipTooltip', settings.autoSkipSeconds));
                 }
 
-                if (adblock.enabled() && this.channelId && !settings.asWl(this.channelId)) {
+                if (adblock.enabled() && this.channelId && !settings.asWl(this.channelId, this.isSubscribed())) {
                     this.adPlaying = true;
                     log('uBO-Ads', 'Skipping ad due to adblock being enabled and channel not passing the whitelist test')
                     this.attemptSkip();
@@ -1339,6 +1339,8 @@ class Page {
     videosQuery: string;
     mode: number;
     eventExemptions: Array<EventListener>;
+    originalURL: string;
+    flaggedURL: string;
 
     constructor(design: Layout) {
         if (design === Layout.Polymer) {
@@ -1370,7 +1372,10 @@ class Page {
         const nextURL = location.href;
 
         if (nextURL !== this.currentURL) {
-            this.currentURL = nextURL;
+            
+            if(this.originalURL === nextURL){
+                window.history.replaceState(history.state, '', this.flaggedURL);
+            }
             return this.mode = this.determineType(nextURL);
         } else {
             return this.mode;
@@ -1467,7 +1472,9 @@ class Page {
         if (location.href.indexOf('&disableadblock=1') !== -1) {
             // ads are enabled, should we correct that?
             if (!whitelisted) {
-                window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, false));
+                this.originalURL = location.href;
+                this.flaggedURL = pages.reflectURLFlag(location.href, false)
+                window.history.replaceState(history.state, '', this.flaggedURL);
                 toggleAdblock(true);
                 return false;
             } else {
@@ -1477,7 +1484,9 @@ class Page {
         } else {
             // ads are not enabled, lets see if they should be
             if (whitelisted) {
-                window.history.replaceState(history.state, '', pages.reflectURLFlag(location.href, true));
+                this.originalURL = location.href;
+                this.flaggedURL = pages.reflectURLFlag(location.href, false)
+                window.history.replaceState(history.state, '', this.flaggedURL);
                 toggleAdblock(false);
                 if (verify && settings.verifyWl) this.confirmDisabled();
                 return true;
