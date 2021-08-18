@@ -2,7 +2,7 @@ import * as React from 'react';
 import { FunctionComponent, useState, useCallback, useEffect, FormEvent, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDownload, faFileImport, faTrash, faCopy } from '@fortawesome/free-solid-svg-icons'
-import SwitchableOption from './switch';
+import { SwitchableOption, Tooltip } from './switch';
 import { Settings } from '../typings';
 import {
     Confirm, isSettings, canonicalizeSettings, diffSettings,
@@ -137,17 +137,16 @@ const CopyableInput: FunctionComponent<{
             <input type="text" ref={inputField} onClick={selectAll} className="form-control" value={text} readOnly={true} />
             <div className="input-group-append">
                 <button
-                    className="btn btn-outline-secondary ml-0"
+                    className="btn btn-outline-secondary p-0 ml-0"
                     type="button"
                     onClick={copy}
                     disabled={copied}>
-                    <div className='tooltip-parent'>
-                        <FontAwesomeIcon icon={faCopy} />
-                        <div className='tooltip'>
-                            <div className='tooltip-inner'>{copied ? i18n('copied') : i18n('copy')}</div>
-                        </div>
-                    </div>
+                    <Tooltip text={copied ? i18n('copied') : i18n('copy')} className='pt-2 pb-2 pl-3 pr-3'>
+                        <FontAwesomeIcon icon={faCopy}/>
+                    </Tooltip>
                 </button>
+
+
             </div>
         </div>
     </div>
@@ -191,7 +190,7 @@ const Options: FunctionComponent<{
                     <div className='row'>
                         <div className='col'>
                             Trusted string
-                    </div>
+                        </div>
                         <div className='col'>
                             <CopyableInput text={'*youtube.com/*&disableadblock=1'} />
                         </div>

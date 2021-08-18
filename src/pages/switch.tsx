@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FunctionComponent, useState } from 'react';
+import { FunctionComponent, useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
@@ -66,12 +66,7 @@ const SwitchableOption: FunctionComponent<{
             {text}
         </span>
         {children}
-        {tooltip && <div className='tooltip-parent'>
-            <FontAwesomeIcon icon={faInfoCircle} />
-            <div className='tooltip'>
-                <div className='tooltip-inner'>{tooltip}</div>
-            </div>
-        </div>}
+        {tooltip && <Tooltip text={tooltip} />}
     </div>
     return listItem
         ? <li className='list-group-item'>
@@ -79,5 +74,54 @@ const SwitchableOption: FunctionComponent<{
         </li>
         : item
 }
-export { SwitchableOption, DropdownSelection }
+
+const Tooltip: FunctionComponent<{
+    text: string;
+    className?: string;
+}> = ({ text, children, className }) => {
+    const [show, setShow] = useState(false);
+    const [x, setX] = useState(0);
+    const [y, setY] = useState(0);
+    const tooltip = useRef(null as HTMLDivElement);
+    const tooltipParent = useRef(null as HTMLSpanElement)
+    // TODO:: figure this shit out, how to calculate optimal place to put tooltip when its a fixed size bvased on a fixed width
+
+    return <>
+        <div className={'tooltip-dyn ' + (show ? 'visible' : 'invisible')} style={{ left: x, top: y }} ref={tooltip}>
+            {text}
+        </div>
+        <span ref={tooltipParent}
+            onMouseEnter={(event) => {
+                const parentWidth = tooltipParent.current.offsetWidth;
+                const parentHeight = tooltipParent.current.offsetHeight;
+                const { top, left } = tooltipParent.current.getBoundingClientRect();
+                const childHeight = tooltip.current.offsetHeight;
+                const childWidth = tooltip.current.offsetWidth;
+
+                const rightX = left + parentWidth + 8
+                const rightY = (top + (parentHeight / 2)) - (childHeight / 2);
+                if (rightX + childWidth > window.innerWidth) {
+                    // place above instead
+                    setX((left + (parentWidth / 2)) - (childWidth / 2))
+                    setY(top - parentHeight - 4)
+                } else {
+                    setX(rightX);
+                    setY(rightY);
+                }
+                setShow(true)
+            }}
+            className={className || ''}
+            onMouseLeave={() => setShow(false)}>
+            {children || <FontAwesomeIcon icon={faInfoCircle} />}
+        </span>
+    </>
+
+    // <div className='tooltip-parent'>
+    //    <span>{children || <FontAwesomeIcon icon={faInfoCircle} />}</span>
+    //   <div className='tooltip'>
+    //       <div className='tooltip-inner'>{text}</div>
+    //   </div>
+    // </div>
+}
+export { SwitchableOption, DropdownSelection, Tooltip }
 export default SwitchableOption;
