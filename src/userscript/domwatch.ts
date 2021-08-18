@@ -1,10 +1,10 @@
 class SiteWatch {
-    components: Array<Component>;
+    private components: Array<Component>;
     currentComponents?: Array<Component>;
-    currentChecker?: (muts: Array<MutationRecord>) => void;
-    observer: MutationObserver;
-    lastURL: string;
-    urlWatchers: Array<(url: string) => void>;
+    private currentChecker?: (muts: Array<MutationRecord>) => void;
+    private observer: MutationObserver;
+    private lastURL: string;
+    private urlWatchers: Array<(url: string) => void>;
     constructor() {
         this.components = [];
         this.urlWatchers = [];
@@ -43,7 +43,6 @@ class SiteWatch {
         } else {
             unMount();
             mount();
-            console.log('Mounted', nextComponents);
             this.currentComponents = nextComponents;
             this.currentChecker = this.getCheckAll(nextComponents);
         }
@@ -52,7 +51,10 @@ class SiteWatch {
         const allRemovedChecks = this.mergeChecks(components.map(component => component.checkRemoved))
         const allAddedChecks = this.mergeChecks(components.map(component => component.checkAdded));
         const allModifiedChecks = this.mergeChecks(components.map(component => component.checkModified))
+        const allMutationChecks = components.map(component => component.checkMutation).flat();
+
         return (muts: Array<MutationRecord>) => {
+            allMutationChecks.forEach(fn => fn(muts, this.observer));
             for (let mut of muts) {
                 if (mut.type === 'childList') {
                     for (const node of mut.removedNodes as NodeListOf<HTMLElement>) {
@@ -144,6 +146,7 @@ abstract class Component {
     checkRemoved: Map<string, () => void>;
     checkAdded: Map<string, (el: HTMLElement) => void>;
     checkModified: Map<string, (el: HTMLElement, mutation: MutationRecord) => void>;
+    checkMutation: Array<MutationCallback>
     attribs: Array<string>;
     remountOnChange: boolean;
 
@@ -154,6 +157,7 @@ abstract class Component {
         this.checkRemoved = new Map();
         this.checkAdded = new Map();
         this.checkModified = new Map();
+        this.checkMutation = [];
     }
     onMount() /* optional override */ {
 
@@ -161,7 +165,9 @@ abstract class Component {
     onUmount() /* optional override */ {
 
     }
-
+    onMutation(fn: MutationCallback) {
+        this.checkMutation.push(fn);
+    }
     onAll(query: string, fn: (el?: HTMLElement) => void, attribs?: Array<string>) {
         this.onTree(query, fn);
         if (attribs) {

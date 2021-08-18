@@ -52,10 +52,9 @@ const getMetadata = (videoId: string) => fetch('https://www.youtube.com/watch?v=
     .then(text => inexactParse(text));
 
 const getVideoData = (videoId: string, metadata: any): Ad => {
-    console.log(metadata);
     const primary = Obj.findParent(metadata, 'videoPrimaryInfoRenderer')?.videoPrimaryInfoRenderer;
     const secondary = Obj.findParent(metadata, 'videoSecondaryInfoRenderer')?.videoSecondaryInfoRenderer;
-
+    
     if (!primary || !secondary) throw 'Could not find primary or secondary video information';
 
 
@@ -84,11 +83,8 @@ const getVideoData = (videoId: string, metadata: any): Ad => {
         timestamp: Date.now() + '',
     } as Ad;
 }
-const getVideoId = (ad: any) => {
-    const owner = Obj.findParent(ad, 'adVideoId');
-    if (owner)
-        return owner.adVideoId;
-    return '';
+const getVideoId = (url: string) => {
+    const matches: any = url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=|\/sandalsResorts#\w\/\w\/.*\/))([^\/&]{10,12})/) || [, null];
+    return matches[1]; 
 }
-
-export {getMetadata, getVideoData};
+export { getMetadata, getVideoData, getVideoId };

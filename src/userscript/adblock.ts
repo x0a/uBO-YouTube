@@ -407,9 +407,8 @@ class AdBlock {
             const [req] = arguments;
 
             const url = req instanceof Request ? req.url : req;
-
+            self.onNetListener(url);
             if (self.fetch && netFilters.some(filter => url.indexOf(filter) !== -1)) {
-                log('uBO-YT-Fetch', url);
                 return Promise.reject(new TypeError('Failed to fetch'));
             } else {
                 const req = origFetch.apply(this, arguments);
