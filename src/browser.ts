@@ -6,7 +6,7 @@ const getWebExtensionsAPI = (): typeof browser => {
         return browser;
     } catch (e) {
         const nextAPI = {} as typeof browser;
-        if(navigator.userAgent.indexOf("Edge") !== -1){
+        if (navigator.userAgent.indexOf("Edge") !== -1) {
             chrome = browser;
         }
         const promisify = (context: any, method: string): any => {
@@ -15,7 +15,7 @@ const getWebExtensionsAPI = (): typeof browser => {
             return function () {
                 return new Promise((resolve, reject) => {
                     let args = [].slice.call(arguments);
-
+                    if (!original) reject('Function ' + method + ' does not exist')
                     args.push(function () {
                         const err = chrome.runtime.lastError
                         if (err) {
@@ -55,9 +55,9 @@ const getWebExtensionsAPI = (): typeof browser => {
                 ...chrome.management,
                 getSelf: promisify(chrome.management, 'getSelf')
             } as typeof browser.management
-        }else{
+        } else {
             nextAPI.management = {
-                getSelf: () => Promise.resolve({installType: "development"} as any)
+                getSelf: () => Promise.resolve({ installType: "development" } as any)
             } as typeof browser.management
         }
         if (chrome.storage) {
@@ -73,6 +73,9 @@ const getWebExtensionsAPI = (): typeof browser => {
                     get: promisify(chrome.storage.sync, 'get'),
                     set: promisify(chrome.storage.sync, 'set'),
                     clear: promisify(chrome.storage.sync, 'clear')
+                },
+                onChanged: {
+                    addListener: promisify(chrome.storage.onChanged.addListener, 'addListener')
                 }
             } as typeof browser.storage
         }
