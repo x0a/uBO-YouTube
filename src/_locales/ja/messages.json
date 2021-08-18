@@ -1,0 +1,418 @@
+{
+    "okBtn": {
+        "message": "OK",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "キャンセル",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "オプション",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "この広告主のオプション"
+    },
+    "adOptionsTooltip": {
+        "message": "「$title$」の広告を管理",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "初期設定に戻す"
+    },
+    "import": {
+        "message": "ファイルから設定をインポート"
+    },
+    "export": {
+        "message": "設定をファイルにエクスポート"
+    },
+    "resetConfirm": {
+        "message": "これにより、ホワイトリストに登録されているすべてのアイテム、広告オプション、設定が消去されます。設定を失いたくない場合は、キャンセルして「ダウンロード」をクリックしてください。"
+    },
+    "whitelistTabTitle": {
+        "message": "ホワイトリスト",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "このチャンネル上の広告をブロック"
+    },
+    "whitelistedTooltip": {
+        "message": "このチャンネルの広告が有効になりました"
+    },
+    "adsTabTitle": {
+        "message": "広告",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "広告",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "その他",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "チャンネル",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "広告主",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "ビデオ",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "ステータス",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "アクション",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "追加",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "追加済み",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "削除"
+    },
+    "bulkRemoveBtn": {
+        "message": "選択項目を削除"
+    },
+    "adsStillBlocked": {
+        "message": "広告はまだブロックされている可能性があります。uBlock Origin ホワイトリストに次のルールが追加されていることを確認してください。"
+    },
+    "adsHeaderLong": {
+        "message": "最近検出された広告"
+    },
+    "adsHeaderShort": {
+        "message": "最近の広告"
+    },
+    "whitelistHeader": {
+        "message": "ホワイトリストに登録されたチャンネル"
+    },
+    "excludeHeader": {
+        "message": "ホワイトリストから削除"
+    },
+    "removeWhitelistTooltip": {
+        "message": "ホワイトリストからチャンネルを削除"
+    },
+    "removeExcludeTooltip": {
+        "message": "購読されている場合に、チャンネルがホワイトリストに登録されるように再度許可する"
+    },
+    "removeFailed": {
+        "message": "アイテムを削除できませんでした: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "「$channelName$」が自動的にホワイトリストに登録されることを許可してもよろしいですか(購読している場合)？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "ホワイトリストから$channelName$を削除して本当によろしいですか？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "ホワイトリストから$count$を削除して本当によろしいですか？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "「$count$」が自動的にホワイトリストに登録されることを許可してもよろしいですか(購読している場合)？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "ブラックリストに登録された広告主"
+    },
+    "removeBlacklistTooltip": {
+        "message": "ブラックリストからチャンネルを削除"
+    },
+    "removeBlacklistConfirm": {
+        "message": "ブラックリストから$channelName$を削除して本当によろしいですか？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "ブラックリストから$count$を削除して本当によろしいですか？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "ミュートされていない広告主"
+    },
+    "muteBtn": {
+        "message": "広告主をミュート"
+    },
+    "removeUnmuteConfirm": {
+        "message": "「$channelName$」のミュートを再開してもよろしいですか？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "「$count$」のミュートを再開してもよろしいですか？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "ミュートされた広告主"
+    },
+    "removeMuteBtn": {
+        "message": "ミュートされていない広告主"
+    },
+    "removeMuteTooltip": {
+        "message": "広告主をミュートリストから削除"
+    },
+    "removeMuteConfirm": {
+        "message": "ミュートリストから$channelName$を削除して本当によろしいですか？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "ミュートリストから$count$を削除して本当によろしいですか？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "リセット"
+    },
+    "resetTooltip": {
+        "message": "すべての設定を消去"
+    },
+    "emptyList": {
+        "message": "なし"
+    },
+    "importBtn": {
+        "message": "ファイルを選択"
+    },
+    "exportBtn": {
+        "message": "ダウンロード"
+    },
+    "exportAltBtn": {
+        "message": "エクスポート"
+    },
+    "channelSearchHeader": {
+        "message": "チャンネルを検索"
+    },
+    "adOptionsHeader": {
+        "message": "広告オプション"
+    },
+    "muteOption": {
+        "message": "デフォルトで広告をミュート"
+    },
+    "overlaysOption": {
+        "message": "オーバーレイを非表示"
+    },
+    "autoWhiteOption": {
+        "message": "デフォルトで購読しているチャンネルをホワイトリストにする"
+    },
+    "autoWhiteTooltip": {
+        "message": "これにより、ページが最初に読み込まれた時にプレロール広告が表示される可能性があります"
+    },
+    "limitAdsOption": {
+        "message": "動画ごとの広告を制限"
+    },
+    "autoSkipOption": {
+        "message": "自動的に広告をスキップ"
+    },
+    "autoSkipValue": {
+        "message": "$number$秒",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "forceWlOption": {
+        "message": "最初のロード時にホワイトリストを強制する"
+    },
+    "forceWlOptionTooltip": {
+        "message": "チャンネル情報が利用可能になる前に広告が元に戻せない場合、ページをリロードする可能性があります"
+    },
+    "adErrorsOption": {
+        "message": "広告再生エラーをスキップ"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "広告の再生に失敗した場合はビデオへスキップします。"
+    },
+    "verifyWlOption": {
+        "message": "ホワイトリストの状態を確認"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "広告の読み込みをシミュレートして、ホワイトリストに登録されたチャンネルで広告がブロックされていないことを確認します"
+    },
+    "adBlocked": {
+        "message": "ブロック済み",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "許可",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "この広告主のすべての広告を自動的にミュート"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "この広告主からのすべての広告をブロック"
+    },
+    "blacklistBtn": {
+        "message": "広告主をブロック"
+    },
+    "autoSkipTooltip": {
+        "message": "$number$ 秒でスキップ",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "強制スキップ"
+    },
+    "skipTooltip": {
+        "message": "この広告をスキップしようとしています"
+    },
+    "pauseAfterAdOption": {
+        "message": "びっくり防止モード"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "ミュートされた広告が再生を終了し、タブが現在フォーカスされていない場合。 ユーザーが戻るまでビデオはバックグラウンドで静かに一時停止されます"
+    },
+    "keyboardSkipOption": {
+        "message": "右矢印キーで強制的に広告をスキップする"
+    },
+    "permissionDesc": {
+        "message": "YouTubeチャンネルを検索するには一度限りの権限の許可が必要です"
+    },
+    "permissionBtn": {
+        "message": "許可を与える"
+    },
+    "searchDesc": {
+        "message": "入力してYouTubeチャンネルを検索、または",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "チャンネル名",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "検索中…"
+    },
+    "searchFailed": {
+        "message": "結果を読み込めませんでした。オフラインですか？"
+    },
+    "importSubsBtn": {
+        "message": "購読をインポート"
+    },
+    "importSubsFailed": {
+        "message": "購読を取得できませんでした。YouTubeにログインしていることを確認してください。"
+    },
+    "importSubsConfirm": {
+        "message": "$total$ 件のサブスクリプションが見つかりました。そのうちの $new$ 件がリストに含まれていません。 $new$ 件のアイテムをホワイトリストに追加しますか？",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "設定を設定できませんでした。エラーが発生しました: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "ファイルは \"$expected$\" である必要があります。\"$encountered$\" の代わりに検出されました。",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "JSONの解析に失敗しました。破損しているか、JSON形式のファイルではない可能性があります。"
+    },
+    "noNew": {
+        "message": "追加する新しいアイテムはありません"
+    },
+    "confirmImport": {
+        "message": "ホワイトリストに $whitelisted$ 、ブラックリストに $blacklisted$ 、ミュートリストに $muted$ を追加しますか？",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    },
+    "skipWarning": {
+        "message": "これは、あなたのお気に入りのチャンネルの収益を奪う可能性があります。"
+    },
+    "copy": {
+        "message": "コピー"
+    },
+    "copied": {
+        "message": "コピーしました"
+    }
+}
