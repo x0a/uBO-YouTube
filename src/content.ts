@@ -27,14 +27,14 @@ class InjectHook {
         this.jsFile = (() => {
             let el = document.createElement('script');
             el.setAttribute('type', 'text/javascript');
-            el.setAttribute('src', browser.runtime.getURL('inject.js'));
+            el.setAttribute('src', browser.runtime.getURL('userscript.js'));
             return el;
         })()
         this.cssFile = (() => {
             let el = document.createElement('link');
             el.setAttribute('rel', 'stylesheet');
             el.setAttribute('type', 'text/css');
-            el.setAttribute('href', browser.runtime.getURL('inject.css'));
+            el.setAttribute('href', browser.runtime.getURL('userscript.css'));
             return el;
         })()
 

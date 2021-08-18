@@ -89,8 +89,8 @@ gulp.task('ts', () => {
     if (build) {
         gulp.src('src/*.ts')
             .pipe(src.add('src/'));
-        gulp.src('src/inject/*.ts')
-            .pipe(src.add('src/inject'))
+        gulp.src('src/userscript/*.ts')
+            .pipe(src.add('src/userscript'))
         gulp.src('shared/api.ts')
             .pipe(src.add('/shared'));
         gulp.src('src/pages/*.[tj]sx')
@@ -100,7 +100,7 @@ gulp.task('ts', () => {
         .pipe(webpack({
             entry: {
                 content: './src/content',
-                inject: './src/inject/nextIndex.ts',
+                userscript: './src/userscript/userscript.ts',
                 background: './src/background',
                 popup: './src/pages/app.tsx'
             },
@@ -311,6 +311,6 @@ gulp.task('watch', gulp.series('default', () => {
     gulp.watch('src/pages/*.html', gulp.series('html'))
     gulp.watch('src/pages/*.[tj]sx', gulp.series('ts'));
     gulp.watch('shared/manifest.json', gulp.series('manifest', 'fullreload'));
-    gulp.watch('src/background.ts', gulp.series('ts', 'fullreload')); // core js changes (background.js) require reload
-    gulp.watch(['src/*.ts', 'src/inject/*.ts', '!src/background.ts'], gulp.series('ts', 'partialreload')); // content.js doesnt require full reload, only script reloading
+    gulp.watch(['src/background.ts', 'src/browser.ts'], gulp.series('ts', 'fullreload')); // core js changes (background.js) require reload
+    gulp.watch(['src/*.ts', 'src/userscript/*.ts', '!src/background.ts'], gulp.series('ts', 'partialreload')); // content.js doesnt require full reload, only script reloading
 }))

@@ -1,13 +1,13 @@
 {
     "files": [
-        "src/inject/nextIndex.ts",
-        "src/inject/index.ts",
+        "src/userscript/userscript.ts",
+        "src/userscript/index.ts",
         "src/background.ts",
         "src/content.ts",
         "src/agent.ts",
         "src/browser.ts",
         "src/pages/main.tsx",
-        "src/inject/domwatch.ts"
+        "src/userscript/domwatch.ts"
     ],
     "compilerOptions": {
         "typeRoots": [
