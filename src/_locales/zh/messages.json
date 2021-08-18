@@ -1,0 +1,418 @@
+{
+    "okBtn": {
+        "message": "确定",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "取消",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "选项",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "这个广告的选择"
+    },
+    "adOptionsTooltip": {
+        "message": "管理来自 \"$title$ 的广告",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "还原至默认设置"
+    },
+    "import": {
+        "message": "从文件导入设置"
+    },
+    "export": {
+        "message": "导出选项到文件"
+    },
+    "resetConfirm": {
+        "message": "这将删除所有白名单项、广告选项和首选项。如果您不想丢失您的设置，请先取消并点击“下载”。"
+    },
+    "whitelistTabTitle": {
+        "message": "白名单",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "启用此频道的广告"
+    },
+    "whitelistedTooltip": {
+        "message": "启用此频道的广告"
+    },
+    "adsTabTitle": {
+        "message": "广告",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "广告",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "其他​​",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "频道",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "广告商",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "视频",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "状态",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "操作",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "增加",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "已添加",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "移除"
+    },
+    "bulkRemoveBtn": {
+        "message": "删除选中项"
+    },
+    "adsStillBlocked": {
+        "message": "广告可能仍然被屏蔽，请确保您已经将以下规则添加到您的 uBlock 初始白名单"
+    },
+    "adsHeaderLong": {
+        "message": "最近检测到的广告商"
+    },
+    "adsHeaderShort": {
+        "message": "最近的广告"
+    },
+    "whitelistHeader": {
+        "message": "白名单"
+    },
+    "excludeHeader": {
+        "message": "从白名单中移除"
+    },
+    "removeWhitelistTooltip": {
+        "message": "从白名单中删除频道"
+    },
+    "removeExcludeTooltip": {
+        "message": "如果订阅，重新允许将频道加入白名单"
+    },
+    "removeFailed": {
+        "message": "无法删除请求的项目： $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "您确定要允许订阅频道 \"$channelName$\" 自动加入白名单？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeWhitelistConfirm": {
+        "message": "您确定要从白名单中移除\"$channelName$\"吗？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveWhitelistConfirm": {
+        "message": "您确定要从白名单中移除\"$count$\"吗？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "您确定要允许订阅项$count$自动加入白名单？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "blacklistHeader": {
+        "message": "黑名单广告商"
+    },
+    "removeBlacklistTooltip": {
+        "message": "将频道移出白名单"
+    },
+    "removeBlacklistConfirm": {
+        "message": "您确定要从白名单中移除\"$channelName$\"吗？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveBlacklistConfirm": {
+        "message": "您确定要从白名单中移除\"$count$\"吗？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "unmutedHeader": {
+        "message": "未静音的广告商"
+    },
+    "muteBtn": {
+        "message": "静音该广告商的广告"
+    },
+    "removeUnmuteConfirm": {
+        "message": "您确定要恢复静音“$channelName$ ”吗？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveUnmuteConfirm": {
+        "message": "您确定要恢复静音“$count$ ”吗？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "mutelistHeader": {
+        "message": "静音该广告商的广告"
+    },
+    "removeMuteBtn": {
+        "message": "静音该广告商的广告"
+    },
+    "removeMuteTooltip": {
+        "message": "从黑名单中删除该广告商"
+    },
+    "removeMuteConfirm": {
+        "message": "您确定要从白名单中移除\"$channelName$\"吗？",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveMuteConfirm": {
+        "message": "您确定要从白名单中移除\"$count$\"吗？",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetBtn": {
+        "message": "重置"
+    },
+    "resetTooltip": {
+        "message": "删除所有设置"
+    },
+    "emptyList": {
+        "message": "未设置"
+    },
+    "importBtn": {
+        "message": "选择文件..."
+    },
+    "exportBtn": {
+        "message": "下载"
+    },
+    "exportAltBtn": {
+        "message": "导出"
+    },
+    "channelSearchHeader": {
+        "message": "查找频道"
+    },
+    "adOptionsHeader": {
+        "message": "广告选项"
+    },
+    "muteOption": {
+        "message": "默认静音广告"
+    },
+    "overlaysOption": {
+        "message": "隐藏广告叠加层"
+    },
+    "autoWhiteOption": {
+        "message": "默认情况下白名单订阅频道"
+    },
+    "autoWhiteTooltip": {
+        "message": "页面首次加载可能会导致预滚动广告"
+    },
+    "limitAdsOption": {
+        "message": "限制每个视频的广告"
+    },
+    "autoSkipOption": {
+        "message": "自动跳过广告"
+    },
+    "autoSkipValue": {
+        "message": "$number$秒",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "forceWlOption": {
+        "message": "首次启动强制加载白名单"
+    },
+    "forceWlOptionTooltip": {
+        "message": "如果广告在频道信息可用之前被删除可能会导致重新加载页面"
+    },
+    "adErrorsOption": {
+        "message": "跳过广告播放错误"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "如果广告未能播放则跳到视频，而不是以静态地显示“发生错误”"
+    },
+    "verifyWlOption": {
+        "message": "验证白名单状态"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "通过模拟加载广告来确认广告不是在白名单频道上被屏蔽的"
+    },
+    "adBlocked": {
+        "message": "已屏蔽",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "已允许",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "自动静音来自此广告商的所有广告"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "屏蔽此广告商的所有广告"
+    },
+    "blacklistBtn": {
+        "message": "屏蔽广告商"
+    },
+    "autoSkipTooltip": {
+        "message": "在 $number$ 后跳过",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "强制跳过"
+    },
+    "skipTooltip": {
+        "message": "尝试跳过这个广告"
+    },
+    "pauseAfterAdOption": {
+        "message": "广告结束后自动暂停视频"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "如果一个静音的广告完成播放，且标签当前未被聚焦， 视频在后台静音暂停，直到用户返回它"
+    },
+    "keyboardSkipOption": {
+        "message": "右箭箭头强制跳过广告"
+    },
+    "permissionDesc": {
+        "message": "搜索您的YouTube频道需要一次性授权"
+    },
+    "permissionBtn": {
+        "message": "授权"
+    },
+    "searchDesc": {
+        "message": "输入搜索Youtube频道或",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "频道名称...",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "搜索中..."
+    },
+    "searchFailed": {
+        "message": "无法加载结果。您是否连上互联网？"
+    },
+    "importSubsBtn": {
+        "message": "从订阅导入"
+    },
+    "importSubsFailed": {
+        "message": "无法获取订阅。请确认您已登录YouTube。"
+    },
+    "importSubsConfirm": {
+        "message": "找到 $total$ 个订阅，列表中不包含 $new$ 个订阅。要添加 $new$ 个项目到白名单吗？",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "无法完成设置，遇到错误: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "文件需要类型 \"$expected$\", 检测到 \"$encountered$\" 而不是",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "解析JSON 失败。文件可能不是 JSON 或损坏。"
+    },
+    "noNew": {
+        "message": "没有要添加的新项目"
+    },
+    "confirmImport": {
+        "message": "添加 $whitelisted$ 个物品到白名单, $blacklisted$ 个物品到黑名单, $muted$ 个物品到静音名单？",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    },
+    "skipWarning": {
+        "message": "这可能会减少您最喜欢的频道收入"
+    },
+    "copy": {
+        "message": "复制"
+    },
+    "copied": {
+        "message": "已复制"
+    }
+}
