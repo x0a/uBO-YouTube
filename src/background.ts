@@ -84,11 +84,15 @@ class SettingsManager {
 
     static async getSettings(throwOnOrigin = false): Promise<[Settings, ChannelList]> {
         const store = await browser.storage.sync.get(null);
-        const localStore = await browser.storage.local.get(null);
-
-        const subscriptions = (localStore?.subscriptions as ChannelList) || [] as ChannelList;
 
         if (throwOnOrigin && (!store.instance || store.instance === instance)) throw 'The changes originated from same instance or are incomplete';
+        const parsedStore = this.decompress(store);
+        const parsedSubscriptions = JSON.parse(localStorage.getItem('subscriptions') || '[]');
+
+        return [(parsedStore || {}) as any as Settings, parsedSubscriptions as ChannelList]; // not encrypted
+
+    }
+    static decompress(store: any) {
         if (store.algorithm === 'lz' && store.totalKeys) {
             let compressedStr = '';
             for (let i = 0; i < store.totalKeys; i++) {
@@ -97,15 +101,14 @@ class SettingsManager {
 
             try {
                 const decompressed = decompressFromBase64(compressedStr)
-                const parsed = JSON.parse(decompressed) as Settings;
-                return [parsed, subscriptions];
+                const parsed = JSON.parse(decompressed)
+                return parsed;
             } catch (e) {
-                return [{} as Settings, subscriptions];
+                return null;
             }
         } else {
-            return [(store || {}) as any as Settings, subscriptions]; // not encrypted
+            return null;
         }
-
     }
     updateAll(originTab?: browser.tabs.Tab, subscriptionsOnly = false) {
         browser.tabs.query({})
@@ -116,9 +119,7 @@ class SettingsManager {
                     if (subscriptionsOnly) {
                         browser.tabs.sendMessage(id, { action: 'subscriptions-update', subscriptions: settings.subscriptions.get(), initiator: isOrigin })
                             .catch(() => { });
-
                     } else {
-                        console.log('sending', settings.get())
                         browser.tabs.sendMessage(id, { action: 'update', settings: settings.get(), initiator: isOrigin })
                             .catch(() => { });
                     }
@@ -203,8 +204,8 @@ class SettingsManager {
             forceWhite: this.forceWhite
         };
     }
-    getCompressed(): any {
-        const compressed = compressToBase64(JSON.stringify(this.get()));
+    getCompressed(obj: any): any {
+        const compressed = compressToBase64(JSON.stringify(obj));
         const max = 8192 / 2;
         const times = Math.ceil(compressed.length / max);
         const store = {} as any;
@@ -218,7 +219,7 @@ class SettingsManager {
         return store;
     }
     async save() {
-        const compressed = this.getCompressed();
+        const compressed = this.getCompressed(this.get());
         const keys = Object.keys(compressed);
         const start = performance.now();
         await browser.storage.sync.clear();
@@ -233,10 +234,7 @@ class SettingsManager {
         console.log('Save duration:', end - start)
     }
     async saveLocal() {
-        browser.storage.local.set({
-            instance,
-            subscriptions: this.subscriptions.get()
-        })
+        localStorage.setItem('subscriptions', JSON.stringify(this.subscriptions.get()));
     }
 }
 
@@ -560,6 +558,7 @@ class AdManager {
 browser.storage.local.get({})
 SettingsManager.getSettings()
     .then(([_settings, _subscriptions]) => {
+        console.log('Loaded with settings:', _settings, 'and cached subscriptions:', _subscriptions)
         settings = new SettingsManager(_settings, _subscriptions);
         ads = new AdManager();
         const listener = new MessageListener();
@@ -604,8 +603,8 @@ SettingsManager.getSettings()
             })
             .on('add-subscriptions', (_, channelId: Channel) => settings.subscriptions.add(channelId))
             .on('remove-subscriptions', (_, channelId: Channel) => settings.subscriptions.remove(channelId.id))
-            .onAll(sender => {
-                settings.updateAll(undefined, true);
+            .onAll((sender) => {
+                settings.updateAll(sender.tab, true);
                 return settings.saveLocal();
             })
         listener.onAction('get')
