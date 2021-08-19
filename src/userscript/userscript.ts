@@ -160,7 +160,9 @@ abstract class VideoPlayer extends Component {
             all.forEach(el => {
                 const id = getVideoId(el.href);
                 if (el.data?.id && el.data.id === id) return;
-                el.data = { id, processed: false }
+                if (!el.data) el.data = {}
+                el.data.id = id;
+                el.data.processed = false;
             })
             const videoIds = [...new Set(all.filter(el => !el.data.processed && el.data.id).map(el => el.data.id))]
             const untouched = all.filter(el => !el.data.processed || !el.data.channelId);
@@ -438,7 +440,7 @@ abstract class VideoPlayer extends Component {
     }
     toggleWhitelist() {
         if (!this.channelId) throw 'No channel ID found';
-        console.log(this.channelId);
+
         if (settings.toggleWl(this.channelId, this.subscribed)) {
             this.wlButton.on();
         } else {
@@ -498,7 +500,7 @@ class VideoPage extends VideoPlayer implements PageWithPlayer {
             const nextVideoId = params.get('v')
             if (nextVideoId === undefined) return;
             if (this.videoId !== nextVideoId) {
-                console.log('uBO-wl', 'Video ID change detected', this.videoId, '->', nextVideoId)
+                log('uBO-wl', 'Video ID change detected', this.videoId, '->', nextVideoId)
                 this.channelId = undefined;
                 this.subscribed = undefined;
             }
@@ -635,7 +637,7 @@ class ChannelPage extends Component {
     }
     onSubscribeBtn(btn: HTMLButtonElement): void {
         if (!btn) return this.subscribed = undefined;
-        console.log(btn);
+
         const prevSubscribed = this.subscribed;
         this.subscribed = this.getSubscribeStatus()//button.getAttribute('subscribed') !== null && button.getAttribute('subscribed') !== 'false';
         if (this.subscribed !== prevSubscribed) {
@@ -678,7 +680,16 @@ class ChannelPage extends Component {
             return;
         }
         const whitelisted = settings.asWl(this.channelId, this.subscribed);
-        console.log(settings.whitelisted.has(this.channelId), this.channelId, this.subscribed, this.getSubscribeStatus(), settings.asWl(this.channelId, this.getSubscribeStatus()), settings.exclude, subscriptions.has(this.channelId))
+        /*
+        log('uBO-wl', 'Applied whitelist state:', whitelisted,
+            'subscribed (dom):', this.subscribed,
+            'subscribed (cached):', subscriptions.has(this.channelId),
+            'subscribed:', this.getSubscribeStatus(),
+            'whitelist (inefficient)', settings.asWl(this.channelId, this.getSubscribeStatus()),
+            'excluded:', settings.exclude.has(this.channelId),
+        ) 
+        */
+
         if (whitelisted) {
             this.wlButton.on();
         } else {
@@ -769,12 +780,13 @@ class AllPages extends Component {
         External.updateAllVideos(true);
 
     }
-    onFetch(req: string | Request, res: Promise<Response>) {
+    onFetch(req: string | Request, call: Promise<Response>) {
         const _url = req instanceof Request ? req.url : req;
         const url = new URL(_url);
 
         if (url.pathname === "/youtubei/v1/guide") {
-            res
+            call
+                .then(res => res.clone())
                 .then(data => data.json())
                 .then(json => {
                     const subscriptionsContainer = Obj.findParent(json, 'guideSubscriptionsSectionRenderer')?.guideSubscriptionsSectionRenderer;
