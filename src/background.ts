@@ -86,8 +86,9 @@ class SettingsManager {
         const store = await browser.storage.sync.get(null);
 
         if (throwOnOrigin && (!store.instance || store.instance === instance)) throw 'The changes originated from same instance or are incomplete';
+        
         const parsedStore = this.decompress(store);
-        const parsedSubscriptions = JSON.parse(localStorage.getItem('subscriptions') || '[]');
+        const parsedSubscriptions = JSON.parse(localStorage?.getItem('subscriptions') || '[]');
 
         return [(parsedStore || {}) as any as Settings, parsedSubscriptions as ChannelList]; // not encrypted
 
@@ -234,7 +235,7 @@ class SettingsManager {
         console.log('Save duration:', end - start)
     }
     async saveLocal() {
-        localStorage.setItem('subscriptions', JSON.stringify(this.subscriptions.get()));
+        localStorage?.setItem('subscriptions', JSON.stringify(this.subscriptions.get()));
     }
 }
 
