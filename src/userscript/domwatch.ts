@@ -61,7 +61,7 @@ class SiteWatch {
                         if (node.nodeType !== Node.ELEMENT_NODE) continue;
                         for (let [query, fns] of allRemovedChecks) {
                             if (node.matches(query)) {
-                                fns.forEach(fn => fn(node))
+                                fns.forEach(fn => fn())
                             } else {
                                 const child = node.querySelector(query) as HTMLElement;
                                 if (child) {
