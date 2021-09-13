@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FunctionComponent, useState, useCallback, useEffect, FormEvent, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDownload, faFileImport, faTrash, faCopy } from '@fortawesome/free-solid-svg-icons'
+import { faDownload, faFileImport, faTrash, faCopy, faCog } from '@fortawesome/free-solid-svg-icons'
 import { SwitchableOption, Tooltip } from './switch';
 import { Settings } from '../typings';
 import {
@@ -113,7 +113,7 @@ const SettingsPage = () => <button
         openTab(getExtURL('settings.html'))
             .then(() => window.close())
     }}>
-    <FontAwesomeIcon icon={faTrash} /> {i18n('optionsBtn')}
+    <FontAwesomeIcon icon={faCog} /> {i18n('optionsBtn')}
 </button>
 const CopyableInput: FunctionComponent<{
     text: string
