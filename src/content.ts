@@ -1,9 +1,25 @@
 import browser from './browser';
 import MessageAgent from './agent';
 
+declare var USERSCRIPT: string;
+let userscriptCode: string;
+
+try {
+    if (!USERSCRIPT) throw 'No userscript code';
+    userscriptCode = USERSCRIPT;
+} catch (e) {
+    userscriptCode = '';
+}
+
 // This content script is to act as a messaging bus between
 // the locally-injected script which contains the main code
 // and the background script.
+
+
+class Userland {
+    static queued: Array<any> = [];
+    
+}
 
 class InjectHook {
     queue: Array<any>;
@@ -27,7 +43,11 @@ class InjectHook {
         this.jsFile = (() => {
             let el = document.createElement('script');
             el.setAttribute('type', 'text/javascript');
-            el.setAttribute('src', browser.runtime.getURL('userscript.js'));
+            if (userscriptCode) {
+                el.textContent = userscriptCode;
+            } else {
+                el.setAttribute('src', browser.runtime.getURL('userscript.js'));
+            }
             return el;
         })()
         this.cssFile = (() => {
@@ -56,11 +76,6 @@ class InjectHook {
             agent.send('ad-update', message.ad);
         } else if (message.action === 'subscriptions-update') {
             agent.send('subscriptions-update', { subscriptions: message.subscriptions, initiator: message.initiator });
-        } else if (message.action === 'toggle-basic') {
-            const turnOn = message.on;
-            browser.cookies.get({ url: 'youtube.com', name: 'f6' })
-                .then(cookie => console.log(cookie))
-                .catch(err => console.error('hey', err))
         }
     }
     pushPending() {
@@ -129,7 +144,7 @@ const hookReload = () => {
     window.dispatchEvent(new CustomEvent('uBOWL-destroy', { detail: instance })); // signal to any pre-existing instances that they should unload
 
     const unloader = (event: CustomEvent) => {
-        if (event.detail === instance) return;
+        if (event.detail === instance) return; // we should be unloading other instances, not ourselves
         console.log('Unloading uBOWL..');
 
         window.removeEventListener('uBOWL-destroy', unloader);
@@ -141,31 +156,12 @@ const hookReload = () => {
     }
     window.addEventListener('uBOWL-destroy', unloader);
 }
-const reflectURLFlag = (url: string, shouldContain: boolean): string => {
-    // take url, return url with flags removed if add is off
-    // return url with flags added if add is on
-    let search = /((?!\?)igno=re&disableadblock=1&?)|(&disableadblock=1)/g
 
-    if (shouldContain) {
-        url = reflectURLFlag(url, false); // remove first, then add
-        let paramsStart = url.indexOf('?');
-        return url + (paramsStart === -1 ? '?igno=re' : (paramsStart === url.length - 1 ? 'igno=re' : '')) + '&disableadblock=1'
-
-    } else {
-        return url.replace(search, '');
-    }
-}
-const finishedLoading = document.readyState === 'complete' || document.readyState === 'interactive';
 if (location.pathname === "/ubo-yt") {
     const allowed = ['whitelist', 'ads', 'misc'];
     const tab = allowed.find(tab => '#' + tab === location.hash.toLowerCase()) || '';
 
     browser.runtime.sendMessage({ action: 'tab', subaction: 'settings', param: tab });
-} else if (!finishedLoading && location.href.indexOf('&disableadblock=1') === -1) {
-    // first load should contain flag to prevent new uBO rules from removing important metadata
-
-    // window.history.replaceState(null, null, reflectURLFlag(location.href, true));
-    // window.location.reload();
 }
 
 const agent = new MessageAgent('uBOWL-message', true); // My postMessage wrapper, to communicate with our injected script
