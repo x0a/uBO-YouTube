@@ -46,9 +46,7 @@ abstract class VideoPlayer extends Component {
      * subscribe button
      * 
      * CURRENT TODOs:
-     * Overlay removal // should be done, test out
-     * Predictive subscription updates
-     * Add flags to suggestions
+     * Base suggested video channel IDs on already-processed related videos for efficiency reasons
      * 
      */
     videoEl?: HTMLVideoElement;
@@ -241,8 +239,10 @@ abstract class VideoPlayer extends Component {
                 container.appendChild(menu);
             this.adOptions.show();
             this.adOptions.skipOption = true;
+            log('uBO-ads', 'Detected ad playing')
             this.applyAdState()
         } else if (this.adPlaying && !playing) {
+            log('uBO-ads', 'Ad finished playing')
             if (this.shouldPause()) {
                 this.schedulePause();
             }
@@ -320,7 +320,7 @@ abstract class VideoPlayer extends Component {
             }
 
         } else {
-            console.log('ad is not a match', this.currentAd, this.adVideoId);
+            err('uBO-Ads', 'Ad is not a match', this.currentAd, this.adVideoId);
         }
         if (this.videoError && this.skipEl && settings.skipAdErrors) {
             log('uBO-Ads', 'Skipping ad due to ad failing to load')
@@ -1220,7 +1220,7 @@ const init = () => {
                 subscriptions = new Channels(_subscriptions, 'subscriptions', 'cache');
             }
 
-            console.log('Received new subscriptions', _subscriptions, initiator, resp)
+            log('uBO-wl', 'Received subscriptions from host', _subscriptions, initiator, resp)
             if (settings.autoWhite)
                 watch.update(true, initiator)
         })
