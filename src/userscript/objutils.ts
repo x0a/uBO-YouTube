@@ -98,7 +98,7 @@ class Obj {
     static prune(obj: any, keyName: string): boolean {
         let parent: any;
         let found = false;
-        while (parent = this.findParent(obj, keyName)){
+        while (parent = this.findParent(obj, keyName)) {
             delete parent[keyName];
             found = true;
         }
@@ -116,6 +116,22 @@ class Obj {
             .map(rule => Obj.parseProps(rule));
         for (const path of allPaths) {
             this.prunePath(obj, path)
+        }
+    }
+
+    static observe(obj: any, key: string, fn: (value: any) => void): () => void {
+        let value = obj[key];
+        Object.defineProperty(obj, key, {
+            set: (nextValue) => {
+                value = nextValue;
+                fn(value);
+                return value;
+            },
+            get: () => value
+        })
+        return () => {
+            delete obj[key];
+            obj[key] = value;
         }
     }
 }
