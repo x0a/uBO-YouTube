@@ -34,7 +34,9 @@
 .UBO-wl-btn.UBO-wl-poly:not(.yt-uix-button-toggled) .UBO-icon {
     display: none;
 }
-
+#edit-buttons .UBO-wl-btn {
+    margin-top: 1.5px;
+}
 .UBO-wl-btn.UBO-wl-poly {
     font-family: Roboto, Noto, sans-serif;
     -moz-osx-font-smoothing: grayscale;
