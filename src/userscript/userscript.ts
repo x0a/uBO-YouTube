@@ -194,11 +194,18 @@ abstract class VideoPlayer extends Component {
     }
 
     getVideoId(): string /** override */ {
-        if (!this.pageManager) {
-            err('YT-video', 'Page manager not found');
-            return ''
+        const fromURL = (url: string) => {
+            const params = new URL(url).searchParams;
+            return params.get('v') || ''
         }
-        return Obj.get(this.pageManager, 'data.playerResponse.videoDetails.videoId') || '';
+        const fromPageManager = () => {
+            if (!this.pageManager) {
+                err('YT-video', 'Page manager not found');
+                return ''
+            }
+            return Obj.get(this.pageManager, 'data.playerResponse.videoDetails.videoId') || '';
+        }
+        return fromPageManager() || fromURL(location.href);
     }
 
     onSubscribeBtn(button?: HTMLButtonElement, mutation?: MutationRecord): void {
@@ -549,6 +556,7 @@ class VideoPage extends VideoPlayer implements PageWithPlayer {
     }
     getChannelId() {
         const channelId = Channels.empty();
+
         if (!this.channelContainer) return null;
         channelId.id = Obj.get(this.channelContainer, 'data.playerResponse.videoDetails.channelId')
         channelId.display = Obj.get(this.channelContainer, 'data.playerResponse.videoDetails.author')
@@ -598,6 +606,7 @@ class VideoPage extends VideoPlayer implements PageWithPlayer {
         if (this.unhookVideo) this.unhookVideo();
     }
 }
+
 class ChannelPage extends Component {
     channelContainer: HTMLDivElement;
     wlButton: WhitelistButton;
@@ -605,20 +614,29 @@ class ChannelPage extends Component {
     channelId?: Channel;
     subscribed?: boolean;
     mounted: boolean;
+
     constructor() {
         super((url) => /youtube.com\/(channel|c|user)\//.test(url));
         this.onTree('#edit-buttons', this.onWlContainer.bind(this));
         this.onTree('ytd-page-manager', this.onPageManager.bind(this));
         this.onAll('div#header ytd-subscribe-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed']);
-        this.onAll('div#inner-header-container ytd-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed'])
+        this.onAll('div#inner-header-container ytd-subscribe-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed'])
         this.onAll('ytd-channel-name.ytd-c4-tabbed-header-renderer', () => this.applyPageState());
+        this.onModified('#progress', this.onProgress.bind(this));
+
         this.wlButton = new WhitelistButtonPoly(this.toggleWhitelist.bind(this), false);
         this.mounted = false;
     }
     onMount() {
-        this.onWlContainer(document.querySelector('#edit-buttons'));
         this.onPageManager(document.querySelector('ytd-page-manager'));
+        this.onSubscribeBtn(document.querySelector('div#inner-header-container ytd-subscribe-button-renderer tp-yt-paper-button'))
+        this.onWlContainer(document.querySelector('#edit-buttons'));
         this.mounted = true;
+    }
+    onProgress(progressEl: HTMLElement) {
+        if (progressEl?.style.transform === 'scaleX(1)') {
+            this.applyPageState();
+        }
     }
     onWlContainer(container: HTMLDivElement) {
         if (!container) {
@@ -639,7 +657,11 @@ class ChannelPage extends Component {
         if (!btn) return this.subscribed = undefined;
 
         const prevSubscribed = this.subscribed;
-        this.subscribed = this.getSubscribeStatus()//button.getAttribute('subscribed') !== null && button.getAttribute('subscribed') !== 'false';
+        const nextSubscribedInternal = this.getSubscribeStatus();
+        const nextSubscribedDOM = btn.getAttribute('subscribed') !== null && btn.getAttribute('subscribed') !== 'false';
+
+        this.subscribed = nextSubscribedDOM;// nextSubscribedInternal !== null ? nextSubscribedInternal : nextSubscribedDOM;
+
         if (this.subscribed !== prevSubscribed) {
             log('uBO-wl', 'Subscribe state change:', this.subscribed, this.channelId)
             this.applyPageState();
@@ -648,7 +670,7 @@ class ChannelPage extends Component {
     toggleWhitelist() {
         if (!this.channelId) throw 'No channel ID found';
 
-        if (settings.toggleWl(this.channelId, this.getSubscribeStatus())) {
+        if (settings.toggleWl(this.channelId, this.subscribed)) {
             this.wlButton.on();
         } else {
             this.wlButton.off();
@@ -704,6 +726,8 @@ class ChannelPage extends Component {
         this.applyPageState(force, userCaused);
     }
     onUmount() {
+        this.subscribed = undefined;
+        this.channelId = undefined;
         this.mounted = false;
     }
     destroy() {
