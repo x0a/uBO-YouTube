@@ -6,7 +6,7 @@ import { SiteWatch, Component } from './domwatch';
 import {
     Channel, Settings as _Settings,
     Action, MutationElement,
-    InfoLink, VideoPoly, Ad, AutoSkipSeconds, DataLink
+    InfoLink, VideoPoly, Ad, AutoSkipSeconds, DataLink, InternalDataLink
 } from '../typings';
 import { getMetadata, getVideoData, getVideoId } from './fauxapi';
 import { AdBlock } from './adblock';
@@ -154,27 +154,27 @@ abstract class VideoPlayer extends Component {
         // [a.ytp-next-button.ytp-button]
         const origPending = this.pendingSuggestions;
         this.pendingSuggestions = new Promise(resolve => origPending.then(() => {
-            const all = Array.from(this.videoContainer.querySelectorAll('a[href*="/watch?"]')) as Array<DataLink>
+            const all = Array.from(this.videoContainer.querySelectorAll('a[href*="/watch?"]')) as Array<InternalDataLink>
             all.forEach(el => {
                 const id = getVideoId(el.href);
-                if (el.data?.id && el.data.id === id) return;
-                if (!el.data) el.data = {}
-                el.data.id = id;
-                el.data.processed = false;
+                if (el.uBOYT?.id && el.uBOYT.id === id) return;
+                if (!el.uBOYT) el.uBOYT = {}
+                el.uBOYT.id = id;
+                el.uBOYT.processed = false;
             })
-            const videoIds = [...new Set(all.filter(el => !el.data.processed && el.data.id).map(el => el.data.id))]
-            const untouched = all.filter(el => !el.data.processed || !el.data.channelId);
+            const videoIds = [...new Set(all.filter(el => !el.uBOYT.processed && el.uBOYT.id).map(el => el.uBOYT.id))]
+            const untouched = all.filter(el => !el.uBOYT.processed || !el.uBOYT.channelId);
 
             Promise.all(videoIds.map(id => getMetadata(id)
                 .then(metadata => getVideoData(id, metadata))))
                 .then(videos => videos.forEach(video => video.channelId && untouched
-                    .filter(el => el.data.id === video.video_id)
-                    .forEach(el => el.data.channelId = video.channelId)))
+                    .filter(el => el.uBOYT.id === video.video_id)
+                    .forEach(el => el.uBOYT.channelId = video.channelId)))
                 .then(() => all.forEach(el => {
-                    if (!force && el.data.processed) return;
-                    el.data.processed = true;
-                    log('uBO-suggestions', 'Treated', el.data.id, el.data.channelId)
-                    el.href = External.reflectURLFlag(el.href, settings.asWl(el.data.channelId));
+                    if (!force && el.uBOYT.processed) return;
+                    el.uBOYT.processed = true;
+                    log('uBO-suggestions', 'Treated', el.uBOYT.id, el.uBOYT.channelId)
+                    el.href = External.reflectURLFlag(el.href, settings.asWl(el.uBOYT.channelId));
 
                 }))
                 .then(() => resolve())

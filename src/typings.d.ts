@@ -67,6 +67,9 @@ interface InfoLink extends HTMLAnchorElement {
 interface DataLink extends HTMLAnchorElement {
     data: any;
 }
+interface InternalDataLink extends HTMLAnchorElement {
+    uBOYT: any;
+}
 
 interface VideoBasic extends HTMLDivElement {
     processed: boolean;
@@ -154,7 +157,7 @@ interface ParsedURL {
 export {
     Channel, ChannelList, MutationElement,
     Settings, ReadonlySettings, Action, AccessURL,
-    MenuItem, InfoLink, DataLink, VideoBasic, VideoPoly,
+    MenuItem, InfoLink, DataLink, InternalDataLink, VideoBasic, VideoPoly,
     Ad, PendingItem, ParsedURL, HostMessage, ClientMessage,
     AutoSkipSeconds
 }
