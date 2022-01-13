@@ -236,10 +236,10 @@ abstract class VideoPlayer extends Component {
     onAdPlayState(playing: boolean, container: HTMLDivElement) {
         if (!this.adPlaying && playing) {
             this.adPlaying = true;
-            const controls = document.querySelector('.ytp-right-controls');
+            const controls = document.querySelector('#movie_player .ytp-right-controls');
             const button = this.adOptions.renderButton();
             const menu = this.adOptions.renderMenu();
-
+            console.log(controls)
             if (!controls.contains(button))
                 controls.insertBefore(button, controls.firstChild);
             if (!container.contains(menu))
@@ -350,6 +350,7 @@ abstract class VideoPlayer extends Component {
             this.skipEl.click();
         } else {
             // force the video ahead;
+            log('uBO-skip', 'Skipping for video element', this.videoEl)
             this.setMute(mute);
             this.skipAhead(this.videoEl);
         }
@@ -520,7 +521,7 @@ class VideoPage extends VideoPlayer implements PageWithPlayer {
         this.mounted = true;
         this.onWlContainer(document.querySelector('#top-row ytd-video-owner-renderer'));
         this.onChannelContainer(document.querySelector('ytd-video-secondary-info-renderer'));
-        this.onVideoElement(document.querySelector('video'));
+        this.onVideoElement(document.querySelector('#movie_player video'));
         this.onVideoContainer(document.querySelector('#movie_player'));
         this.onPageManager(document.querySelector('ytd-page-manager'))
         this.onSubscribeBtn(document.querySelector('ytd-subscribe-button-renderer tp-yt-paper-button'));
