@@ -128,10 +128,10 @@ gulp.task('ts', () => {
                 new compiler.DefinePlugin({
                     DEVSERVER: JSON.stringify(ip)
                 }),
-                new AssetInclude([{
-                    target: 'content.js',
-                    includedAssets: ['userscript.js']
-                },
+                // new AssetInclude([{
+                //     target: 'content.js',
+                //     includedAssets: ['userscript.js']
+                // },
                 // {
                 //     target: 'userscript-only.js',
                 //     includedAssets: ['userscript.js'],
@@ -144,7 +144,7 @@ gulp.task('ts', () => {
                 //     }]
                 // } 
             
-           ])
+           //])
             ],
             mode: production ? 'production' : 'development',
             optimization: {
