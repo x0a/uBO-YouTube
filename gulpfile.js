@@ -4,7 +4,7 @@ const gulp = require('gulp');
 const cleanCSS = require('gulp-clean-css');
 const uglify = require('gulp-uglify-es').default
 const jeditor = require('gulp-json-editor');
-const sass = require('gulp-sass');
+const sass = require('gulp-sass')(require('sass'));
 const del = require('del');
 const gulpif = require('gulp-if');
 const mergestream = require('merge-stream');
@@ -12,8 +12,8 @@ const webpack = require('webpack-stream');
 const fs = require('fs');
 const compiler = require('webpack');
 const Archiver = require('gulp-archiver2');
-const { isParameter } = require('typescript');
 const Server = require('websocket').server;
+const AssetInclude = require('./src/asset-include/index.js');
 
 const ip = Object.values(require("os").networkInterfaces())
     .flat()
@@ -100,9 +100,10 @@ gulp.task('ts', () => {
         .pipe(webpack({
             entry: {
                 content: './src/content',
-                userscript: './src/userscript/userscript.ts',
+                userscript: './src/userscript/index.ts',
                 background: './src/background',
-                popup: './src/pages/app.tsx'
+                popup: './src/pages/app.tsx',
+                'userscript-only': './src/userscript-only/index.ts'
             },
             output: {
                 filename: '[name].js'
@@ -120,13 +121,30 @@ gulp.task('ts', () => {
             },
             module: {
                 rules: [
-                    { test: /\.[tj]sx?$/, loader: 'ts-loader', options: { transpileOnly: true } }
+                    { test: /\.[tj]sx?$/, loader: 'ts-loader', options: { transpileOnly: true } },
                 ]
             },
             plugins: [
                 new compiler.DefinePlugin({
                     DEVSERVER: JSON.stringify(ip)
-                })
+                }),
+                new AssetInclude([{
+                    target: 'content.js',
+                    includedAssets: ['userscript.js']
+                },
+                // {
+                //     target: 'userscript-only.js',
+                //     includedAssets: ['userscript.js'],
+                //     nonIncludedAssets: [{
+                //         filename: './src/img/icon_16.png',
+                //         type: 'base64'
+                //     }, {
+                //     //    filename: './src/_locales/*/messages.json',
+                //         type: 'json'
+                //     }]
+                // } 
+            
+           ])
             ],
             mode: production ? 'production' : 'development',
             optimization: {
