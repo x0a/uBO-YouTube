@@ -1,557 +1,118 @@
-import MessageAgent from '../agent';
 
-import hookEvents from "./events";
-import icons from './icons';
-import AdOptions from './ad-options';
 import { log, err } from './logging';
 import { i18n, seti18n } from './i18n';
-import { AdBlock } from './adblock';
-import { getMetadata, getVideoData } from './fauxapi';
-import Obj from './objutils';
-
+import icons from './icons';
+import { SiteWatch, Component } from './domwatch';
 import {
     Channel, Settings as _Settings,
     Action, MutationElement,
-    InfoLink, VideoPoly, Ad, AutoSkipSeconds
+    InfoLink, VideoPoly, Ad, AutoSkipSeconds, DataLink, InternalDataLink
 } from '../typings';
+import { getMetadata, getVideoData, getVideoId } from './fauxapi';
+import { AdBlock } from './adblock';
+import MessageAgent from '../agent';
+import AdOptions from './ad-options';
+import Obj from './objutils';
 
-const enum Layout {
-    Polymer,
-    Unknown
-}
-const enum PageType {
-    Video,
-    Channel,
-    Search,
-    Subscriptions,
-    Any
-}
-
-type WhitelistButtonInstance = WhitelistButtonPoly;
-type WhitelistButtonFactory = typeof WhitelistButtonPoly;
-
-interface ChannelElement extends HTMLDivElement {
-    whitelistButton: WhitelistButtonPoly;
+interface PageWithPlayer extends VideoPlayer {
+    getChannelId: () => Channel;
+    onWlContainer: (container: HTMLDivElement) => void;
+    onChannelContainer: (el: HTMLElement) => void;
 }
 
-/* ---------------------------- */
-
+let agent: MessageAgent;
 let settings: Settings;
-let pages: Page, watcher: MutationWatcher, agent: MessageAgent, toast: (text: string) => void;
+let subscriptions: Channels;
+/** to prevent feedback loops when multiple tabs are open with subscriptions, any deviation from the list should be saved locally until the conflicting channel ID is gone */
+let nextSubscriptions: Channels
+let subscriptionChanges: Array<string>;
 
-const ifOrNull = (tester: (val: any) => boolean, val: any) => tester(val) ? val : null;
-const awaitData = (el: HTMLElement) => new Promise(resolve => {
-    const _el = el as any;
-    if (_el.data) return resolve(_el.data);
-    const i = setInterval(() => {
-        if (_el.data) resolve(_el.data);
-        clearInterval(i);
-    }, 200);
-})
-
-class MutationWatcher {
-
-    watcher: MutationObserver;
-    queuedActions: Map<Function, Action>;
-    firstLoad: boolean;
-
-    constructor() {
-        this.watcher = new MutationObserver(this.onMutation.bind(this));
-        this.queuedActions = new Map();
-        this.firstLoad = false;
-    }
-
-    start() {
-        this.watcher.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['hidden', 'href', 'style', 'class'], // we keep these to a minimum to avoid overwatching the page
-            attributeOldValue: true
-        });
-    }
-
-    isPlayerUpdate(mutation: MutationElement): HTMLElement {
-        if (mutation.target.id === 'movie_player') {
-            return mutation.target;
-        } else if (mutation.target.id === 'player-container' && mutation.addedNodes.length) {
-            for (let node of mutation.addedNodes) {
-                if (node.id === 'movie_player') {
-                    return node as HTMLElement;
-                }
-            }
-        }
-    }
-    isFirstPageLoad(mutation: MutationElement): boolean {
-        if (!this.firstLoad && mutation.type === 'childList'
-            && mutation.target.localName === 'body'
-            && (window as any).ytplayer?.config?.args?.author) {
-            this.firstLoad = true;
-            return true
-        }
-    }
-    isPlayerErrorChange(mutation: MutationElement): null | boolean {
-        for (const node of mutation.addedNodes)
-            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('ytp-error'))
-                return true;
-        for (const node of mutation.removedNodes)
-            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('ytp-error'))
-                return false;
-        return null;
-    }
-
-    isPolyUserInfo(mutation: MutationElement): HTMLElement {
-        const isParent = mutation.target.localName === 'yt-formatted-string'
-            && mutation.target.classList.contains('ytd-channel-name')
-            && mutation.addedNodes.length;
-        const isChild = isParent
-            || (mutation.target.localName === 'a'
-                && mutation.addedNodes.length
-                && mutation.target.classList.contains('yt-formatted-string')
-                && mutation.target.parentElement.classList.contains('ytd-channel-name'))
-        if (isChild) {
-            const container = mutation.target.closest('#top-row ytd-video-owner-renderer');
-            if (container)
-                return container as HTMLElement;
-        }
-        return null;
-    }
-
-    isRelatedUpdate(mutation: MutationElement) {
-        return (
-            mutation.type === 'attributes'
-            && mutation.target.id === 'continuations'
-            && mutation.attributeName === 'hidden'
-        );
-    }
-
-    hasNewItems(mutation: MutationElement) {
-        return (
-            mutation.type === 'attributes'
-            && mutation.target.localName === 'yt-page-navigation-progress'
-            && mutation.attributeName === 'hidden'
-            && mutation.oldValue === null
-        ) || (
-                mutation.type === 'childList'
-                && (mutation.target.id === 'items' || mutation.target.id === 'contents')
-            )
-    }
-
-    isOverlayAd(mutation: MutationElement): HTMLButtonElement {
-        return mutation.type === 'childList'
-            && (mutation.target.classList.contains('ytp-ad-module')
-                || mutation.target.classList.contains('ytp-ubo-ad-module'))
-            && mutation.addedNodes.length
-            && mutation.target.querySelector('button.ytp-ad-overlay-close-button')
-    }
-    fixOverlayVideoAd(element: HTMLElement): boolean {
-        if (element.classList.contains('ytp-ad-module') || element.classList.contains('ytp-ubo-ad-module')) {
-            if (element.classList.contains('video-ads')) { // if .ytp-ad-module & .video-ads
-                element.classList.remove('video-ads');
-            }
-            element.classList.replace('ytp-ad-module', 'ytp-ubo-ad-module');
-            return true;
-        }
-        return element.classList.contains('video-ads'); // otherwise check if just .video-ads
-    }
-    isAdSkipContainer(mutation: MutationElement): HTMLElement {
-        return (
-            mutation.target.classList.contains('ytp-ad-skip-button-container')
-            && mutation.target
-        ) || (
-                mutation.type === 'childList'
-                && this.fixOverlayVideoAd(mutation.target)
-                && mutation.addedNodes.length
-                && mutation.target.querySelector('.ytp-ad-skip-button-container')
-            );
-    }
-    isSubscribeBtn(mutation: MutationElement): boolean | undefined {
-        return mutation.type === 'childList'
-            && mutation.target.localName === 'yt-formatted-string'
-            && mutation.target.parentElement.localName === 'paper-button'
-            && mutation.target.parentElement.parentElement.localName === 'ytd-subscribe-button-renderer'
-            ? !!mutation.target.parentElement.getAttribute('subscribed')
-            : undefined
-    }
-    isChannelGrid(mutation: MutationElement) {
-        return mutation.type === 'childList'
-            && mutation.target.id === 'contents'
-            && Array.from(mutation.addedNodes).some(el => el.localName === 'ytd-item-section-renderer');
-    }
-    isNextVideo(mutation: MutationElement): Array<HTMLAnchorElement> | null {
-        return mutation.type === 'childList'
-            && mutation.target.id === 'movie_player'
-            && mutation.addedNodes.length
-            && Array.from(mutation.addedNodes).some(el => el.classList.contains('ytp-ce-video'))
-            && Array.from(mutation.target.querySelectorAll('.ytp-ce-covering-overlay'));
-    }
-    static adSkipButton(container: HTMLElement): HTMLButtonElement {
-        return container.style.display !== 'none'
-            && container.querySelector('button');
-    }
-    pollUpdate(method: Function) {
-        // To prevent excessive updating, wait
-        let ticket: Action;
-        let action = () => {
-            ticket.lastExecuted = Date.now();
-            method();
-        };
-
-        if (this.queuedActions.has(method)) {
-            ticket = this.queuedActions.get(method);
-
-            if (ticket.timeoutId) {
-                clearTimeout(ticket.timeoutId);
-            }
-
-            if (Date.now() - ticket.lastExecuted > 400) {
-                action();
-            } else {
-                ticket.timeoutId = window.setTimeout(action, 50);
-            }
-        } else {
-            ticket = {
-                method: method,
-                lastExecuted: Date.now(),
-                timeoutId: window.setTimeout(action, 50)
-            }
-            this.queuedActions.set(method, ticket)
-        }
-    }
-    //** For debugging: Helps identify where/when element was added, removed, or changed */
-    findInjection(mutation: MutationRecord, selector: string, cb: (el: HTMLElement) => void = () => { }) {
-        const target = mutation.target as HTMLElement;
-        if (target.matches(selector)) {
-            if (mutation.type === 'attributes') {
-                console.log(
-                    `%c[${selector}].${mutation.attributeName}` +
-                    ` = %c"${mutation.oldValue}"` +
-                    ` -> %c"${target.getAttribute(mutation.attributeName || "")}"`,
-                    'font-weight: bold',
-                    'font-weight: normal; color: red;',
-                    'color: green;'
-                );
-            }
-            else {
-                console.log(`%c[${selector}] >`, 'font-weight: bold;', mutation.type, mutation);
-            }
-            cb(target);
-        }
-        else if (mutation.type === 'childList') {
-            for (let node of mutation.addedNodes as NodeListOf<HTMLElement>) {
-                if (node.nodeType !== Node.ELEMENT_NODE)
-                    continue;
-                if (node.matches(selector)) {
-                    console.log(
-                        `<${this.getSelector(target)}>.addedNodes = [...,` +
-                        `%c<${selector}>%c, ...]`, 'color: green;', mutation
-                    );
-                    cb(node);
-                }
-                else if (node.querySelector(selector)) {
-                    console.log(
-                        `<${this.getSelector(target)}>.addedNodes = [...,` +
-                        `%c<${this.getSelector(node)}>%c.querySelector("%c${selector}"%c),...]`,
-                        'color: green;',
-                        '',
-                        'color: green; font-weight: bold;',
-                        mutation
-                    );
-                    cb(node.querySelector(selector));
-                }
-            }
-            for (let node of mutation.removedNodes as NodeListOf<HTMLElement>) {
-                if (node.nodeType !== Node.ELEMENT_NODE)
-                    continue;
-                if (node.matches(selector)) {
-                    console.log(
-                        `<${this.getSelector(target)}>.removedNodes = [..., <%c${selector}%c>, ...]`,
-                        'color: red',
-                        ''
-                    );
-                    cb(node);
-                }
-                else if (node.querySelector(selector)) {
-                    console.log(
-                        `<${this.getSelector(target)}>.removedNodes = [..., ` +
-                        `%c<${this.getSelector(node)}>.querySelector("${selector}"), ...] `,
-                        'color: red'
-                    );
-                    cb(node.querySelector(selector));
-                }
-            }
-        }
-    }
-    getSelector(el: HTMLElement) {
-        const classes = Array.from(el.classList);
-        return el.tagName.toLowerCase()
-            + (classes.length ? '.' + classes.join('.') : '')
-            + (el.id.length ? '#' + el.id : '')
-    }
-    onMutation(mutations: Array<MutationElement>) {
-        for (const mutation of mutations) {
-            const type = pages.getType();
-            //this.findInjection(mutation, '.ytp-ce-covering-overlay', el => console.log(el.parentElement.outerHTML));
-            let userInfo;
-            let suggestions;
-            if (type === PageType.Video) {
-                let player, skipContainer, overlaySkipButton: HTMLButtonElement, subscribeChange;
-                if (userInfo = this.isPolyUserInfo(mutation)) {
-                    pages.video.setParentNode(userInfo)
-                    pages.video.updatePage();
-                } else if (this.isRelatedUpdate(mutation)) {
-                    this.pollUpdate(pages.video.updateVideos);
-                } else if (this.isFirstPageLoad(mutation)) {
-                    if (!pages.video.channelId) {
-                        pages.video.updatePage();
-                    }
-                } else if (suggestions = this.isNextVideo(mutation)) {
-                    console.log(mutation);
-                    pages.video.onEndscreen(suggestions);
-                } else if (player = this.isPlayerUpdate(mutation)) {
-                    pages.video.updateAdPlaying(player, player.classList.contains('ad-showing'));
-                    let errorState = this.isPlayerErrorChange(mutation);
-                    if (errorState !== null) {
-                        pages.video.onVideoError(errorState);
-                    }
-                } else if (skipContainer = this.isAdSkipContainer(mutation)) {
-                    pages.video.skipButtonUpdate(MutationWatcher.adSkipButton(skipContainer));
-                } else if (overlaySkipButton = this.isOverlayAd(mutation)) {
-                    if (settings.skipOverlays)
-                        overlaySkipButton.click();
-                } else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
-                    pages.video.updatePage();
-                }
-            } else if (type === PageType.Subscriptions) {
-                if (this.isChannelGrid(mutation)) {
-                    pages.subscriptions.loadedChannels();
-                }
-            } else {
-                if (type === PageType.Channel) {
-                    let player, skipContainer, subscribeChange;
-                    if (player = this.isPlayerUpdate(mutation)) {
-                        pages.channel.updateAdPlaying(player, !!player.classList.contains('ad-showing'));
-                        let errorState = this.isPlayerErrorChange(mutation);
-                        if (errorState !== null) {
-                            pages.channel.onVideoError(errorState);
-                        }
-                    } else if (skipContainer = this.isAdSkipContainer(mutation)) {
-                        pages.channel.skipButtonUpdate(MutationWatcher.adSkipButton(skipContainer));
-                    } else if ((subscribeChange = this.isSubscribeBtn(mutation)) !== undefined) {
-                        pages.channel.updatePage();
-                    }
-                }
-                if (userInfo = this.isPolyUserInfo(mutation)) {
-                    pages.video.setParentNode(userInfo)
-                    pages.video.updatePage();
-                }
-                if (this.hasNewItems(mutation)) { // new items in videolist
-                    if (type === PageType.Channel) {
-                        this.pollUpdate(pages.channel.updatePage);
-                    } else if (type === PageType.Search) {
-                        this.pollUpdate(pages.search.updatePage);
-                    } else if (type === PageType.Any) {
-                        pages.updateAllVideos();
-                    }
-                }
-            }
-
-        }
-    }
-
-    destroy() {
-        this.watcher.disconnect();
-    }
-}
-
-class WhitelistButton {
-    toggled: boolean;
-    button: HTMLButtonElement;
-    buttonContainer: HTMLDivElement;
-
-    constructor(onClick: EventListener, toggled: boolean) {
-        this.toggled = toggled;
-
-        this.button = document.createElement('button');
-        this.button.className = 'UBO-wl-btn';
-        this.button.title = i18n('whitelistTooltip');
-        this.button.addEventListener('click', onClick);
-
-        this.buttonContainer = document.createElement('div');
-        this.buttonContainer.className = 'UBO-wl-container';
-    }
-
-    off() {
-        if (!this.toggled) return;
-
-        this.toggled = false;
-        this.button.title = i18n('whitelistTooltip');
-        this.button.classList.remove('yt-uix-button-toggled');
-    }
-
-    on() {
-        if (this.toggled) return;
-
-        this.toggled = true;
-        this.button.title = i18n('whitelistedTooltip');
-        this.button.classList.add('yt-uix-button-toggled');
-    }
-
-
-}
-
-class WhitelistButtonPoly extends WhitelistButton {
-    constructor(onClick: EventListener, toggled: boolean) {
-        super(onClick, toggled);
-        this.button.className += ' UBO-wl-poly ' + (toggled ? ' yt-uix-button-toggled' : '');
-        this.button.appendChild(AdOptions.generateIcon(icons.checkcircle))
-        this.button.appendChild(document.createTextNode(i18n('adsEnableBtn').toUpperCase()));
-        this.buttonContainer.appendChild(this.button);
-    }
-    exists() {
-        return !!this.buttonContainer.parentElement;
-    }
-    render() {
-        return this.buttonContainer;
-    }
-}
-
-/** Class for dealing with pages with only one channel and thus only one Whitelisting button needed */
-class SingleChannelPage {
-    dataNode: HTMLElement;
-    buttonParent: HTMLElement;
-    whitelistButton: WhitelistButtonInstance;
-    adOptions: AdOptions;
-    channelId?: Channel;
-    currentAd: Ad;
-    adVideoId: string;
-    firstRun: boolean;
+abstract class VideoPlayer extends Component {
+    /** 
+     * Needs to be able to:
+     * detect whether the video belongs to a channel that is whitelisted or not (incl. when whitelist subscribed channels is turned on),
+     * force skip ads when playing on non-whitelisted channels
+     * detect whether related videos belong to whitelisted channels or not, add flag accordingly
+     * skip ads when errors are encountered
+     * hide/remove overlay ads when the setting is enabled
+     * 
+     * Needs to watch for:
+     * channel information
+     * skip button
+     * video element
+     * video error element
+     * related video continuations
+     * overlay ads
+     * subscribe button
+     * 
+     * CURRENT TODOs:
+     * Base suggested video channel IDs on already-processed related videos for efficiency reasons
+     * 
+     */
+    videoEl?: HTMLVideoElement;
+    videoContainer?: HTMLDivElement;
+    skipEl?: HTMLButtonElement;
+    pageManager?: HTMLDivElement;
+    pendingSuggestions: Promise<void>
+    channelId?: Channel
     adPlaying: boolean;
-    adConfirmed: boolean;
-    videoError: boolean;
-    awaitingSkip: boolean;
-    pauseOrigin: boolean;
+    currentAd?: Ad;
+    adVideoId: string;
+    subscribed: undefined | boolean;
+    skipping: boolean;
+    adOptions: AdOptions
+    wlButton: WhitelistButtonPoly;
     videoId: string;
     adsPlayed: number;
-    skipButton: HTMLButtonElement;
-    pageManager: HTMLDivElement;
-    pageApp: HTMLDivElement;
-    _currentPlayer: HTMLVideoElement;
-    removeNet: () => void;
-    removeHooks: () => void;
-
-    constructor(ButtonFactory: WhitelistButtonFactory) {
-        this.dataNode = null
-        this.buttonParent = null;
-        this.whitelistButton = new ButtonFactory(this.toggleWhitelist.bind(this), false);
-        this.adOptions = new AdOptions(
-            this.addBlacklist.bind(this),
-            this.toggleMute.bind(this),
-            this.attemptSkip.bind(this)
-        );
-        this.channelId = null;
-        this.currentAd = null;
-        this.firstRun = true;
+    videoError: boolean;
+    unhookVideo?: () => void;
+    initialized: boolean;
+    constructor(url: string | ((url: string) => boolean), WlConstructor: typeof WhitelistButtonPoly) {
+        super(url);
         this.adPlaying = false;
-        this.adConfirmed = false;
-        this.awaitingSkip = false;
+        this.skipping = false;
         this.videoError = false;
-        this.skipButton = null;
-        this.adsPlayed = 0;
+        this.initialized = false;
         this.videoId = '';
         this.adVideoId = '';
-        this.muteTab(false);
+        this.adsPlayed = 0;
+        this.pendingSuggestions = Promise.resolve();
+        this.adOptions = new AdOptions(this.onBlacklist.bind(this), this.toggleMute.bind(this), this.forceSkip.bind(this));
+        this.wlButton = new WlConstructor(this.toggleWhitelist.bind(this), false);
+        this.onTree('video', this.onVideoElement.bind(this));
+        this.onAll('#movie_player', this.onVideoContainer.bind(this), ['class'])
+        this.onAll('.ytp-ad-skip-button-container', this.onSkipAvailability.bind(this), ['style']);
+        this.onTree('ytd-page-manager', this.onPageManager.bind(this));
+        this.onTree('button.ytp-ad-overlay-close-button', (button: HTMLButtonElement) => settings.skipOverlays && button && button.click())
+        //this.onTree('a.ytp-ce-covering-overlay', this.onSuggested.bind(this))
         this.onKeyboard = this.onKeyboard.bind(this);
-        this.removeNet = adblock.onNet(this.onNet.bind(this));
-        this.removeHooks = () => { };
         document.addEventListener('keyup', this.onKeyboard);
-
-        log('uBO-YT-Log', this);
+        adblock.onNet(this.onNet.bind(this));
+        console.log(this);
     }
 
-    updatePage(forceUpdate?: boolean, verify?: boolean) {
-        if (!this.dataNode && !this.setDataNode()) {
-            log('uBO-wl', 'Page update requested, but container not available yet');
+    onVideoElement(videoEl?: HTMLVideoElement) {
+        if (!videoEl) {
+            err('uBO-Video', 'Could not find video element');
+            if (this.unhookVideo) this.unhookVideo();
             return;
         }
-        this.channelId = this.getChannelId(this.dataNode);
-        if (!this.channelId) {
-            log('uBO-wl', 'Page update requested, but channel ID not available yet');
-            return;
-        }
-        const whitelisted = settings.asWl(this.channelId, this.isSubscribed());
-
-        pages.updateURL(whitelisted, verify);
-
-        whitelisted ? this.whitelistButton.on() : this.whitelistButton.off();
-
-        if (verify && whitelisted) {
-            // toast("Channel added to whitelist");
-        }
-
-        if (!settings.asWl(this.channelId, this.isSubscribed()) && this.adPlaying && !this.awaitingSkip) {
-            log('uBO-limit', 'Ad playing that should not be playing, attempting skip');
-            this.attemptSkip();
-        }
-
-        if (!this.whitelistButton.exists() && this.insertButton(this.whitelistButton)) {
-            // if whitelistButton doesn't exist, is there a chance that AdOptions doesn't exist either?
-            if (this.firstRun) {
-                if (settings.forceWhite && whitelisted && adblock.immutableBlock) {
-                    log('uBO-reload', 'An irreversible change was made before status could be determined. Will reload...')
-                    location.reload();
-                }
-                log('uBO-reload', settings.forceWhite, whitelisted, adblock.immutableBlock)
-
-                let player = document.querySelector('#movie_player') as HTMLElement;
-
-                if (player) {
-                    this.updateAdPlaying(player, !!player.classList.contains('ad-showing'), true);
-                }
-
-                this.firstRun = false;
-            }
-        }
-
-        this.updateAdButton();
-        this.updateVideos(whitelisted, forceUpdate);
-    }
-    onNet(url: string) {
-        if (!this.adPlaying) return;
-        if (url.indexOf('/api/stats/ads') !== -1) {
-            const [, adVideoId] = url.match(/&ad_v=([^&]+)&/) || [, ''];
-            if (adVideoId && this.adVideoId !== adVideoId) {
-                this.adVideoId = adVideoId;
-                log('uBO-video', adVideoId, this.getVideoId());
-                // TO DO -- convert this to an ad object and send up to background
-                getMetadata(adVideoId)
-                    .then(metadata => {
-                        log('uBO-Ads', 'Received metadata', metadata);
-                        return getVideoData(adVideoId, metadata);
-                    })
-                    .then(ad => {
-                        agent.send('echo-ad', ad);
-                        console.log('uBO-Ads', 'Found an ad', ad);
-                    })
-                    .catch(_err => err('uBO-Ads', 'Could not get ad details', _err));
-            }
-        }
-    }
-    set currentPlayer(nextPlayer: HTMLVideoElement) {
+        let lastVideoId = this.getVideoId();
         const checkVideoId = () => {
-            const nextVideoId = this.getVideoId();
-            if (this.videoId !== nextVideoId) {
-                this.videoId = nextVideoId;
+            if (this.videoId !== lastVideoId) {
+                log('uBO-YT', 'Video ID change detected (onVideoElement)', lastVideoId, '->', this.videoId);
+                lastVideoId = this.videoId
                 this.adsPlayed = 0;
             }
         }
-        if (nextPlayer && this._currentPlayer !== nextPlayer) {
-            let src = nextPlayer.getAttribute('src');
+        let src = videoEl.getAttribute('src');
+        if (!this.videoEl || this.videoEl !== videoEl) {
+            if (this.unhookVideo) this.unhookVideo();
+            log('uBO-video', 'Found new video element. Hooking events');
             const fn = () => {
-                // if (!src) src = nextPlayer.getAttribute('src');
-                if (isNaN(nextPlayer.duration)) return;
-                if (nextPlayer.getAttribute('src') !== src) {
-                    src = nextPlayer.getAttribute('src');
+                if (isNaN(videoEl.duration)) return;
+                if (videoEl.getAttribute('src') !== src) {
+                    src = videoEl.getAttribute('src');
                     checkVideoId();
                     log('uBO-limit', 'Video source:', src, 'VideoID:', this.videoId);
                     if (this.adPlaying) {
@@ -560,207 +121,192 @@ class SingleChannelPage {
                     }
                 }
                 const overPlayLimit = settings.autoSkip
-                    && nextPlayer.currentTime > settings.autoSkipSeconds
-                    && nextPlayer.duration > settings.autoSkipSeconds;
+                    && videoEl.currentTime > settings.autoSkipSeconds
+                    && videoEl.duration > settings.autoSkipSeconds;
                 const overAdsLimit = settings.limitAds && this.adsPlayed > settings.limitAdsQty;
                 const shouldAutoSkip = overPlayLimit || overAdsLimit;
 
-                if (this.awaitingSkip) {
-                    log('uBO-limit', 'Re-attempting skip')
-                    this.forceAhead(nextPlayer);
+                if (this.skipping) {
+                    log('Re-attempting skip')
+                    this.skipAhead(videoEl);
                 } else if (this.adPlaying && shouldAutoSkip) {
-                    log('uBO-limit', 'Automatically skipping per settings');
-                    if (overAdsLimit) {
-                        log('uBO-limit', 'Adblock enabled for remainder of video')
-                        adblock.toggleNet(true);
-                        adblock.togglePrune(true);
-                    }
-                    this.attemptSkip();
+                    log('Automatically skipping per settings');
+                    this.forceSkip();
                 }
             }
-            nextPlayer.addEventListener('timeupdate', fn);
-            nextPlayer.addEventListener('durationchange', fn);
-            this.removeHooks();
-            this.removeHooks = () => {
-                nextPlayer.removeEventListener('timeupdate', fn);
-                nextPlayer.removeEventListener('durationchange', fn);
+            videoEl.addEventListener('timeupdate', fn);
+            videoEl.addEventListener('durationchange', fn);
+            this.unhookVideo = () => {
+                videoEl.removeEventListener('timeupdate', fn);
+                videoEl.removeEventListener('durationchange', fn)
+                if (this.videoEl = videoEl) {
+                    this.videoEl = undefined;
+                }
+                this.unhookVideo = undefined;
             }
-            this._currentPlayer = nextPlayer;
+            this.videoEl = videoEl;
+        }
 
+    }
+    updateSuggestions(force = false) {
+        if (!this.videoContainer) return;
+        // [a.ytp-ce-covering-overlay]
+        // [a.ytp-next-button.ytp-button]
+        const origPending = this.pendingSuggestions;
+        this.pendingSuggestions = new Promise(resolve => origPending.then(() => {
+            const all = Array.from(this.videoContainer.querySelectorAll('a[href*="/watch?"]')) as Array<InternalDataLink>
+            all.forEach(el => {
+                const id = getVideoId(el.href);
+                if (el.uBOYT?.id && el.uBOYT.id === id) return;
+                if (!el.uBOYT) el.uBOYT = {}
+                el.uBOYT.id = id;
+                el.uBOYT.processed = false;
+            })
+            const videoIds = [...new Set(all.filter(el => !el.uBOYT.processed && el.uBOYT.id).map(el => el.uBOYT.id))]
+            const untouched = all.filter(el => !el.uBOYT.processed || !el.uBOYT.channelId);
+
+            Promise.all(videoIds.map(id => getMetadata(id)
+                .then(metadata => getVideoData(id, metadata))))
+                .then(videos => videos.forEach(video => video.channelId && untouched
+                    .filter(el => el.uBOYT.id === video.video_id)
+                    .forEach(el => el.uBOYT.channelId = video.channelId)))
+                .then(() => all.forEach(el => {
+                    if (!force && el.uBOYT.processed) return;
+                    el.uBOYT.processed = true;
+                    log('uBO-suggestions', 'Treated', el.uBOYT.id, el.uBOYT.channelId)
+                    el.href = External.reflectURLFlag(el.href, settings.asWl(el.uBOYT.channelId));
+
+                }))
+                .then(() => resolve())
+                .catch(error => err('uBO-suggestions', error))
+        })
+        )
+    }
+    onPageManager(pageManager: HTMLDivElement) {
+        this.pageManager = pageManager;
+        this.videoId = this.getVideoId();
+    }
+    onVideoContainer(container?: HTMLDivElement) {
+        const playing = container && container.classList.contains('ad-showing');
+        this.videoContainer = container;
+        this.onAdPlayState(playing || false, container);
+        this.updateSuggestions();
+    }
+
+    getVideoId(): string /** override */ {
+        const fromURL = (url: string) => {
+            const params = new URL(url).searchParams;
+            return params.get('v') || ''
+        }
+        const fromPageManager = () => {
+            if (!this.pageManager) {
+                err('YT-video', 'Page manager not found');
+                return ''
+            }
+            return Obj.get(this.pageManager, 'data.playerResponse.videoDetails.videoId') || '';
+        }
+        return fromPageManager() || fromURL(location.href);
+    }
+
+    onSubscribeBtn(button?: HTMLButtonElement, mutation?: MutationRecord): void {
+        if (!button) return this.subscribed = undefined;
+
+        const prevSubscribed = this.subscribed;
+        this.subscribed = this.getSubscribeStatus()//button.getAttribute('subscribed') !== null && button.getAttribute('subscribed') !== 'false';
+        if (this.subscribed !== prevSubscribed) {
+            log('uBO-wl', 'Subscribe state change:', this.subscribed, this.channelId)
+            this.applyPageState();
+            this.applyAdState();
         }
     }
-    get currentPlayer() {
-        return this._currentPlayer;
+
+    onSkipAvailability(container?: HTMLDivElement) {
+        const available = container && container.style.display !== 'none' && container.querySelector('button');
+        const prevSkip = this.skipEl;
+
+        this.skipEl = available || undefined;
+
+        if (prevSkip !== this.skipEl)
+            log('uBO-ads', 'Updated skip button', this.skipEl)
+
+        if (this.skipping && this.skipEl)
+            this.skipEl.click();
+
     }
-    updateAdPlaying(player: HTMLElement, playing: boolean, firstRun = false) {
-        if (playing && !this.adPlaying) {
-            let container = player.querySelector('.ytp-right-controls');
-            if (!container) return err('Can\'t find .ytp-right-controls');
-
-            let options = this.adOptions.renderButton();
-            let menu = this.adOptions.renderMenu();
-
-            if (!container.contains(options)) {
-                container.insertBefore(options, container.firstChild);
-            }
-            if (!player.contains(menu)) {
-                player.appendChild(menu);
-            }
-            if (this.currentPlayer = player.querySelector('video')) {
-                this.adOptions.skipOption = true;
-                this.adOptions.show();
-
-                if (settings.autoSkip) {
-                    // this.adOptions.overrideTooltip(i18n('autoSkipTooltip', settings.autoSkipSeconds));
-                }
-
-                if (adblock.enabled() && this.channelId && !settings.asWl(this.channelId, this.isSubscribed())) {
-                    this.adPlaying = true;
-                    log('uBO-Ads', 'Skipping ad due to adblock being enabled and channel not passing the whitelist test')
-                    this.attemptSkip();
-                }
-                this.onVideoPlayable(this.currentPlayer)
-                    .then(() => this.updateAdButton());
-            }
-            if (firstRun) {
-                agent.send('recent-ad').then(message => {
-                    this.currentAd = message.response as Ad;
-                    this.updateAdButton();
-                })
-                const skipContainer = player.querySelector(".ytp-ad-skip-button-container") as HTMLElement;
-                if (skipContainer) {
-                    const skipButton = MutationWatcher.adSkipButton(skipContainer);
-                    if (skipButton)
-                        this.skipButtonUpdate(skipButton);
-                    const adContainer = skipContainer.closest('.ytp-ad-module');
-
-                    if (adContainer) {
-                        adContainer.classList.remove('video-ads');
-                        adContainer.classList.replace('ytp-ad-module', 'ytp-ubo-ad-module');
-                    }
-
-                }
-            }
-
+    onAdPlayState(playing: boolean, container: HTMLDivElement) {
+        if (!this.adPlaying && playing) {
             this.adPlaying = true;
-        } else if (!playing && this.adPlaying) {
+            const controls = document.querySelector('#movie_player .ytp-right-controls');
+            const button = this.adOptions.renderButton();
+            const menu = this.adOptions.renderMenu();
+            console.log(controls)
+            if (!controls.contains(button))
+                controls.insertBefore(button, controls.firstChild);
+            if (!container.contains(menu))
+                container.appendChild(menu);
+            this.adOptions.show();
+            this.adOptions.skipOption = true;
+            log('uBO-ads', 'Detected ad playing')
+            this.applyAdState()
+        } else if (this.adPlaying && !playing) {
+            log('uBO-ads', 'Ad finished playing')
+            if (this.shouldPause()) {
+                this.schedulePause();
+            }
+            this.setMute(false);
+            this.adPlaying = false;
+            this.videoError = false;
             this.adOptions.hide();
             this.adOptions.reset();
-            this.adPlaying = false;
-            this.adConfirmed = false;
-            this.awaitingSkip = false;
-            this.skipButton = null;
+            this.skipEl = null;
+            this.skipping = false;
             this.currentAd = null;
-            if (this.shouldPause()) {
-                this.schedulePause()
-            } else {
-                this.muteTab(false);
-            }
-        }
-
-        if (this.adPlaying) {
-            this.updateAdButton();
+            this.adVideoId = '';
         }
     }
-    onKeyboard(event: KeyboardEvent) {
-        if (!settings.keyboardSkip) return;
-
-        if (event.key === 'ArrowRight'
-            && this.adPlaying
-            && !this.awaitingSkip
-            && !event.composedPath().find((node: Element) =>
-                node instanceof HTMLElement &&
-                (node.tagName === 'TEXTAREA'
-                    || node.tagName === 'INPUT'
-                    || node.getAttribute('contenteditable')))) {
-            this.attemptSkip();
-        }
-    }
-    onEndscreen(links: Array<HTMLAnchorElement>) {
-        log('uBO-suggestions', links)
-        this.setPageManager();
-
-        links.forEach(link => {
-            const videoId = (link.href.match(/[\?\&]v=([^&]+)/) || [, ''])[1];
-            if (!videoId) throw 'Could not get videoID for' + link.href;
-            getMetadata(videoId)
-                .then(metadata => getVideoData(videoId, metadata))
-                .then(({ channelId }) => {
-                    link.href = pages.reflectURLFlag(link.href, settings.asWl(channelId, false));
-                    awaitData(this.pageApp)
-                        .then(data => {
-                            const renderers = Obj.findParent(data, 'endscreenRenderer')?.endscreenRenderer?.elements;
-                            
-                            renderers.find((renderer: any) => renderer.endscreenElementRenderer.endpoint.watchEndpoint?.videoId === videoId)
-                                .endscreenElementRenderer.endpoint.commandMetadata.webCommandMetadata.url += (settings.asWl(channelId) ? '&disableadblock=1' : '')
-                        })
-                        .catch(err => console.error('fuck', err))
-
-
-                })
-        })
-    }
-    onVideoError(error: boolean) {
-        this.videoError = error;
-
-        if (this.videoError && this.adPlaying && this.skipButton && settings.skipAdErrors) {
-            log('uBO-Ads', 'Skipping ad due to ad failing to load')
-            this.attemptSkip(false);
-        }
-    }
-    updateAdInformation(ad: Ad) {
+    onAdInfo(ad: Ad) {
         if (this.currentAd && this.currentAd.video_id !== ad.video_id) {
-            this.adConfirmed = false;
             this.adOptions.reset();
             this.adOptions.skipOption = true;
         }
-
         this.currentAd = ad;
+        this.applyAdState();
+    }
+    /** This should be triggered by changing channel name, changing user info, etc. */
+    possibleChannelChange(nextChannel: Channel) {
+        if (this.channelId && nextChannel && this.channelId.id === nextChannel.id) return;
+        log('uBO-wl', 'Channel changed', nextChannel);
+        this.channelId = nextChannel
+        this.applyPageState();
+        this.applyAdState();
+    }
+    abstract getChannelId(): Channel;
+    abstract getSubscribeStatus(): boolean;
 
-        if (this.currentPlayer) {
-            this.onVideoPlayable(this.currentPlayer)
-                .then(() => this.updateAdButton());
+    applyPageState(userCaused = false) {
+        if (!this.channelId) return;
+
+        const whitelisted = settings.asWl(this.channelId, this.subscribed);
+        log('uBO-wl', 'Applied wl-state from', this.channelId,
+            'whitelisted:', whitelisted,
+            'subscribed:', this.subscribed,
+            'excluded:', settings.exclude.has(this.channelId))
+        if (whitelisted) {
+            this.wlButton.on();
+        } else {
+            this.wlButton.off();
         }
+        External.updateURL(whitelisted, userCaused);
+
+        if (!settings.autoWhite || this.subscribed === undefined) return;
+
+        External.updateSubscriptions(userCaused, this.channelId, this.subscribed);
     }
-    schedulePause() {
-        let pageTitle: string;
-        let intervalId: number;
-        let titleChanges = 0;
-
-        this.onVideoPlayable(this.currentPlayer)
-            .then(() => {
-                this.currentPlayer.pause();
-                this.muteTab(false);
-                this.pauseOrigin = true;
-
-                pageTitle = document.title;
-                intervalId = setInterval(() => {
-                    document.title = ++titleChanges % 2 ? "[❚❚] " + pageTitle : "[❚❚]";
-                }, 800);
-
-                agent.send('highlight-tab');
-                return pages.onPageFocus();
-            })
-            .then(() => {
-                clearInterval(intervalId);
-                document.title = pageTitle;
-                this.currentPlayer.play();
-                this.pauseOrigin = false;
-            })
-    }
-    shouldPause() {
-        return this.adOptions.muted && settings.pauseAfterAd && document.hidden && !this.awaitingSkip;
-    }
-    updateAdButton() {
-        if (!this.adConfirmed && this.adPlaying && this.currentAd && this.verifyAd()) {
-            this.adConfirmed = true;
-            this.adOptions.muteOption = true;
-            this.adOptions.blacklistOption = true;
-            this.adOptions.advertiserName = this.currentAd.channelId.display;
-            this.adOptions.show();
-        }
-
-        if (this.adConfirmed) {
+    applyAdState() {
+        if (!this.adPlaying) return;
+        if (!this.currentAd) {
+            this.setMute(settings.muteAll);
+        } else if (this.currentAd.video_id === this.adVideoId) {
             const inMutelist = settings.muted.has(this.currentAd.channelId);
             const muteAll = !!settings.muteAll;
 
@@ -770,71 +316,81 @@ class SingleChannelPage {
             // if !muteAll && !inmute should be false
             // All of these conditions are met with muteAll !== inmute
 
-            this.muteTab(muteAll !== inMutelist);
+            this.setMute(muteAll !== inMutelist);
 
             if (settings.blacklisted.has(this.currentAd.channelId)) {
-                log('uBO-Ads', 'Skipping ad due to advertiser being in blacklist');
-                this.attemptSkip();
+                this.forceSkip();
+            } else {
+                this.adOptions.muteOption = true;
+                this.adOptions.blacklistOption = true;
+                this.adOptions.advertiserName = this.currentAd.channelId.display;
             }
-        } else if (this.adPlaying && this.currentPlayer) {
-            this.muteTab(settings.muteAll);
-        }
-    }
-    attemptSkip(mute = true) {
-        if (!this.currentPlayer || !this.adPlaying) return;
 
-        if (this.skipButton) {
-            return this.skipButton.click();
-        }
-
-        this.awaitingSkip = true;
-        this.muteTab(mute);
-        this.forceAhead(this.currentPlayer)
-        this.currentPlayer.playbackRate = 5;
-    }
-
-    forceAhead(player: HTMLVideoElement) {
-        const limit = this.getPlaybackLimit(player)
-
-        if (isNaN(limit)) {
-            this.onVideoPlayable(player, false)
-                .then(() => {
-                    player.currentTime = this.getPlaybackLimit(player) - 1
-                })
-                .catch(() => err('Src no longer matches'));
         } else {
-            const target = limit - 1;
+            err('uBO-Ads', 'Ad is not a match', this.currentAd, this.adVideoId);
+        }
+        if (this.videoError && this.skipEl && settings.skipAdErrors) {
+            log('uBO-Ads', 'Skipping ad due to ad failing to load')
+            this.forceSkip(false);
+            return;
+        }
+        if (this.channelId && !settings.asWl(this.channelId, this.subscribed)) {
+            log('uBO-ads', 'Force skipping ad due to non-whitelisted channel', this.channelId, this.getChannelId())
+            this.forceSkip();
+        } else {
+            log('uBO-ads', 'Decided not to skip', this.channelId, settings.asWl(this.channelId))
+        }
 
-            if (player.currentTime < target)
-                player.currentTime = target;
+    }
+    forceSkip(mute = true) {
+        if (!this.adPlaying) return;
+        this.skipping = true;
+
+        if (this.skipEl) {
+            this.skipEl.click();
+        } else {
+            // force the video ahead;
+            log('uBO-skip', 'Skipping for video element', this.videoEl)
+            this.setMute(mute);
+            this.skipAhead(this.videoEl);
         }
     }
+    skipAhead(videoEl: HTMLVideoElement) {
+        if (!videoEl) return err('uBO-ads', 'Can\'t skip ahead until video element is available');
 
-    getPlaybackLimit(video: HTMLVideoElement): number {
-        // const ranges = video.buffered;
-        // if(ranges.length){
-        //     return ranges.end(ranges.length - 1) || video.duration;
-        // }
-
-        return video.duration;
+        const duration = videoEl.duration;
+        if (isNaN(duration)) return;
+        const target = duration - 1;
+        if (videoEl.currentTime < target)
+            videoEl.currentTime = target;
     }
-    skipButtonUpdate(skipButton: HTMLElement) {
-        this.skipButton = skipButton as HTMLButtonElement;
-        const shouldSkip = this.awaitingSkip || (this.videoError && settings.skipAdErrors);
-
-        if (this.skipButton && shouldSkip) {
-            this.skipButton.click();
-        }
+    shouldPause() {
+        return this.adOptions.muted && settings.pauseAfterAd && document.hidden && !this.skipping;
     }
-    verifyAd() {
-        //console.log(!!this.currentPlayer, typeof this.currentPlayer.src === 'string' && this.currentPlayer.src);
-        return this.matchAdCompanion()
-            || (typeof this.currentPlayer.src === 'string'
-                && this.currentPlayer.src.indexOf('blob:') === 0);
-        // if all else fails, just go with the fact that the ad is streaming from YT
-        // and not some third party
-    }
+    schedulePause() {
+        let pageTitle: string;
+        let intervalId: ReturnType<typeof setTimeout>;
+        let titleChanges = 0;
 
+        this.onVideoPlayable(this.videoEl)
+            .then(() => {
+                this.videoEl.pause();
+                this.setMute(false);
+
+                pageTitle = document.title;
+                intervalId = setInterval(() => {
+                    document.title = ++titleChanges % 2 ? "[❚❚] " + pageTitle : "[❚❚]";
+                }, 800);
+
+                agent.send('highlight-tab');
+                return External.onPageFocus();
+            })
+            .then(() => {
+                clearInterval(intervalId);
+                document.title = pageTitle;
+                this.videoEl.play();
+            })
+    }
     onVideoPlayable(video: HTMLVideoElement, resolveAnySrc = true): Promise<void> {
         if (!!(video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 2)) // is already playable
             return Promise.resolve();
@@ -853,35 +409,16 @@ class SingleChannelPage {
             }, 4000);
         })
     }
-    matchAdCompanion() {
-        const companion = document.querySelector('ytd-companion-slot-renderer');
+    onVideoError(error: boolean) {
+        this.videoError = error;
 
-        return companion
-            && Obj.get(companion, 'data.actionCompanionAdRenderer.adVideoId') === this.currentAd.video_id
+        this.applyAdState();
     }
-
-    addBlacklist() {
+    onBlacklist() {
         if (!this.currentAd.channelId) throw ('Channel ID not available for blacklisting');
         agent.send('set-settings', { param: this.currentAd.channelId, type: 'add-black' })
-            .then(() => this.attemptSkip())
+            .then(() => this.forceSkip())
             .catch(error => err('Error blacklisting:', error))
-    }
-    muteTab(shouldMute: boolean) {
-        if (shouldMute) {
-            log('uBO-mute', 'Requesting tab mute')
-            agent.send('mute-tab', true)
-                .then(resp => this.adOptions.muted = true)
-                .catch(error => {
-                    err('Error muting:', error);
-                });
-
-        } else {
-            log('uBO-mute', 'Requesting tab unmute')
-            const done = () => this.adOptions.muted = false;
-            agent.send('mute-tab', false)
-                .then(done)
-                .catch(done); // replicate .finally 
-        }
     }
     toggleMute() {
         if (!this.currentAd.channelId) throw 'Ad channel ID not available for muting';
@@ -894,76 +431,156 @@ class SingleChannelPage {
             .then(() => agent.send('mute-tab', shouldMute))
             .catch((error: any) => err('Error setting settings', error));
     }
-    toggleWhitelist() {
-        this.channelId = this.getChannelId(this.dataNode);
-        if (!this.channelId) throw 'Channel ID not available';
+    setMute(nextMute: boolean) {
+        if (nextMute) {
+            agent.send('mute-tab', true)
+                .then(resp => this.adOptions.muted = true)
+                .catch(error => {
+                    err('Error muting:', error);
+                });
 
-        if (settings.toggleWl(this.channelId, this.isSubscribed())) {
-            this.whitelistButton.on();
         } else {
-            this.whitelistButton.off();
+            const done = () => this.adOptions.muted = false;
+            agent.send('mute-tab', false)
+                .then(done)
+                .catch(done); // replicate .finally
         }
     }
+    toggleWhitelist() {
+        if (!this.channelId) throw 'No channel ID found';
 
-    setPageManager() {
-        this.pageManager = this.pageManager = this.pageManager || document.querySelector('ytd-page-manager');
-        this.pageApp = this.pageApp || document.querySelector('ytd-app');
-        return this.pageManager;
+        if (settings.toggleWl(this.channelId, this.subscribed)) {
+            this.wlButton.on();
+        } else {
+            this.wlButton.off();
+        }
     }
-    setDataNode(/* override */node?: HTMLElement) { return node }
-    insertButton(/* override */button: WhitelistButtonInstance): boolean { return false }
-    updateVideos(/* override */whitelisted: boolean, forceUpdate: boolean) { }
-    getChannelId(/* override */node: HTMLElement): Channel { return Channels.empty(); }
-    getVideoId(/* override */) { return '' }
-    isSubscribed(/* override */): boolean { return false };
+    onKeyboard(event: KeyboardEvent) {
+        if (!settings.keyboardSkip) return;
 
+        if (event.key === 'ArrowRight'
+            && this.adPlaying
+            && !this.skipping
+            && !event.composedPath().find((node: Element) =>
+                node instanceof HTMLElement &&
+                (node.tagName === 'TEXTAREA'
+                    || node.tagName === 'INPUT'
+                    || node.getAttribute('contenteditable')))) {
+            this.forceSkip();
+        }
+    }
+    onNet(url: string) {
+        if (!this.adPlaying) return;
+        if (url.indexOf('/api/stats/ads') !== -1) {
+            const [, adVideoId] = url.match(/&ad_v=([^&]+)&/) || [, ''];
+            if (adVideoId && this.adVideoId !== adVideoId) {
+                this.adVideoId = adVideoId;
+                log('uBO-video', adVideoId, this.getVideoId());
+                // TO DO -- convert this to an ad object and send up to background
+                getMetadata(adVideoId)
+                    .then(metadata => {
+                        log('uBO-Ads', 'Received metadata', metadata);
+                        return getVideoData(adVideoId, metadata);
+                    })
+                    .then(ad => {
+                        agent.send('echo-ad', ad);
+                    })
+                    .catch(_err => err('uBO-Ads', 'Could not get ad details', _err));
+            }
+        }
+    }
 }
 
-class VideoPagePoly extends SingleChannelPage {
-    secondaryDataNode: HTMLElement;
+class VideoPage extends VideoPlayer implements PageWithPlayer {
+    channelContainer: HTMLElement;
+    buttonContainer: HTMLDivElement;
+    mounted: boolean;
     constructor() {
-        super(WhitelistButtonPoly);
-        this.toggleWhitelist = this.toggleWhitelist.bind(this);
-        this.updatePage = this.updatePage.bind(this);
-        this.updateVideos = this.updateVideos.bind(this);
+        super('youtube.com/watch?', WhitelistButtonPoly);
+        this.onTree('#owner ytd-video-owner-renderer,#top-row ytd-video-owner-renderer', this.onWlContainer.bind(this));
+        this.onTree('ytd-video-secondary-info-renderer', this.onChannelContainer.bind(this));
+        this.onAll('ytd-video-owner-renderer ytd-channel-name yt-formatted-string a', this.onChannelContainer.bind(this));
+        this.onModified('ytd-subscribe-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed']);
+
+        watch.onURLUpdate(url => {
+            if (!this.mounted) return;
+            const params = new URL(url).searchParams;
+            const nextVideoId = params.get('v')
+            if (nextVideoId === undefined) return;
+            if (this.videoId !== nextVideoId) {
+                log('uBO-wl', 'Video ID change detected', this.videoId, '->', nextVideoId)
+                this.channelId = undefined;
+                this.subscribed = undefined;
+            }
+
+            this.videoId = nextVideoId;
+
+        })
+    }
+    onMount() {
+        this.mounted = true;
+        this.onWlContainer(document.querySelector('#owner ytd-video-owner-renderer,#top-row ytd-video-owner-renderer'));
+        this.onChannelContainer(document.querySelector('ytd-video-secondary-info-renderer'));
+        this.onVideoElement(document.querySelector('#movie_player video'));
+        this.onVideoContainer(document.querySelector('#movie_player'));
+        this.onPageManager(document.querySelector('ytd-page-manager'))
+        this.onSubscribeBtn(document.querySelector('ytd-subscribe-button-renderer tp-yt-paper-button'));
+        this.update(!this.initialized);
+        this.initialized = true;
     }
 
-    setDataNode(container?: HTMLElement) {
-        this.secondaryDataNode = document.querySelector('ytd-video-secondary-info-renderer');
-        return this.dataNode = container || this.dataNode || document.querySelector('ytd-app');
-    }
-
-    setParentNode(parent?: HTMLElement) {
-        this.setDataNode();
-        return this.buttonParent = parent || this.buttonParent || document.querySelector('#top-row ytd-video-owner-renderer');
-    }
-    insertButton(button: WhitelistButtonInstance): boolean {
-        this.setParentNode();
-        if (!this.buttonParent) {
-            err('uBO-wl', 'Tried to add WL button, but target parent not found');
-            return false;
+    onWlContainer(el: HTMLDivElement) {
+        if ((this.buttonContainer && !this.buttonContainer.closest('#meta-contents')) || el?.closest('#meta-contents')?.getAttribute('hidden')) {
+            err('uBO-wl', 'Whitelist container rejected due to being hidden');
+            return;
+        }
+        this.buttonContainer = el;
+        if (!el) {
+            err('uBO-wl', 'Wl button destination was removed');
+            return;
         }
 
-        if (this.buttonParent.nextSibling) {
-            this.buttonParent.parentElement.insertBefore(button.render(), this.buttonParent.nextSibling);
+        if (el.nextSibling) {
+            el.parentElement.insertBefore(this.wlButton.render(), el.nextSibling);
         } else {
-            this.buttonParent.appendChild(button.render());
+            el.appendChild(this.wlButton.render());
         }
-        return true;
+        log('uBO-wl', 'Found button destination', el)
+        this.updateInfoLinks();
+
     }
-    updateVideos(whitelisted: boolean, forceUpdate: boolean) {
-        this.updateInfobar(this.buttonParent, whitelisted);
-        let relatedVideos = document.querySelectorAll('ytd-compact-video-renderer,ytd-playlist-panel-video-renderer') as NodeListOf<VideoPoly>;
+    onChannelContainer(container: HTMLDivElement) {
+        if (!container) {
+            err('uBO-wl', 'Channel ID container not found');
+            return;
+        }
+        this.channelContainer = document.querySelector('ytd-app');
+        this.possibleChannelChange(this.getChannelId())
+        this.updateInfoLinks();
 
-        pages.updateVideos(relatedVideos, forceUpdate)
     }
+    getChannelId() {
+        const channelId = Channels.empty();
 
-    updateInfobar(container: HTMLElement, whitelisted: boolean, channelId = this.channelId) {
-        container = this.setParentNode(container);
-        if (!container) return false;
-        if (!channelId) return false;
+        if (!this.channelContainer) return null;
+        channelId.id = Obj.get(this.channelContainer, 'data.playerResponse.videoDetails.channelId')
+        channelId.display = Obj.get(this.channelContainer, 'data.playerResponse.videoDetails.author')
 
-        let links = container.querySelectorAll('a') as NodeListOf<InfoLink>;
+        return Channels.valid(channelId);
+    }
+    getSubscribeStatus() {
+        const parent = Obj.findParent(Obj.get(this.pageManager, 'data'), 'videoSecondaryInfoRenderer');
+        if (parent) {
+            const subscribed = Obj.get(parent, 'videoSecondaryInfoRenderer.subscribeButton.subscribeButtonRenderer.subscribed');
+
+            return subscribed;
+        }
+
+    }
+    updateInfoLinks() {
+        if (!this.buttonContainer || !this.channelId) return;
+        const whitelisted = settings.asWl(this.channelId, this.subscribed);
+        const links = this.buttonContainer.querySelectorAll('a') as NodeListOf<InfoLink>;
 
         for (let link of links) {
             // this link hasn't been looked at
@@ -971,78 +588,106 @@ class VideoPagePoly extends SingleChannelPage {
             // or the whitelist state changed
             // or the link changed to something that we didnt set it to
             if (!link.href) continue;
-            if (!link.channelId || link.channelId !== channelId.id || link.whitelisted !== whitelisted || link.sethref !== link.href) {
-                link.href = link.sethref = pages.reflectURLFlag(link.href, whitelisted);
+            if (!link.channelId || link.channelId !== this.channelId.id || link.whitelisted !== whitelisted || link.sethref !== link.href) {
+                link.href = link.sethref = External.reflectURLFlag(link.href, whitelisted);
                 link.whitelisted = whitelisted;
-                link.channelId = channelId.id;
+                link.channelId = this.channelId.id;
             }
         }
     }
-    isSubscribed() {
-        if (!this.secondaryDataNode) return false;
-        return Obj.get(this.secondaryDataNode, 'data.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+    update(force = false, userCaused = false) {
+        this.applyPageState(userCaused);
+        this.applyAdState();
+        this.updateSuggestions(force || userCaused);
+        this.updateInfoLinks()
     }
-    getVideoId() {
-        this.setPageManager();
-        if (!this.pageManager) {
-            err('uBO-Limit', 'Could not find page manager')
-            return '';
-        }
-
-        return Obj.get(this.pageManager, 'data.playerResponse.videoDetails.videoId') || '';
+    unMount() {
+        if (this.unhookVideo) this.unhookVideo();
+        this.mounted = false;
     }
-    getChannelId(container?: HTMLElement) {
-        let channelId = Channels.empty();
-        container = this.setDataNode(container);
-
-        if (!container) return null;
-        const prevId = this.channelId ? Channels.valid(this.channelId) : null;
-
-        channelId.id = Obj.get(container, 'data.playerResponse.videoDetails.channelId') || (!prevId ? (window as any).ytplayer?.config?.args?.ucid : null);
-        channelId.display = Obj.get(container, 'data.playerResponse.videoDetails.author') || (!prevId ? (window as any).ytplayer?.config?.args?.author : null);
-        // channelId.username = Channels.fromURL(Obj.get(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.canonicalBaseUrl')) || ''
-        // channelId.id = Obj.get(container, 'data.owner.videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId') || '';
-        // channelId.display = Obj.get(container, 'data.owner.videoOwnerRenderer.title.runs[0].text') || '';
-        return Channels.valid(channelId);
+    destroy(): void {
+        document.querySelectorAll('.UBO-ads-btn,.UBO-wl-container')
+            .forEach(el => el.remove());
+        if (this.unhookVideo) this.unhookVideo();
     }
 }
 
-class ChannelPagePoly extends SingleChannelPage {
+class ChannelPage extends Component {
+    channelContainer: HTMLDivElement;
+    wlButton: WhitelistButton;
+    pageManager: HTMLDivElement;
+    channelId?: Channel;
+    subscribed?: boolean;
+    mounted: boolean;
+
     constructor() {
-        super(WhitelistButtonPoly);
+        super((url) => /youtube.com\/(channel|c|user)\//.test(url));
+        this.onTree('#edit-buttons', this.onWlContainer.bind(this));
+        this.onTree('ytd-page-manager', this.onPageManager.bind(this));
+        this.onAll('div#header ytd-subscribe-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed']);
+        this.onAll('div#inner-header-container ytd-subscribe-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed'])
+        this.onAll('ytd-channel-name.ytd-c4-tabbed-header-renderer', () => this.applyPageState());
+        this.onModified('#progress', this.onProgress.bind(this));
 
-        this.toggleWhitelist = this.toggleWhitelist.bind(this);
-        this.updatePage = this.updatePage.bind(this);
-        this.updateVideos = this.updateVideos.bind(this);
+        this.wlButton = new WhitelistButtonPoly(this.toggleWhitelist.bind(this), false);
+        this.mounted = false;
     }
-
-    setDataNode(container: HTMLElement) {
-        // ytd-page-manager contains data at .data.response.metadata
-        // whereas ytd-browse contains data at .data.metadata
-        return this.dataNode = container || this.dataNode || document.querySelector('ytd-page-manager');//'ytd-browse');
+    onMount() {
+        this.onPageManager(document.querySelector('ytd-page-manager'));
+        this.onSubscribeBtn(document.querySelector('div#inner-header-container ytd-subscribe-button-renderer tp-yt-paper-button'))
+        this.onWlContainer(document.querySelector('#edit-buttons'));
+        this.mounted = true;
     }
-
-    setParentNode(parent?: HTMLElement) {
-        return this.buttonParent = parent || this.buttonParent || document.querySelector('#edit-buttons');
-    }
-    insertButton(button: WhitelistButtonInstance): boolean {
-        this.setParentNode();
-        if (!this.buttonParent) {
-            err('uBO-wl', 'Tried to add WL button, but target parent not found');
-            return false;
+    onProgress(progressEl: HTMLElement) {
+        if (progressEl?.style.transform === 'scaleX(1)') {
+            this.applyPageState();
         }
-
-        this.buttonParent.appendChild(button.render());
-        return true;
     }
-
-    updateVideos(whitelisted: boolean, forceUpdate: boolean) {
-        pages.updateAllVideos(forceUpdate, this.channelId);
+    onWlContainer(container: HTMLDivElement) {
+        if (!container) {
+            err('uBO-wl', 'Channel ID container not found on channel page');
+            return;
+        } else {
+            log('uBO-wl', 'Found', container)
+        }
+        this.channelContainer = container;
+        this.channelContainer.appendChild(this.wlButton.render())
+        this.applyPageState();
     }
+    onPageManager(manager: HTMLDivElement) {
+        this.pageManager = manager;
+        this.applyPageState();
+    }
+    onSubscribeBtn(btn: HTMLButtonElement): void {
+        if (!btn) return this.subscribed = undefined;
 
+        const prevSubscribed = this.subscribed;
+        const nextSubscribedInternal = this.getSubscribeStatus();
+        const nextSubscribedDOM = btn.getAttribute('subscribed') !== null && btn.getAttribute('subscribed') !== 'false';
+
+        this.subscribed = nextSubscribedDOM;// nextSubscribedInternal !== null ? nextSubscribedInternal : nextSubscribedDOM;
+
+        if (this.subscribed !== prevSubscribed) {
+            log('uBO-wl', 'Subscribe state change:', this.subscribed, this.channelId)
+            this.applyPageState();
+        }
+    }
+    toggleWhitelist() {
+        if (!this.channelId) throw 'No channel ID found';
+
+        if (settings.toggleWl(this.channelId, this.subscribed)) {
+            this.wlButton.on();
+        } else {
+            this.wlButton.off();
+        }
+    }
+    getSubscribeStatus() {
+        if (!this.pageManager) throw 'Page manager not found';
+        return Obj.get(this.pageManager, 'data.response.header.c4TabbedHeaderRenderer.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+
+    }
     getChannelId(container: HTMLElement) {
         let channelId = Channels.empty();
-        container = this.setDataNode(container);
         if (!container) return null;
 
         channelId.username = Obj.get(container, 'data.response.metadata.channelMetadataRenderer.doubleclickTrackingUsername') || '';
@@ -1051,59 +696,84 @@ class ChannelPagePoly extends SingleChannelPage {
 
         return Channels.valid(channelId);
     }
-    getVideoId() {
-        this.setPageManager();
-        if (!this.pageManager || !(this.pageManager as any).data) return '';
-        const parent = Obj.findParent((this.pageManager as any).data, 'channelVideoPlayerRenderer');
-        if (!parent) {
-            err('uBO-Limit', 'Could not find current video ID owner under page-manager')
-            return '';
+    applyPageState(force = false, userCaused = false) {
+        if (!this.pageManager) {
+            err('uBO-wl', 'Page manager not found');
+            return;
         }
-        return parent.channelVideoPlayerRenderer.videoId;
+        this.channelId = this.getChannelId(this.pageManager);
+        if (!this.channelId) {
+            err('uBO-wl', 'Channel ID not found yet');
+            return;
+        }
+        const whitelisted = settings.asWl(this.channelId, this.subscribed);
+        /*
+        log('uBO-wl', 'Applied whitelist state:', whitelisted,
+            'subscribed (dom):', this.subscribed,
+            'subscribed (cached):', subscriptions.has(this.channelId),
+            'subscribed:', this.getSubscribeStatus(),
+            'whitelist (inefficient)', settings.asWl(this.channelId, this.getSubscribeStatus()),
+            'excluded:', settings.exclude.has(this.channelId),
+        ) 
+        */
+
+        if (whitelisted) {
+            this.wlButton.on();
+        } else {
+            this.wlButton.off();
+        }
+        if (this.channelId && this.subscribed !== undefined)
+            External.updateSubscriptions(userCaused, this.channelId, this.subscribed)
+        External.updateAllVideos(force, this.channelId)
+        External.updateURL(whitelisted, userCaused)
     }
-    isSubscribed() {
-        return Obj.get(this.dataNode, 'data.response.header.c4TabbedHeaderRenderer.subscribeButton.subscribeButtonRenderer.subscribed') || false;
+    update(force = false, userCaused = false) {
+        this.applyPageState(force, userCaused);
+    }
+    onUmount() {
+        this.subscribed = undefined;
+        this.channelId = undefined;
+        this.mounted = false;
+    }
+    destroy() {
+
     }
 }
 
-class SearchPagePoly {
+interface ChannelElement extends HTMLDivElement {
+    whitelistButton: WhitelistButtonPoly;
+}
+class Search extends Component {
     constructor() {
-        this.updatePage = this.updatePage.bind(this);
+        super('youtube.com/results?');
+        this.onModified('div#contents', this.onList.bind(this))
     }
-    updatePage(forceUpdate?: boolean) {
-        let channelElements: NodeListOf<ChannelElement> = document.querySelectorAll('ytd-channel-renderer');
+    onMount() {
+        this.update();
+    }
+    onList(list: HTMLDivElement) {
+        this.update();
+    }
+    update(userCaused = false) {
+        const channelEls = document.querySelectorAll('ytd-channel-renderer') as NodeListOf<ChannelElement>;
+        for (const channelEl of channelEls) {
+            const channelId = this.getChannelId(channelEl);
+            const whitelisted = settings.asWl(channelId, this.isSubscribed(channelEl));
 
-        if (!channelElements) return;
-
-        for (let channelElement of channelElements) {
-            let channelId = this.getChannelId(channelElement);
-            let whitelisted = settings.asWl(channelId, this.isSubscribed(channelElement));
-
-            if (channelElement.whitelistButton && channelElement.whitelistButton.exists()) {
-                if (forceUpdate)
-                    whitelisted ? channelElement.whitelistButton.on() : channelElement.whitelistButton.off();
+            if (channelEl.whitelistButton && channelEl.whitelistButton.exists()) {
+                if (userCaused)
+                    whitelisted ? channelEl.whitelistButton.on() : channelEl.whitelistButton.off();
             } else {
-                let button = new WhitelistButtonPoly(this.toggleWhitelist.bind(this, channelElement), whitelisted);
-                let container = channelElement.querySelector('#subscribe-button');
+                const button = new WhitelistButtonPoly(this.toggleWhitelist.bind(this, channelEl), whitelisted);
+                const container = channelEl.querySelector('#subscribe-button');
 
                 container.insertBefore(button.render(), container.firstChild);
-                channelElement.whitelistButton = button;
+                channelEl.whitelistButton = button;
             }
         }
-
-        pages.updateAllVideos(forceUpdate)
-    }
-    toggleWhitelist(dataNode: HTMLElement) {
-        let channelId = this.getChannelId(dataNode);
-        if (!channelId) throw 'Channel ID not available';
-
-        settings.toggleWl(channelId, this.isSubscribed(dataNode));
-    }
-    isSubscribed(dataNode: HTMLElement): boolean {
-        return Obj.get(dataNode, 'data.subscriptionButton.subscribed') || false;
     }
     getChannelId(container: HTMLElement) {
-        let channelId = Channels.empty();
+        const channelId = Channels.empty();
         if (!container) throw 'Search element required to get channelId under search mode';
 
         channelId.display = Obj.get(container, 'data.title.simpleText') || '';
@@ -1112,125 +782,284 @@ class SearchPagePoly {
 
         return Channels.valid(channelId);
     }
-}
-class ChannelFeedPoly {
-    // #grid-container 's contain the channels
-    // if there are multiple pages, there will be multiple grid containers
-    // if they are hidden, then window.dispatchEvent(new UIEvent('resize')) triggers the load of the next page
-    // if there is a next page #continuations will have children.
-    capture: boolean;
-    container: HTMLElement;
-    timeout: number;
-    debug: boolean;
-    constructor() {
-        this.capture = false;
+    toggleWhitelist(channelEl: HTMLElement) {
+        const channelId = this.getChannelId(channelEl);
+        if (!channelId) throw 'Channel ID not available';
+
+        settings.toggleWl(channelId, this.isSubscribed(channelEl));
     }
-    updatePage(force: boolean = false) {
-        if (this.capture) return;
-        if (location.href.indexOf('?uBO-YT-extract') !== -1) {
-            this.debug = location.href.indexOf('&debug=true') !== -1;
+    isSubscribed(channelEl: HTMLElement): boolean {
+        return Obj.get(channelEl, 'data.subscriptionButton.subscribed') || false;
+    }
+    destroy() {
 
-            log('Capturing channels...');
+    }
+}
+class AllPages extends Component {
+    extract: boolean;
+    constructor() {
+        super((url) => !/youtube.com\/(channel|c)\//.test(url));
+        adblock.onFetch(this.onFetch.bind(this));
+        this.onModified('#continuations', this.update.bind(this, false), ['hidden']);
+        this.onModified('yt-page-navigation-progress', this.update.bind(this, false), ['hidden'])
+        this.onTree('#items,#content', el => el?.childNodes?.length && this.update(false, el));
+        this.extract = location.href.indexOf('?uBO-YT-extract') !== -1
+    }
+    onMount() {
+        External.updateAllVideos(true);
 
-            this.insertUnload();
-            this.insertCSS();
-            this.instantAnimation();
-            this.capture = true;
+    }
+    onFetch(req: string | Request, call: Promise<Response>) {
+        const _url = req instanceof Request ? req.url : req;
+        const url = new URL(_url);
+
+        if (url.pathname === "/youtubei/v1/guide") {
+            call
+                .then(res => res.clone())
+                .then(data => data.json())
+                .then(json => {
+                    const subscriptionsContainer = Obj.findParent(json, 'guideSubscriptionsSectionRenderer')?.guideSubscriptionsSectionRenderer;
+                    if (!subscriptionsContainer) throw 'Could not find .guideSubscriptionsSectionRenderer';
+
+                    const firstSubs = subscriptionsContainer.items.filter((sub: any) => !sub.guideCollapsibleEntryRenderer);
+                    const expandables = Obj.findParent(subscriptionsContainer, 'expandableItems')?.expandableItems || [];
+                    if (!expandables) log('uBO-subscriptions', 'No expandable items found');
+
+
+                    const all = [...firstSubs, ...expandables]
+                        .filter((item: any) => item.guideEntryRenderer.entryData)
+                        .map((item: any) => ({
+                            id: item.guideEntryRenderer.navigationEndpoint.browseEndpoint.browseId,
+                            username: '',
+                            display: item.guideEntryRenderer.formattedTitle.simpleText
+                        }))
+                        .filter(item => Channels.valid(item));
+
+                    log('uBO-subscriptions', 'Found the following subscriptions', all);
+                    subscriptions.suggest(all);
+                    if (this.extract) {
+                        log('uBO-subscriptions', 'Sending subscriptions up to background script');
+                        settings.whitelisted.suggest(all)
+                    }
+                })
+                .catch(error => err('uBO-subscriptions', 'Found guide data but unable to extract information', error))
         }
     }
-    insertUnload() {
-        window.addEventListener('beforeunload', () => {
-            if (!this.capture) {
-                settings.whitelisted.suggest(undefined);
+    update(force = false, el: HTMLElement) {
+        // log('uBO-links', 'Updating video links', el) 
+        // TO DO: minimize the running of this function
+        External.updateAllVideos(force);
+    }
+    destroy() {
+
+    }
+}
+class External {
+    private static videosQuery = [
+        'ytd-rich-grid-video-renderer',
+        'ytd-grid-video-renderer',
+        'ytd-video-renderer',
+        'ytd-playlist-video-renderer',
+        'ytd-rich-item-renderer',
+        'ytd-compact-video-renderer',
+        'ytd-playlist-panel-video-renderer'
+    ].join(',');
+    static updateURL(whitelisted: boolean, verify: boolean) {
+        if (location.href.indexOf('&disableadblock=1') !== -1) {
+            // ads are enabled, should we correct that?
+            if (!whitelisted) {
+                window.history.replaceState(history.state, '', this.reflectURLFlag(location.href, false));
+                toggleAdblock(true);
+                return false;
+            } else {
+                toggleAdblock(false);
+                return true;
             }
+        } else {
+            // ads are not enabled, lets see if they should be
+            if (whitelisted) {
+                window.history.replaceState(history.state, '', this.reflectURLFlag(location.href, true));
+                toggleAdblock(false);
+                if (verify && settings.verifyWl) this.confirmDisabled();
+                return true;
+            } else {
+                toggleAdblock(true);
+                return false;
+            }
+        }
+    }
+
+    static reflectURLFlag(url: string, shouldContain: boolean): string {
+        // take url, return url with flags removed if add is off
+        // return url with flags added if add is on
+        const search = /((?!\?)igno=re&disableadblock=1&?)|(&disableadblock=1)/g
+
+        if (shouldContain) {
+            url = this.reflectURLFlag(url, false); // remove first, then add
+            const paramsStart = url.indexOf('?');
+            return url + (paramsStart === -1 ? '?igno=re' : (paramsStart === url.length - 1 ? 'igno=re' : '')) + '&disableadblock=1'
+
+        } else {
+            return url.replace(search, '');
+        }
+    }
+    static confirmDisabled(): void {
+        setTimeout(() =>
+            fetch('https://www.youtube.com/favicon.ico?ads=true').catch(() =>
+                prompt(i18n('adsStillBlocked'), '*youtube.com/*&disableadblock=1')
+            )
+            , 300);
+    }
+    static updateVideos(videos: NodeListOf<VideoPoly>, forceUpdate?: boolean, channelId?: Channel) {
+        for (const video of videos) {
+            if (!forceUpdate && video.data.processed) continue;
+
+            const id = Obj.get(video, 'data.channelId')
+                || Obj.get(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+                || Obj.get(video, 'data.content.videoRenderer.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
+                || (channelId && channelId.id);
+            if (id) {
+                let links = video.querySelectorAll('a[href^="/watch?"]') as NodeListOf<HTMLAnchorElement>;
+                if (!links.length) continue;
+
+                let destURL = video.data.originalHref;
+                if (settings.asWl(id)) {
+                    if (!video.data.originalHref) {
+                        destURL = links[0].getAttribute('href');
+                        video.data.originalHref = destURL;
+                    }
+                    destURL += '&disableadblock=1';
+                } else {
+                    if (!destURL) {
+                        video.data.processed = true;
+                        continue;
+                    }
+                }
+
+                for (let link of links)
+                    link.href = destURL;
+                if (Obj.get(video, 'data.content.videoRenderer.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
+                    video.data.content.videoRenderer.navigationEndpoint.commandMetadata.webCommandMetadata.url = destURL
+                if (Obj.get(video, 'data.navigationEndpoint.webNavigationEndpointData.url'))
+                    video.data.navigationEndpoint.webNavigationEndpointData.url = destURL;
+                if (Obj.get(video, 'data.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
+                    video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url = destURL;
+
+                video.data.processed = true;
+            }
+        }
+    }
+    static updateAllVideos(forceUpdate?: boolean, channelId?: Channel) {
+        const videos = document.querySelectorAll(this.videosQuery) as NodeListOf<VideoPoly>;
+        return this.updateVideos(videos, forceUpdate, channelId);
+    }
+    static onPageFocus(): Promise<void> {
+        if (!document.hidden) return Promise.resolve();
+        return new Promise(resolve => {
+            const listener = () => {
+                if (!document.hidden) {
+                    document.removeEventListener("visibilitychange", listener);
+                    resolve();
+                }
+            };
+            document.addEventListener("visibilitychange", listener);
         })
     }
-    insertCSS() {
-        const nextCSS = document.createElement('style');
-        nextCSS.textContent = '#grid-container { display: none !important }'
-        document.documentElement.appendChild(nextCSS);
-    }
-    instantAnimation() {
-        const origRAF = window.requestAnimationFrame;
-        (window as any).requestAnimationFrame = function (fn: any) {
-            fn(performance.now());
-            return Math.random(); //shouldn't be much consequence to this, since the page will be closed immediately after
+    static updateSubscriptions(userCaused: boolean, channel: Channel, subscribed: boolean) {
+        if ((userCaused && nextSubscriptions) || (subscriptionChanges && subscriptionChanges.indexOf(channel.id) === -1)) {
+            // change originated from here or subscriptions are pending and do not conflict with current channel ID
+            log('uBO-wl', 'Applied pending subscriptions', nextSubscriptions);
+            subscriptions = nextSubscriptions;
+            nextSubscriptions = undefined;
+            subscriptionChanges = undefined;
+        } else if (nextSubscriptions) {
+            log('uBO-wl', 'Did not apply pending subscriptions due to conflict w/ current channel ID', subscriptionChanges, channel.id, userCaused)
         }
-        return () => {
-            window.requestAnimationFrame = origRAF;
-        }
-    }
-    loadedChannels() {
-        if (!this.capture) return;
+        const inList = subscriptions.has(channel) || nextSubscriptions?.has(channel) || false;
+        if (inList !== subscribed) {
+            log('uBO-wl', 'Suggesting change due to subscriptions not being correct', channel, 'In cache:', inList, 'On page:', subscribed);
 
-        const grids = document.querySelectorAll('#grid-container');
-        if (!grids) {
-            log('YT-uBO-Channels', 'Could not find grid containers');
-            if (!this.debug) settings.whitelisted.suggest(undefined);
-            return;
-        }
-
-        if (this.timeout) {
-            clearTimeout(this.timeout)
-            this.timeout = 0;
-        }
-        if (!this.container) {
-            this.container = document.querySelector('ytd-section-list-renderer');
-            if (!this.container) {
-                log('uBO-YT-Channels', 'Found grids but parent container likely changed. No way to gauge page length');
-                if (!this.debug) settings.whitelisted.suggest(undefined);
-                return;
+            if (inList && !subscribed) {
+                subscriptions.remove(channel);
+                log('uBO-wl', 'Request remove to subscriptions cache', channel)
+            } else {
+                subscriptions.add(channel);
+                log('uBO-wl', 'Request add to subscriptions cache', channel);
             }
         }
-        const continuations = Obj.get(this.container, 'data.continuations') || [];
-        if (continuations.length) {
-            log('Fetching next page..')
-            // The following is an absolute hack, for the record. It will break if YouTube decides to update the page..
-            // But since they got rid of the RSS/XML feed, and their JSON api requires special headers, it's the only option we have.
-            this.timeout = setTimeout(() => {
-                log('uBO-YT-Channels', 'Timed out');
-                if (!this.debug) settings.whitelisted.suggest(undefined);
-            }, 4000)
-            document.querySelectorAll('yt-next-continuation').forEach(el => {
-                console.log(el);
-                (el as any).data.autoloadEnabled = true;
-                (el as any).data.autoloadImmediately = true;
-                (el as any).maybeTriggerAutoload();
-            })
-            window.dispatchEvent(new UIEvent('resize'))
-        } else {
-            const channels = Array.from(document.querySelectorAll('ytd-channel-renderer'))
-                .map(el => this.getChannelId(el as HTMLElement))
-                .filter(channelId => channelId);
-            log('Collected ' + channels.length + ' channels. Sending them to background')
-            settings.whitelisted.suggest(channels);
-        }
-    }
-    getChannelId(container: HTMLElement) {
-        const channelId = Channels.empty();
-        if (!container) throw 'Channel element required to get channelId';
-
-        channelId.display = Obj.get(container, 'data.longBylineText.runs[0].text');
-        channelId.username = Channels.fromURL(Obj.get(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.canonicalBaseUrl'))
-        channelId.id = Obj.get(container, 'data.longBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
-
-        return Channels.valid(channelId);
     }
 }
+
+abstract class WhitelistButton {
+    toggled: boolean;
+    button: HTMLButtonElement;
+    buttonContainer: HTMLDivElement;
+    placeholder: HTMLElement;
+    constructor(onClick: EventListener, toggled: boolean) {
+        this.toggled = toggled;
+
+        this.button = document.createElement('button');
+        this.button.className = 'UBO-wl-btn';
+        this.button.title = i18n('whitelistTooltip');
+        this.button.addEventListener('click', onClick);
+
+        this.buttonContainer = document.createElement('div');
+        this.buttonContainer.className = 'UBO-wl-container';
+        this.placeholder = document.createElement('button');
+    }
+
+    off() {
+        if (!this.toggled) return;
+
+        this.toggled = false;
+        this.button.title = i18n('whitelistTooltip');
+        this.button.classList.remove('yt-uix-button-toggled');
+    }
+
+    on() {
+        if (this.toggled) return;
+
+        this.toggled = true;
+        this.button.title = i18n('whitelistedTooltip');
+        this.button.classList.add('yt-uix-button-toggled');
+    }
+
+    abstract render(): HTMLElement
+}
+
+class WhitelistButtonPoly extends WhitelistButton {
+    constructor(onClick: EventListener, toggled: boolean) {
+        super(onClick, toggled);
+        this.button.className += ' UBO-wl-poly ' + (toggled ? ' yt-uix-button-toggled' : '');
+        this.button.appendChild(AdOptions.generateIcon(icons.checkcircle))
+        this.button.appendChild(document.createTextNode(i18n('adsEnableBtn').toUpperCase()));
+        this.buttonContainer.appendChild(this.button);
+    }
+    exists() {
+        return !!this.buttonContainer.parentElement;
+    }
+    render() {
+        return this.buttonContainer;
+    }
+}
+
 class Channels {
     private type: string;
-    private list: Array<Channel>;
+    protected list: Array<Channel>;
+    private action: string;
 
-    constructor(list: Array<Channel>, type: string) {
+    constructor(list: Array<Channel>, type: string, action = 'set-settings') {
         this.list = list;
         this.type = type;
+        this.action = action;
     }
 
     static empty(): Channel {
         return { id: '', username: '', display: '' };
     }
     static valid(channel: Channel): Channel | null {
-        return (channel && (channel.id || channel.username))
+        return (channel && (channel.id || channel.username)) &&
+            typeof channel.id === 'string' && typeof channel.username === 'string'
             ? channel
             : null;
     }
@@ -1264,22 +1093,27 @@ class Channels {
             return '';
         }
     }
+    diff(channels: Channels) {
+        const notIn2 = this.list.filter(i => channels.list.findIndex(channel => channel.id === i.id) === -1)
+        const notIn1 = channels.list.filter(i => this.list.findIndex(channel => channel.id === i.id) === -1);
+        const unique = Array.from(new Set([...notIn1.map(({ id }) => id), ...notIn2.map(({ id }) => id)]))
+        return unique;
+    }
     has(channel: Channel | string) {
         if (!channel) return false;
         const needle = typeof channel === 'string' ? channel : channel.id;
         return this.list.findIndex(({ id }) => id === needle) !== -1;
     }
     remove(channel: Channel) {
-        return agent.send('set-settings', { param: channel, type: 'remove-' + this.type })
+        return agent.send(this.action, { param: channel, type: 'remove-' + this.type })
     }
     add(channel: Channel) {
-        return agent.send('set-settings', { param: channel, type: 'add-' + this.type });
+        return agent.send(this.action, { param: channel, type: 'add-' + this.type });
     }
     suggest(channels: Array<Channel> | undefined) {
-        return agent.send('set-settings', { param: channels, type: 'suggest-' + this.type })
+        return agent.send(this.action, { param: channels, type: 'suggest-' + this.type })
     }
 }
-
 class Settings implements _Settings<Channels> {
     whitelisted: Channels;
     muted: Channels;
@@ -1297,22 +1131,22 @@ class Settings implements _Settings<Channels> {
     limitAds: boolean;
     limitAdsQty: number;
     forceWhite: boolean;
+
     constructor(settings: _Settings) {
         Object.assign(this, {
             ...settings,
             whitelisted: new Channels(settings.whitelisted, 'white'),
             muted: new Channels(settings.muted, 'mute'),
             exclude: new Channels(settings.exclude, 'exclude'),
-            blacklisted: new Channels(settings.blacklisted, 'black')
+            blacklisted: new Channels(settings.blacklisted, 'black'),
         })
     }
-    /** Determine whether channel should be treated as whitelisted */
-    asWl(channel: Channel, subscribed = false): boolean {
-        return settings.whitelisted.has(channel)
-            || (settings.autoWhite && subscribed && !settings.exclude.has(channel));
+    asWl(channel: Channel, subscribed = subscriptions.has(channel)): boolean {
+        return this.whitelisted.has(channel)
+            || (this.autoWhite && subscribed && !this.exclude.has(channel));
     }
     /** Toggle a channel's whitelisted status */
-    toggleWl(channel: Channel, subscribed = false): boolean {
+    toggleWl(channel: Channel, subscribed = subscriptions.has(channel)): boolean {
         const curWl = this.asWl(channel, subscribed);
         if (curWl) {
             if (this.autoWhite && subscribed)
@@ -1327,300 +1161,7 @@ class Settings implements _Settings<Channels> {
             return true;
         }
     }
-
 }
-
-class Page {
-    video: VideoPagePoly //| VideoPageBasic;
-    channel: ChannelPagePoly //| ChannelPageBasic;
-    search: SearchPagePoly //| SearchPageBasic;
-    subscriptions: ChannelFeedPoly;
-    currentURL: string;
-    videosQuery: string;
-    mode: number;
-    eventExemptions: Array<EventListener>;
-    originalURL: string;
-    flaggedURL: string;
-
-    constructor(design: Layout) {
-        if (design === Layout.Polymer) {
-            this.video = new VideoPagePoly();
-            this.channel = new ChannelPagePoly();
-            this.search = new SearchPagePoly();
-            this.subscriptions = new ChannelFeedPoly();
-        }
-
-        this.currentURL = '';
-        this.eventExemptions = [];
-        this.videosQuery = [
-            'ytd-rich-grid-video-renderer',
-            'ytd-grid-video-renderer',
-            'ytd-video-renderer',
-            'ytd-playlist-video-renderer',
-            'ytd-rich-item-renderer'
-        ].join(',');
-        this.updateAllVideos = this.updateAllVideos.bind(this);
-    }
-    static getDesign() {
-        if ((window as any).Polymer || document.querySelector('ytd-app')) {
-            return Layout.Polymer;
-        } else {
-            return Layout.Unknown;
-        }
-    }
-    getType(): PageType {
-        const nextURL = location.href;
-
-        if (nextURL !== this.currentURL) {
-            
-            if(this.originalURL === nextURL){
-                window.history.replaceState(history.state, '', this.flaggedURL);
-            }
-            return this.mode = this.determineType(nextURL);
-        } else {
-            return this.mode;
-        }
-    }
-    determineType(url = location.href): PageType {
-        if (url.indexOf('youtube.com/watch?') !== -1) {
-            return PageType.Video;
-        } else if (url.indexOf('youtube.com/channel/') !== -1 || url.indexOf('youtube.com/user/') !== -1 || url.indexOf('youtube.com/c/') !== -1) {
-            return PageType.Channel;
-        } else if (url.indexOf('youtube.com/results?') !== -1) {
-            toggleAdblock(true);
-            return PageType.Search;
-        } else if (url.indexOf('youtube.com/feed/channels') !== -1) {
-            toggleAdblock(true);
-            return PageType.Subscriptions
-        } else {
-            toggleAdblock(true);
-            return PageType.Any;
-        }
-    }
-
-    update(forceUpdate?: boolean, verify?: boolean) {
-        let mode = this.getType();
-
-        if (mode === PageType.Video) {
-            this.video.updatePage(forceUpdate, verify);
-        } else if (mode === PageType.Channel) {
-            this.channel.updatePage(forceUpdate, verify);
-        } else if (mode === PageType.Search) {
-            this.search.updatePage(forceUpdate);
-        } else if (mode === PageType.Subscriptions) {
-            this.subscriptions.updatePage(forceUpdate);
-        } else if (mode === PageType.Any) {
-            this.updateURL(false, false);
-            this.updateAllVideos(forceUpdate)
-        }
-    }
-
-    updateAd(ad: any, mode = this.getType()) {
-        if (mode === PageType.Video) {
-            this.video.updateAdInformation(ad);
-        } else if (mode === PageType.Channel) {
-            this.channel.updateAdInformation(ad);
-        }
-    }
-    updateVideos(videos: NodeListOf<VideoPoly>, forceUpdate?: boolean, channelId?: Channel) {
-        for (let video of videos) {
-            if (!forceUpdate && video.data.processed) continue;
-
-            let id = Obj.get(video, 'data.channelId')
-                || Obj.get(video, 'data.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
-                || Obj.get(video, 'data.content.videoRenderer.shortBylineText.runs[0].navigationEndpoint.browseEndpoint.browseId')
-                || (channelId && channelId.id);
-
-            if (id) {
-                let links = video.querySelectorAll('a[href^="/watch?"]') as NodeListOf<HTMLAnchorElement>;
-                if (!links.length) continue;
-
-                let destURL = video.data.originalHref;
-
-                if (settings.asWl(id)) {
-                    if (!video.data.originalHref) {
-                        destURL = links[0].getAttribute('href');
-                        video.data.originalHref = destURL;
-                    }
-                    destURL += '&disableadblock=1';
-                } else {
-                    if (!destURL) {
-                        video.data.processed = true;
-                        continue;
-                    }
-                }
-
-                for (let link of links)
-                    link.href = destURL;
-                if (Obj.get(video, 'data.content.videoRenderer.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
-                    video.data.content.videoRenderer.navigationEndpoint.commandMetadata.webCommandMetadata.url = destURL
-                if (Obj.get(video, 'data.navigationEndpoint.webNavigationEndpointData.url'))
-                    video.data.navigationEndpoint.webNavigationEndpointData.url = destURL;
-                if (Obj.get(video, 'data.navigationEndpoint.commandMetadata.webCommandMetadata.url'))
-                    video.data.navigationEndpoint.commandMetadata.webCommandMetadata.url = destURL;
-
-                video.data.processed = true;
-            }
-        }
-    }
-    updateAllVideos(forceUpdate?: boolean, channelId?: Channel) {
-        const videos = document.querySelectorAll(this.videosQuery) as NodeListOf<VideoPoly>;
-
-        return this.updateVideos(videos, forceUpdate, channelId);
-    }
-    updateURL(whitelisted: boolean, verify: boolean) {
-        if (location.href.indexOf('&disableadblock=1') !== -1) {
-            // ads are enabled, should we correct that?
-            if (!whitelisted) {
-                this.originalURL = location.href;
-                this.flaggedURL = pages.reflectURLFlag(location.href, false)
-                window.history.replaceState(history.state, '', this.flaggedURL);
-                toggleAdblock(true);
-                return false;
-            } else {
-                toggleAdblock(false);
-                return true;
-            }
-        } else {
-            // ads are not enabled, lets see if they should be
-            if (whitelisted) {
-                this.originalURL = location.href;
-                this.flaggedURL = pages.reflectURLFlag(location.href, false)
-                window.history.replaceState(history.state, '', this.flaggedURL);
-                toggleAdblock(false);
-                if (verify && settings.verifyWl) this.confirmDisabled();
-                return true;
-            } else {
-                toggleAdblock(true);
-                return false;
-            }
-        }
-    }
-
-    reflectURLFlag(url: string, shouldContain: boolean): string {
-        // take url, return url with flags removed if add is off
-        // return url with flags added if add is on
-        let search = /((?!\?)igno=re&disableadblock=1&?)|(&disableadblock=1)/g
-
-        if (shouldContain) {
-            url = this.reflectURLFlag(url, false); // remove first, then add
-            let paramsStart = url.indexOf('?');
-            return url + (paramsStart === -1 ? '?igno=re' : (paramsStart === url.length - 1 ? 'igno=re' : '')) + '&disableadblock=1'
-
-        } else {
-            return url.replace(search, '');
-        }
-    }
-
-    confirmDisabled(): void {
-        setTimeout(() =>
-            fetch('https://www.youtube.com/favicon.ico?ads=true').catch(() =>
-                prompt(i18n('adsStillBlocked'), '*youtube.com/*&disableadblock=1')
-            )
-            , 300);
-    }
-    onPageFocus(): Promise<void> {
-        if (!document.hidden) return Promise.resolve();
-        return new Promise(resolve => {
-            const listener = () => {
-                if (!document.hidden) {
-                    document.removeEventListener("visibilitychange", listener);
-                    this.eventExemptions = this.eventExemptions.filter(fn => fn !== listener);
-                    resolve();
-                }
-            };
-            this.eventExemptions = this.eventExemptions.concat(listener);
-            document.addEventListener("visibilitychange", listener);
-        })
-    }
-    destroy() {
-        pages.video.removeHooks();
-        pages.channel.removeHooks();
-        document.removeEventListener('keyup', this.video.onKeyboard);
-        document.removeEventListener('keyup', this.channel.onKeyboard);
-
-        const nodes = document.querySelectorAll('.UBO-ads-btn,.UBO-wl-btn,.UBO-wl-container,.UBO-menu');
-
-        for (let node of nodes) {
-            node.remove();
-        }
-    }
-}
-
-const hookToast = () => {
-    const toast = document.querySelector("ytd-popup-container paper-toast.yt-notification-action-renderer") as HTMLElement;
-    if (!toast) return () => { };
-    const label = toast.querySelector("span#label");
-
-    return (text: string) => {
-        label.textContent = text;
-        toast.style.display = "";
-        toast.classList.add('paper-toast-open');
-
-        setTimeout(() => {
-            toast.style.display = "none";
-            toast.classList.remove('paper-toast-open');
-        }, 3000);
-    }
-}
-
-class LoadHastener {
-    // This class helps us process the page 82% sooner than waiting for DOMContentLoaded
-    // By watching HTML elements as they are first added, we can determine what design was
-    // used sooner and can begin processing the page after 600 ms, as opposed to the
-    // 3500 ms it can take to wait for DOMContentLoaded.
-    watcher: MutationObserver;
-    designConfirmed: (design: Layout) => void;
-
-    constructor() {
-        this.watcher = new MutationObserver(mutations => {
-            for (let mutation of mutations) {
-                if (mutation.type === 'childList') {
-                    for (let node of mutation.addedNodes) {
-                        if (node.nodeName === 'BODY') {
-                            return this.switchToBody();
-                        } else if (node.nodeName === 'SCRIPT') {
-                            if ((node as HTMLScriptElement).src.indexOf('polymer.js') !== -1) {
-                                return this.confirmDesign(Layout.Polymer);
-                            }
-                        } else if ((node as Element).localName === 'ytd-app') {
-                            return this.confirmDesign(Layout.Polymer);
-                        }
-                    }
-                }
-            }
-        });
-        this.designConfirmed = null;
-        this.contentLoaded = this.contentLoaded.bind(this)
-    }
-
-    getDesign(): Promise<Layout> {
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            return Promise.resolve(Page.getDesign());
-        } else {
-            return new Promise(resolve => {
-                this.designConfirmed = resolve;
-                this.watcher.observe(document.body || document.documentElement, { childList: true });
-                document.addEventListener('DOMContentLoaded', this.contentLoaded);
-            })
-        }
-    }
-    confirmDesign(design: Layout): void {
-        this.watcher.disconnect();
-        document.removeEventListener('DOMContentLoaded', this.contentLoaded)
-        this.designConfirmed(design);
-    }
-
-    contentLoaded() {
-        this.confirmDesign(Page.getDesign());
-    }
-    switchToBody() {
-        this.watcher.disconnect();
-        this.watcher.observe(document.body, { childList: true });
-    }
-
-}
-
 const hookNav = (onURL: (url: string) => any) => {
     const hookLinks = (onURL: (url: string) => any) => {
         const listener = (e: MouseEvent) => {
@@ -1656,73 +1197,90 @@ const hookNav = (onURL: (url: string) => any) => {
     }
 }
 
+const adblock = new AdBlock(location.href.indexOf('&disableadblock=1') === -1);
+const unhookLinks = hookNav(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
+const toggleAdblock = (nextBlock: boolean) => {
+    adblock.toggleAll(nextBlock);
+    adblock.togglePrune(nextBlock)//  && !settings.autoWhite); // TODO: Add this back if the new predictive subscribe feature isnt working
+}
 
-const init = (design: Layout) => {
-    pages = new Page(design || Page.getDesign());
-    watcher = new MutationWatcher();
-    // toast = hookToast();
-    pages.update(true);
-    watcher.start();
+const watch = new SiteWatch();
 
+const init = () => {
+    const video = new VideoPage();
+    const all = new AllPages();
+    const channel = new ChannelPage();
+    const search = new Search();
+    if (settings.forceWhite) {
+        adblock.togglePrune(false);
+    }
+    watch.add(video);
+    watch.add(all);
+    watch.add(channel);
+    watch.add(search);
+    watch.onURLUpdate(url => {
+        !adblock.enabled() // force whitelist if adblocker is off, incase YT randomly changes URL after it loaded it itself
+            && url.indexOf("&disableadblock=1") === -1
+            && window.history.replaceState(history.state, '', External.reflectURLFlag(location.href, true))
+        log('uBO-wl', 'Forced URL flag addition to match internal adblock state')
+    })
+
+    try {
+        watch.start();
+    } catch (e) {
+        err('YT-general', e)
+    }
+    // fix this shit and use it instead of video.mounted, so that channel can be used too 
+    //const potentialFeedbackLoop = () => watch.currentComponents && watch.currentComponents.indexOf((component: Component) => component === video || component === channel) !== -1
     agent
-        .on('settings-update', (updated: any) => {
-            settings = new Settings(updated.settings);
-            pages.update(true, updated.initiator)
+        .on('settings-update', ({ initiator, settings: _settings }) => {
+            log('uBO-YT', 'Received settings update', _settings)
+            settings = new Settings(_settings);
+            watch.update(true, initiator);
+        })
+        .on('subscriptions-update', (resp: any) => {
+            const { initiator, subscriptions: _subscriptions } = resp;
+            if (video.mounted || channel.mounted) {
+                nextSubscriptions = new Channels(_subscriptions, 'subscriptions', 'cache')
+                subscriptionChanges = subscriptions.diff(nextSubscriptions);
+            } else {
+                subscriptions = new Channels(_subscriptions, 'subscriptions', 'cache');
+            }
+
+            log('uBO-wl', 'Received subscriptions from host', _subscriptions, initiator, resp)
+            if (settings.autoWhite)
+                watch.update(true, initiator)
         })
         .on('ad-update', (ad: any) => {
-            pages.updateAd(ad);
+            video.onAdInfo(ad);
         })
         .on('destroy', () => {
             log('uBO-YT', 'Detaching inject script..');
-            watcher.destroy();
-            pages.destroy();
+            watch.destroy();
             agent = null;
-            watcher = null;
-            pages = null;
         })
         .send('ready');
 }
 
 
-const [getEventListeners, awaitEventListener, filterEventListeners, unhookEvents] = hookEvents();
-(window as any).gev = getEventListeners; // delete me
-
-const adblock = new AdBlock(location.href.indexOf('&disableadblock=1') === -1)
-
-adblock.onAds(ads => {
-    log('uBO-Replace', ads)
-    if (ads instanceof Array) {
-
-    }
-    return ads;
-})
-const toggleAdblock = (nextBlock: boolean) => {
-    adblock.toggleAll(nextBlock);
-    adblock.togglePrune(nextBlock && !settings.autoWhite);
-}
-const unhookLinks = hookNav(link => toggleAdblock(link.indexOf('&disableadblock=1') === -1));
-
-filterEventListeners("visibilitychange", (target, { fn }) => pages
-    ? pages.eventExemptions.indexOf(fn) !== -1
-    : false);
 
 agent = new MessageAgent('uBOWL-message', true);
 agent
     .on('destroy', () => {
         log('uBO-YT', 'Detaching all hooks and destroying agent');
-        unhookEvents();
         adblock.destroy();
         unhookLinks();
         agent.destroy();
+        watch.destroy();
         log('uBO-YT', 'Gone.')
     })
     .send('get-settings')
     .then(response => {
+        log('uBO-YT', 'Initiated with the following settings', response)
+        agent.send('mute-tab', false) // reset
         settings = new Settings(response.settings);
+        subscriptions = new Channels(response.subscriptions, 'subscriptions', 'cache');
         AdOptions.uboIcon = response.accessURLs.ICO;
         seti18n(response.i18n);
-
-        let load = new LoadHastener();
-        load.getDesign()
-            .then(design => init(design));
+        init();
     });
