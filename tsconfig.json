@@ -1,13 +1,13 @@
 {
     "files": [
-        "src/userscript/userscript.ts",
         "src/userscript/index.ts",
         "src/background.ts",
         "src/content.ts",
         "src/agent.ts",
         "src/browser.ts",
         "src/pages/main.tsx",
-        "src/userscript/domwatch.ts"
+        "src/userscript/domwatch.ts",
+        "src/userscript-only/index.ts"
     ],
     "compilerOptions": {
         "typeRoots": [
