@@ -42,13 +42,11 @@
     "@types/lz-string": "^1.3.34",
     "@types/react-dom": "^16.9.14",
     "@types/webpack": "^5.28.0",
-    "archiver": "^2.1.1",
     "bootstrap": "^4.6.1",
     "del": "^3.0.0",
     "empty-module": "0.0.2",
     "glob": "^7.2.0",
     "gulp": "^4.0.2",
-    "gulp-archiver2": "^1.1.6",
     "gulp-clean-css": "^3.10.0",
     "gulp-if": "^2.0.2",
     "gulp-json-editor": "^2.5.6",
@@ -69,6 +67,12 @@
   },
   "dependencies": {
     "@types/greasemonkey": "^4.0.2",
+    "gulp-archiver2": "^1.1.6",
     "sass": "^1.52.3"
+  },
+  "overrides": {
+    "gulp-archiver2": {
+      "archiver": "^5.3.1"
+    }
   }
 }
