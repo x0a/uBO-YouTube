@@ -34,10 +34,63 @@
 .UBO-wl-btn.UBO-wl-poly:not(.yt-uix-button-toggled) .UBO-icon {
     display: none;
 }
+
+.UBO-wl-btn.UBO-wl-modern:not(.yt-uix-button-toggled) .UBO-icon {
+    display: none;
+}
+
 #edit-buttons .UBO-wl-btn {
     margin-top: 1.5px;
 }
-.UBO-wl-btn.UBO-wl-poly {
+
+.UBO-wl-btn.UBO-wl-modern {
+    font-family: Roboto, Noto, sans-serif;
+    border-radius: 18px;
+    padding: 0px 16px;
+    white-space: nowrap;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 36px;
+    border: 0;
+    cursor: pointer;
+}
+/** click me for wl button  #0f0f0f; in white mode**/
+
+html[dark] .UBO-wl-btn.UBO-wl-modern:not(.yt-uix-button-toggled) {
+    background-color: #f1f1f1;
+}
+
+html[dark] .UBO-wl-btn.UBO-wl-modern:not(.yt-uix-button-toggled):hover {
+    background-color: #d9d9d9;
+}
+
+html[dark] .UBO-wl-btn.UBO-wl-modern.yt-uix-button-toggled {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #f1f1f1;
+}
+
+html[dark] .UBO-wl-btn.UBO-wl-modern.yt-uix-button-toggled:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+html:not([dark]) .UBO-wl-btn.UBO-wl-modern:not(.yt-uix-button-toggled) {
+    background-color: #0f0f0f;
+    color: #fff;
+}
+html:not([dark]) .UBO-wl-btn.UBO-wl-modern:not(.yt-uix-button-toggled):hover{
+    background-color: #272727
+}
+
+html:not([dark]) .UBO-wl-btn.UBO-wl-modern.yt-uix-button-toggled {
+    background-color: #f1f1f1;
+}
+
+html:not([dark]) .UBO-wl-btn.UBO-wl-modern.yt-uix-button-toggled:hover {
+    background-color: #d9d9d9;
+}
+
+
+.UBO-wl-btn.UBO-wl-moderm .UBO-wl-btn.UBO-wl-poly {
     font-family: Roboto, Noto, sans-serif;
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
@@ -224,6 +277,10 @@ html[dark] .UBO-wl-btn.UBO-wl-poly.yt-uix-button-toggled {
     height: 1.4rem;
     margin-right: 5px;
     vertical-align: -4px;
+}
+
+.UBO-wl-modern .UBO-icon {
+    vertical-align: -2px;
 }
 
 /* Replicate .ytp-ad-module */

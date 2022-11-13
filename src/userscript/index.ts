@@ -61,13 +61,13 @@ abstract class VideoPlayer extends Component {
     subscribed: undefined | boolean;
     skipping: boolean;
     adOptions: AdOptions
-    wlButton: WhitelistButtonPoly;
+    wlButton: WhitelistButtonModern;
     videoId: string;
     adsPlayed: number;
     videoError: boolean;
     unhookVideo?: () => void;
     initialized: boolean;
-    constructor(url: string | ((url: string) => boolean), WlConstructor: typeof WhitelistButtonPoly) {
+    constructor(url: string | ((url: string) => boolean), WlConstructor: typeof WhitelistButtonModern) {
         super(url);
         this.adPlaying = false;
         this.skipping = false;
@@ -496,7 +496,7 @@ class VideoPage extends VideoPlayer implements PageWithPlayer {
     buttonContainer: HTMLDivElement;
     mounted: boolean;
     constructor() {
-        super('youtube.com/watch?', WhitelistButtonPoly);
+        super('youtube.com/watch?', WhitelistButtonModern);
         this.onTree('#owner ytd-video-owner-renderer,#top-row ytd-video-owner-renderer', this.onWlContainer.bind(this));
         this.onTree('ytd-video-secondary-info-renderer', this.onChannelContainer.bind(this));
         this.onAll('ytd-video-owner-renderer ytd-channel-name yt-formatted-string a', this.onChannelContainer.bind(this));
@@ -629,7 +629,7 @@ class ChannelPage extends Component {
         this.onAll('ytd-channel-name.ytd-c4-tabbed-header-renderer', () => this.applyPageState());
         this.onModified('#progress', this.onProgress.bind(this));
 
-        this.wlButton = new WhitelistButtonPoly(this.toggleWhitelist.bind(this), false);
+        this.wlButton = new WhitelistButtonModern(this.toggleWhitelist.bind(this), false);
         this.mounted = false;
     }
     onMount() {
@@ -741,7 +741,7 @@ class ChannelPage extends Component {
 }
 
 interface ChannelElement extends HTMLDivElement {
-    whitelistButton: WhitelistButtonPoly;
+    whitelistButton: WhitelistButtonModern;
 }
 class Search extends Component {
     constructor() {
@@ -764,7 +764,7 @@ class Search extends Component {
                 if (userCaused)
                     whitelisted ? channelEl.whitelistButton.on() : channelEl.whitelistButton.off();
             } else {
-                const button = new WhitelistButtonPoly(this.toggleWhitelist.bind(this, channelEl), whitelisted);
+                const button = new WhitelistButtonModern(this.toggleWhitelist.bind(this, channelEl), whitelisted);
                 const container = channelEl.querySelector('#subscribe-button');
 
                 container.insertBefore(button.render(), container.firstChild);
@@ -1033,6 +1033,21 @@ class WhitelistButtonPoly extends WhitelistButton {
         this.button.className += ' UBO-wl-poly ' + (toggled ? ' yt-uix-button-toggled' : '');
         this.button.appendChild(AdOptions.generateIcon(icons.checkcircle))
         this.button.appendChild(document.createTextNode(i18n('adsEnableBtn').toUpperCase()));
+        this.buttonContainer.appendChild(this.button);
+    }
+    exists() {
+        return !!this.buttonContainer.parentElement;
+    }
+    render() {
+        return this.buttonContainer;
+    }
+}
+class WhitelistButtonModern extends WhitelistButton {
+    constructor(onClick: EventListener, toggled: boolean) {
+        super(onClick, toggled);
+        this.button.className += ' UBO-wl-modern ' + (toggled ? ' yt-uix-button-toggled' : '');
+        this.button.appendChild(AdOptions.generateIcon(icons.checkcircle))
+        this.button.appendChild(document.createTextNode(i18n('adsEnableBtn')));
         this.buttonContainer.appendChild(this.button);
     }
     exists() {
