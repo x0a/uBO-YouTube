@@ -40,7 +40,9 @@ const hookEvents = (debug = false): [
             .concat(event));
 
         if (awaitMap.has(self)) {
-            awaitMap.set(self, awaitMap.get(self).filter(({ eventName, resolve }) => {
+            const target = awaitMap.get(self)
+            if(!target) return;
+            awaitMap.set(self, target.filter(({ eventName, resolve }) => {
                 if (eventName === name) {
                     resolve(event);
                     return false;
@@ -69,7 +71,7 @@ const hookEvents = (debug = false): [
             .filter(({ name }) => name === eventName);
     }
     const awaitEventListener = (element: EventTarget, eventName: string, expires = -1) => {
-        const self = this as EventTarget;
+        const self = this as any as EventTarget;
         return new Promise((resolve, reject) => {
             const events = getEventListeners(element, eventName);
 
@@ -79,7 +81,9 @@ const hookEvents = (debug = false): [
                 awaitMap.set(self, (awaitMap.get(self) || []).concat({ eventName, resolve }))
 
                 if (expires !== -1) setTimeout(() => {
-                    awaitMap.set(self, awaitMap.get(self)
+                    const target = awaitMap.get(self);
+                    if(!target) return;
+                    awaitMap.set(self, target
                         .filter(awaiting => awaiting.resolve !== resolve));
                     reject();
                 }, expires);

@@ -6,9 +6,9 @@ interface Asset {
 type Assets = Array<Asset>;
 const assets: Assets = (() => {
     const nextAssets = '___ASSETS___';
-    if(nextAssets !== '___ASSETS___'){
-        return nextAssets as Assets;
-    }else{
+    if (nextAssets !== String.fromCharCode(95, 95, 95) + 'ASSETS' + String.fromCharCode(95, 95, 95)) {
+        return nextAssets as any as Assets;
+    } else {
         return undefined;
     }
 })();
