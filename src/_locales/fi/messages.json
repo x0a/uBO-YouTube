@@ -405,5 +405,14 @@
                 "content": "$3"
             }
         }
+    },
+    "skipWarning": {
+        "message": "Tämä voi viedä suosikkikanaviesi tulot"
+    },
+    "copy": {
+        "message": "Kopioi"
+    },
+    "copied": {
+        "message": "Kopioitu"
     }
 }
