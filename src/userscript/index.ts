@@ -810,10 +810,17 @@ class AllPages extends Component {
 
     }
     onFetch(req: string | Request, call: Promise<Response>) {
-        const _url = req instanceof Request ? req.url : req;
-        const url = new URL(_url);
+        const getPathname = (req: Request | string) => {
+            const url = req instanceof Request ? req.url : req;
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }else{
+                return location.origin + (url.startsWith('/') ? '' : '/') + url;
+            }
+        }
+        const pathname = new URL(getPathname(req));
 
-        if (url.pathname === "/youtubei/v1/guide") {
+        if (pathname.pathname === "/youtubei/v1/guide") {
             call
                 .then(res => res.clone())
                 .then(data => data.json())
