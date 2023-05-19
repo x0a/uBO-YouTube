@@ -405,5 +405,14 @@
                 "content": "$3"
             }
         }
+    },
+    "skipWarning": {
+        "message": "Dies könnte Ihre Lieblingskanäle um Einnahmen bringen"
+    },
+    "copy": {
+        "message": "Kopieren"
+    },
+    "copied": {
+        "message": "Kopiert"
     }
 }

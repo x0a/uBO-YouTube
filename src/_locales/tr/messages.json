@@ -271,12 +271,6 @@
             }
         }
     },
-    "forceWlOption": {
-        "message": "Force whitelist on first load"
-    },
-    "forceWlOptionTooltip": {
-        "message": "This might reload the page if ads are irreversibly removed before channel information was available"
-    },
     "adErrorsOption": {
         "message": "Reklam oynatma hatalarını atla"
     },
@@ -405,9 +399,6 @@
                 "content": "$3"
             }
         }
-    },
-    "skipWarning": {
-        "message": "This may deprive your favorite channels of revenue"
     },
     "copy": {
         "message": "Kopyala"

@@ -253,8 +253,29 @@
     "autoWhiteOption": {
         "message": "Domyślnie dodaj kanały subskrybowane do białej listy"
     },
+    "autoWhiteTooltip": {
+        "message": "Może to skutkować reklamami podczas pierwszego wczytywania stron"
+    },
+    "limitAdsOption": {
+        "message": "Ogranicz reklamy na film"
+    },
     "autoSkipOption": {
         "message": "Automatycznie pomiń reklamy"
+    },
+    "autoSkipValue": {
+        "message": "$number$s",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "forceWlOption": {
+        "message": "Wymuś białą listę przy pierwszym załadowaniu"
+    },
+    "forceWlOptionTooltip": {
+        "message": "Może to odświeżyć stronę, jeśli reklamy zostaną nieodwracalnie usunięte przed otrzymaniem informacji o kanale"
     },
     "adErrorsOption": {
         "message": "Pomiń błędy odtwarzania reklam"
@@ -286,7 +307,8 @@
         "message": "Zablokuj reklamodawcę"
     },
     "autoSkipTooltip": {
-        "message": "Pomijanie po $number sekundach",
+        "message": "Pomijanie za $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
                 "content": "$1"
@@ -304,6 +326,9 @@
     },
     "pauseAfterAdTooltip": {
         "message": "Jeśli wyciszona reklama zakończy odtwarzanie, a karta nie jest obecnie aktywna to film zostanie cicho wstrzymany w tle dopóki użytkownik do niego nie wróci"
+    },
+    "keyboardSkipOption": {
+        "message": "Strzałka w prawo, aby wymusić pominięcie reklamy"
     },
     "permissionDesc": {
         "message": "Aby wyszukać kanały YouTube potrzebne jest jednorazowe uprawnienie"
@@ -380,5 +405,14 @@
                 "content": "$3"
             }
         }
+    },
+    "skipWarning": {
+        "message": "Może to pozbawić Twoich ulubionych twórców z przychodów"
+    },
+    "copy": {
+        "message": "Skopiuj"
+    },
+    "copied": {
+        "message": "Skopiowano"
     }
 }

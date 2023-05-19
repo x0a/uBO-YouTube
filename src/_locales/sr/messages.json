@@ -1,0 +1,103 @@
+{
+    "okBtn": {
+        "message": "Потврди",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Откажи",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Опције",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "Опције за овог оглашивача"
+    },
+    "adOptionsTooltip": {
+        "message": "Управљај рекламама од \"$title$\"",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "Врати на подразумевана подешавања"
+    },
+    "import": {
+        "message": "Увези подешавања из фајла"
+    },
+    "export": {
+        "message": "Извези подешавања ка фајлу"
+    },
+    "whitelistTabTitle": {
+        "message": "Бела листа",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "Омогући рекламе за овај канал"
+    },
+    "whitelistedTooltip": {
+        "message": "Омогућене рекламе за овај канал"
+    },
+    "adsTabTitle": {
+        "message": "Рекламе",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "Рекламе",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "Разно",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "Канал",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Оглашивач",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Видео",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "Стање",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "addBtn": {
+        "message": "Додај",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "removeBtn": {
+        "message": "Уклони"
+    },
+    "bulkRemoveBtn": {
+        "message": "Уклони изабрано"
+    },
+    "adsHeaderShort": {
+        "message": "Недавне рекламе"
+    },
+    "resetTooltip": {
+        "message": "Избриши сва подешавања"
+    },
+    "emptyList": {
+        "message": "Ниједан"
+    },
+    "importBtn": {
+        "message": "Изабери фајл..."
+    },
+    "exportBtn": {
+        "message": "Преузми"
+    },
+    "exportAltBtn": {
+        "message": "Извези"
+    },
+    "noNew": {
+        "message": "Нема нових ставки за додавање"
+    }
+}

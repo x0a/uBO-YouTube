@@ -1,21 +1,21 @@
 {
     "okBtn": {
-        "message": "OK",
+        "message": "Okej",
         "description": "Appears as button in confirmation dialog"
     },
     "cancelBtn": {
-        "message": "Annuler",
+        "message": "Avbryt",
         "description": "Appears as button in confirmation dialog"
     },
     "optionsBtn": {
-        "message": "Options",
+        "message": "Inställningar",
         "description": "For a button in the popup page, when clicked opens the full settings page"
     },
     "adOptionsDefaultTooltip": {
-        "message": "Options pour cet annonceur"
+        "message": "Alternativ för denna annonsör"
     },
     "adOptionsTooltip": {
-        "message": "Gérer les annonces provenant de \"$title$\"",
+        "message": "Hantera annonser från \"$title$\"",
         "placeholders": {
             "title": {
                 "content": "$1"
@@ -23,96 +23,96 @@
         }
     },
     "reset": {
-        "message": "Restaurer les paramètres par défaut"
+        "message": "Återställ till förvalda inställningar"
     },
     "import": {
-        "message": "Importer les réglages depuis un fichier"
+        "message": "Importera inställningar från fil"
     },
     "export": {
-        "message": "Exporter les réglages vers un fichier"
+        "message": "Exportera inställningar till fil"
     },
     "resetConfirm": {
-        "message": "Ceci effacera tous les éléments de la liste blanche, les options d'annonce et les préférences. Si vous ne voulez pas perdre vos paramètres, annulez et cliquez d'abord sur \"Télécharger\"."
+        "message": "Detta kommer att radera alla vitlistade objekt, annonsalternativ och inställningar. Om du inte vill förlora dina inställningar, avbryt och klicka på \"Ladda ner\" först."
     },
     "whitelistTabTitle": {
-        "message": "Liste blanche",
+        "message": "Vitlista",
         "description": "Appears as title for tab in options page"
     },
     "whitelistTooltip": {
-        "message": "Activer les annonces pour cette chaîne"
+        "message": "Aktivera annonser för denna kanal"
     },
     "whitelistedTooltip": {
-        "message": "Annonces activées pour cette chaîne"
+        "message": "Annonser aktiverade för denna kanal"
     },
     "adsTabTitle": {
-        "message": "Annonces",
+        "message": "Annonser",
         "description": "Appears as title for tab in options page"
     },
     "adsEnableBtn": {
-        "message": "Annonces",
+        "message": "Annonser",
         "description": "Shown next to channels, short for 'Enable ads for this channel'"
     },
     "miscTabTitle": {
-        "message": "Divers",
+        "message": "Övrigt",
         "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
     },
     "channelColumn": {
-        "message": "Chaîne",
+        "message": "Kanal",
         "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
     },
     "advertiserColumn": {
-        "message": "Annonceur",
+        "message": "Annonsör",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
     },
     "videoColumn": {
-        "message": "Vidéo",
+        "message": "Video",
         "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
     },
     "statusColumn": {
-        "message": "État",
+        "message": "Status",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
     },
     "actionColumn": {
-        "message": "Action",
+        "message": "Åtgärd",
         "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
     },
     "addBtn": {
-        "message": "Ajouter",
+        "message": "Lägg till",
         "description": "Button shown next to channel name, for adding to whitelist"
     },
     "addedBtn": {
-        "message": "Ajouté",
+        "message": "Tillagd",
         "description": "Shown next to channel search results that are already in whitelist"
     },
     "removeBtn": {
-        "message": "Supprimer"
+        "message": "Ta bort"
     },
     "bulkRemoveBtn": {
-        "message": "Supprimer les éléments sélectionnés"
+        "message": "Ta bort markerade"
     },
     "adsStillBlocked": {
-        "message": "Les annonces peuvent toujours être bloquées, assurez-vous d'avoir ajouté la règle suivante à votre liste blanche d'uBlock Origin"
+        "message": "Annonser kan fortfarande blockeras, se till att du lagt till följande regel till din Ublock Origin vitlista"
     },
     "adsHeaderLong": {
-        "message": "Annonceurs récemment détectés"
+        "message": "Nyligen upptäckta annonsörer"
     },
     "adsHeaderShort": {
-        "message": "Annonces récentes"
+        "message": "Senaste annonserna"
     },
     "whitelistHeader": {
-        "message": "Chaînes dans la Liste Blanche"
+        "message": "Vitlistade kanaler"
     },
     "excludeHeader": {
-        "message": "Exclure de la liste blanche"
+        "message": "Uteslut från vitlistan"
     },
     "removeWhitelistTooltip": {
-        "message": "Enlever la chaîne de la liste blanche"
+        "message": "Ta bort kanal från vitlistan"
     },
     "removeExcludeTooltip": {
-        "message": "Réautoriser la chaine à être mise en liste blanche si vous êtes abonnés"
+        "message": "Tillåt att kanalen vitlistas om du prenumererar"
     },
     "removeFailed": {
-        "message": "Impossible de supprimer les éléments demandés : $error$",
+        "message": "Kunde inte ta bort begärda objekt: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -120,7 +120,7 @@
         }
     },
     "removeExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$channelName$\" à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "Är du säker på att du vill tillåta att \"$channelName$\" automatiskt vitlistas (om du prenumererar)?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -128,7 +128,7 @@
         }
     },
     "removeWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "Är du säker på att du vill ta bort \"$channelName$\" från vitlistan?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -136,7 +136,7 @@
         }
     },
     "bulkRemoveWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "Är du säker på att du vill ta bort $count$ objekt från vitlistan?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -144,7 +144,7 @@
         }
     },
     "bulkRemoveExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$count$\" objets à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "Är du säker på att du vill tillåta att $count$ objekt automatiskt vitlistas (om du prenumererar)?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -152,13 +152,13 @@
         }
     },
     "blacklistHeader": {
-        "message": "Liste noire d'Annonceurs"
+        "message": "Svartlistade annonsörer"
     },
     "removeBlacklistTooltip": {
-        "message": "Enlever la chaîne de la liste noire"
+        "message": "Ta bort kanal från svartlistan"
     },
     "removeBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "Är du säker på att du vill ta bort \"$channelName$\" från svartlistan?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -166,7 +166,7 @@
         }
     },
     "bulkRemoveBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "Är du säker på att du vill ta bort $count$ objekt från svartlistan?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -174,13 +174,13 @@
         }
     },
     "unmutedHeader": {
-        "message": "Annonceurs non muets"
+        "message": "Ej tystade annonsörer"
     },
     "muteBtn": {
-        "message": "Muter l'annonceur"
+        "message": "Tysta annonsör"
     },
     "removeUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour \"$channelName$\" ?",
+        "message": "Är du säker på att du vill återuppta tystning för \"$channelName$\"?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -188,7 +188,7 @@
         }
     },
     "bulkRemoveUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour $count$ éléments ?",
+        "message": "Är du säker på att du vill återuppta tystning för $count$ objekt?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -196,16 +196,16 @@
         }
     },
     "mutelistHeader": {
-        "message": "Annonceurs muets"
+        "message": "Tystade annonsörer"
     },
     "removeMuteBtn": {
-        "message": "Dé-muter l'annonceur"
+        "message": "Avtysta annonsören"
     },
     "removeMuteTooltip": {
-        "message": "Supprimer l'annonceur de la liste des annonceurs muets"
+        "message": "Ta bort annonsör från tystningslistan"
     },
     "removeMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste des annonceurs muets ?",
+        "message": "Är du säker på att du vill ta bort \"$channelName$\" från tystningslistan?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -213,7 +213,7 @@
         }
     },
     "bulkRemoveMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste des annonceurs muets ?",
+        "message": "Är du säker på att du vill ta bort $count$ objekt från tystningslistan?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -221,46 +221,46 @@
         }
     },
     "resetBtn": {
-        "message": "Réinitialiser"
+        "message": "Återställ"
     },
     "resetTooltip": {
-        "message": "Effacer tous les paramètres"
+        "message": "Radera alla inställningar"
     },
     "emptyList": {
-        "message": "Vide"
+        "message": "Inget"
     },
     "importBtn": {
-        "message": "Sélectionner un fichier..."
+        "message": "Välj fil..."
     },
     "exportBtn": {
-        "message": "Télécharger"
+        "message": "Ladda ner"
     },
     "exportAltBtn": {
-        "message": "Exporter"
+        "message": "Exportera"
     },
     "channelSearchHeader": {
-        "message": "Trouver des chaînes"
+        "message": "Hitta kanaler"
     },
     "adOptionsHeader": {
-        "message": "Options d'annonce"
+        "message": "Annonsalternativ"
     },
     "muteOption": {
-        "message": "Muter les annonces par défaut"
+        "message": "Tysta annonser som standard"
     },
     "overlaysOption": {
-        "message": "Masquer les annonces superposées"
+        "message": "Dölj annonsöverlägg"
     },
     "autoWhiteOption": {
-        "message": "Ajouter les chaines auxquelles vous êtes abonnés en liste blanche par défaut"
+        "message": "Vitlista prenumererade kanaler som standard"
     },
     "autoWhiteTooltip": {
-        "message": "Cela peut entrainer des annonces pre-roll lors du premier chargement des pages"
+        "message": "Detta kan resultera i pre-roll annonser när sidorna först laddar"
     },
     "limitAdsOption": {
-        "message": "Limiter les annonces par vidéo"
+        "message": "Begränsa annonser per video"
     },
     "autoSkipOption": {
-        "message": "Ignorer automatiquement les annonces"
+        "message": "Hoppa över annonser automatiskt"
     },
     "autoSkipValue": {
         "message": "$number$s",
@@ -272,42 +272,42 @@
         }
     },
     "forceWlOption": {
-        "message": "Forcer la whitelist au premier chargement"
+        "message": "Tvinga vitlista vid första laddningen"
     },
     "forceWlOptionTooltip": {
-        "message": "Cela pourrait recharger la page si les publicités sont irréversiblement supprimées avant que les informations de la chaîne ne soient disponibles"
+        "message": "Detta kan ladda om sidan om annonser är oåterkalleligt borttagna innan kanalinformation var tillgänglig"
     },
     "adErrorsOption": {
-        "message": "Ignorer les erreurs de lecture des annonces"
+        "message": "Hoppa över annonsuppspelningsfel"
     },
     "adErrorsOptionTooltip": {
-        "message": "Passe à la vidéo si l'annonce ne fonctionne pas, plutôt que d'afficher l'erreur \"Une erreur s'est produite\" avec l'animation de TV statique"
+        "message": "Hoppa över till video om annonsen inte spelar, istället för att visa 'Ett fel uppstod' med myrornas krig"
     },
     "verifyWlOption": {
-        "message": "Vérifier le statut de la liste blanche"
+        "message": "Verifiera vitlistans status"
     },
     "verifyWlOptionTooltip": {
-        "message": "Confirme que les annonces ne sont pas bloquées sur les chaînes en liste blanche en simulant le chargement d'une annonce"
+        "message": "Bekräfta att annonser inte blockeras på vitlistade kanaler genom att simulera inläsning av en annons"
     },
     "adBlocked": {
-        "message": "Bloqué",
+        "message": "Blockerad",
         "description": "Shown next to ads that were blocked"
     },
     "adAllowed": {
-        "message": "Autorisé",
+        "message": "Tillåten",
         "description": "Shown next to ads that were allowed through"
     },
     "muteAdvertiserTooltip": {
-        "message": "Muter automatiquement toutes les annonces de cet annonceur"
+        "message": "Tysta alla annonser från denna annonsör automatiskt"
     },
     "blacklistAdvertiserTooltip": {
-        "message": "Bloquer toutes les annonces de cet annonceur"
+        "message": "Blockera alla annonser från denna annonsör"
     },
     "blacklistBtn": {
-        "message": "Bloquer cet annonceur"
+        "message": "Blockera annonsör"
     },
     "autoSkipTooltip": {
-        "message": "Ignorer dans $number$",
+        "message": "Hoppar över om $number$",
         "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
@@ -316,48 +316,48 @@
         }
     },
     "skipBtn": {
-        "message": "Passer l'annonce"
+        "message": "Tvinga hoppa över"
     },
     "skipTooltip": {
-        "message": "Tente de forcer le passage de l'annonce"
+        "message": "Försök att hoppa över denna annons"
     },
     "pauseAfterAdOption": {
-        "message": "Mode Anti-Sursaut"
+        "message": "Antiskrämsel-läge"
     },
     "pauseAfterAdTooltip": {
-        "message": "Si une annonce muette se termine, et que l'onglet n'est pas actuellement affiché, la vidéo est discrètement mise en pause jusqu'à ce que l'utilisateur y retourne"
+        "message": "Om en tystad annons är klar och fliken inte är i fokus blir videon automatiskt pausad i bakgrunden tills användaren återvänder"
     },
     "keyboardSkipOption": {
-        "message": "Touche flèche droite pour ignorer une annonce de force"
+        "message": "Höger pil för att tvinga hoppa över annonser"
     },
     "permissionDesc": {
-        "message": "Une permission unique est nécessaire pour rechercher des chaînes YouTube"
+        "message": "En engångsbehörighet behövs för att söka efter YouTube-kanaler"
     },
     "permissionBtn": {
-        "message": "Accorder l’autorisation"
+        "message": "Ge behörighet"
     },
     "searchDesc": {
-        "message": "Entrez du texte pour rechercher une chaîne ou",
+        "message": "Skriv för att söka efter en youtube-kanal eller",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
     },
     "searchPlaceholder": {
-        "message": "Rechercher une chaîne...",
+        "message": "Kanalnamn..",
         "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },
     "searching": {
-        "message": "Recherche en cours..."
+        "message": "Söker..."
     },
     "searchFailed": {
-        "message": "Impossible de charger les résultats. Hors ligne ?"
+        "message": "Kunde inte ladda resultat. Offline?"
     },
     "importSubsBtn": {
-        "message": "Importer depuis les Abonnements"
+        "message": "Importera från prenumerationer"
     },
     "importSubsFailed": {
-        "message": "Impossible de récupérer les abonnements. Assurez-vous d'être connecté à YouTube."
+        "message": "Kunde inte hämta prenumerationer. Se till att du är inloggad på YouTube."
     },
     "importSubsConfirm": {
-        "message": "$total$ abonnements trouvés, dont $new$ ne sont pas dans la liste. Ajouter ces $new$ éléments à la liste blanche ?",
+        "message": "Hittade $total$ prenumerationer, varav $new$ inte finns med i listan. Lägg till $new$ objekt i vitlistan?",
         "placeholders": {
             "total": {
                 "content": "$1"
@@ -368,7 +368,7 @@
         }
     },
     "updateFailed": {
-        "message": "Impossible de définir les paramètres, erreur rencontrée : $error$",
+        "message": "Kunde inte ställa in inställningar, stötte på fel: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -376,7 +376,7 @@
         }
     },
     "wrongFormat": {
-        "message": "Le fichier doit être de type \"$expected$\", mais un fichier \"$encountered$\" a été détecté",
+        "message": "Filen måste vara av typen \"$expected$\", hittade \"$encountered$\" istället",
         "placeholders": {
             "expected": {
                 "content": "application/json"
@@ -387,13 +387,13 @@
         }
     },
     "parseFailed": {
-        "message": "Impossible d'analyser en tant que JSON. Le fichier n'est probablement pas en JSON, ou il est corrompu."
+        "message": "Misslyckades att tolka som JSON. Filen är sannolikt inte JSON eller skadad."
     },
     "noNew": {
-        "message": "Aucun nouvel élément à ajouter"
+        "message": "Inga nya objekt att lägga till"
     },
     "confirmImport": {
-        "message": "Ajouter $whitelisted$ éléments à la liste blanche, $blacklisted$ éléments à la liste noire, et $muted$ éléments à la liste des annonceurs mutés ?",
+        "message": "Lägg till $whitelisted$ objekt i vitlistan, $blacklisted$ objekt i svartlistan, och $muted$ objekt i tystningslistan?",
         "placeholders": {
             "whitelisted": {
                 "content": "$1"
@@ -407,12 +407,12 @@
         }
     },
     "skipWarning": {
-        "message": "Cela peut priver vos chaînes préférées de revenus"
+        "message": "Detta kan beröva dina favoritkanaler intäkter"
     },
     "copy": {
-        "message": "Copie"
+        "message": "Kopiera"
     },
     "copied": {
-        "message": "Copié"
+        "message": "Kopierad"
     }
 }

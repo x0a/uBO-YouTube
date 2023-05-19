@@ -4,18 +4,18 @@
         "description": "Appears as button in confirmation dialog"
     },
     "cancelBtn": {
-        "message": "Annuler",
+        "message": "Zrušit",
         "description": "Appears as button in confirmation dialog"
     },
     "optionsBtn": {
-        "message": "Options",
+        "message": "Možnosti",
         "description": "For a button in the popup page, when clicked opens the full settings page"
     },
     "adOptionsDefaultTooltip": {
-        "message": "Options pour cet annonceur"
+        "message": "Možnosti pro tohoto inzerenta"
     },
     "adOptionsTooltip": {
-        "message": "Gérer les annonces provenant de \"$title$\"",
+        "message": "Spravujte reklamy z \"$title$\"",
         "placeholders": {
             "title": {
                 "content": "$1"
@@ -23,96 +23,96 @@
         }
     },
     "reset": {
-        "message": "Restaurer les paramètres par défaut"
+        "message": "Resetovat do výchozího nastavení"
     },
     "import": {
-        "message": "Importer les réglages depuis un fichier"
+        "message": "Importovat nastavení ze souboru"
     },
     "export": {
-        "message": "Exporter les réglages vers un fichier"
+        "message": "Exportovat nastavení do souboru"
     },
     "resetConfirm": {
-        "message": "Ceci effacera tous les éléments de la liste blanche, les options d'annonce et les préférences. Si vous ne voulez pas perdre vos paramètres, annulez et cliquez d'abord sur \"Télécharger\"."
+        "message": "Tímto vymažete všechny položky na bílé listině, možnosti reklam a předvolby. Pokud nechcete ztratit vaše nastavení, zrušte akci a klikněte nejprve na tlačítko \"Stáhnout\"."
     },
     "whitelistTabTitle": {
-        "message": "Liste blanche",
+        "message": "Bílá listina",
         "description": "Appears as title for tab in options page"
     },
     "whitelistTooltip": {
-        "message": "Activer les annonces pour cette chaîne"
+        "message": "Povolit reklamy pro tento kanál"
     },
     "whitelistedTooltip": {
-        "message": "Annonces activées pour cette chaîne"
+        "message": "Reklamy povoleny pro tento kanál"
     },
     "adsTabTitle": {
-        "message": "Annonces",
+        "message": "Reklamy",
         "description": "Appears as title for tab in options page"
     },
     "adsEnableBtn": {
-        "message": "Annonces",
+        "message": "Reklamy",
         "description": "Shown next to channels, short for 'Enable ads for this channel'"
     },
     "miscTabTitle": {
-        "message": "Divers",
+        "message": "Různé",
         "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
     },
     "channelColumn": {
-        "message": "Chaîne",
+        "message": "Kanál",
         "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
     },
     "advertiserColumn": {
-        "message": "Annonceur",
+        "message": "Inzerent",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
     },
     "videoColumn": {
-        "message": "Vidéo",
+        "message": "Video",
         "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
     },
     "statusColumn": {
-        "message": "État",
+        "message": "Stav",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
     },
     "actionColumn": {
-        "message": "Action",
+        "message": "Akce",
         "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
     },
     "addBtn": {
-        "message": "Ajouter",
+        "message": "Přidat",
         "description": "Button shown next to channel name, for adding to whitelist"
     },
     "addedBtn": {
-        "message": "Ajouté",
+        "message": "Přidáno",
         "description": "Shown next to channel search results that are already in whitelist"
     },
     "removeBtn": {
-        "message": "Supprimer"
+        "message": "Odebrat"
     },
     "bulkRemoveBtn": {
-        "message": "Supprimer les éléments sélectionnés"
+        "message": "Odebrat vybrané"
     },
     "adsStillBlocked": {
-        "message": "Les annonces peuvent toujours être bloquées, assurez-vous d'avoir ajouté la règle suivante à votre liste blanche d'uBlock Origin"
+        "message": "Reklamy mohou být stále blokovány, ujistěte se, že jste přidali následující pravidlo do bílé listinu uBlock Originu"
     },
     "adsHeaderLong": {
-        "message": "Annonceurs récemment détectés"
+        "message": "Nedávno zjištění inzerenti"
     },
     "adsHeaderShort": {
-        "message": "Annonces récentes"
+        "message": "Nedávné reklamy"
     },
     "whitelistHeader": {
-        "message": "Chaînes dans la Liste Blanche"
+        "message": "Kanály na bílé listině"
     },
     "excludeHeader": {
-        "message": "Exclure de la liste blanche"
+        "message": "Vyloučit z bílé listiny"
     },
     "removeWhitelistTooltip": {
-        "message": "Enlever la chaîne de la liste blanche"
+        "message": "Odebrat kanál z bílé listiny"
     },
     "removeExcludeTooltip": {
-        "message": "Réautoriser la chaine à être mise en liste blanche si vous êtes abonnés"
+        "message": "Znovu povolit, aby byl kanál na bílé listině, pokud je odebírán"
     },
     "removeFailed": {
-        "message": "Impossible de supprimer les éléments demandés : $error$",
+        "message": "Nelze odebrat požadované položky: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -120,7 +120,7 @@
         }
     },
     "removeExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$channelName$\" à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "Opravdu chcete, aby byl kanál \"$channelName$\" automaticky přidán na bílou listinu (pokud je odebírán)?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -128,7 +128,7 @@
         }
     },
     "removeWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "Opravdu chcete odebrat kanál \"$channelName$\" z bílé listiny?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -136,7 +136,7 @@
         }
     },
     "bulkRemoveWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "Opravdu chcete odebrat $count$ položek z bílé listiny?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -144,7 +144,7 @@
         }
     },
     "bulkRemoveExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$count$\" objets à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "Opravdu chcete, aby bylo $count$ položek automaticky přidáno na bílou listinu (pokud je odebíráno)?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -152,13 +152,13 @@
         }
     },
     "blacklistHeader": {
-        "message": "Liste noire d'Annonceurs"
+        "message": "Inzerenti na černé listině"
     },
     "removeBlacklistTooltip": {
-        "message": "Enlever la chaîne de la liste noire"
+        "message": "Odebrat kanál z černé listiny"
     },
     "removeBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "Opravdu chcete odebrat kanál \"$channelName$\" z černé listiny?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -166,7 +166,7 @@
         }
     },
     "bulkRemoveBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "Opravdu chcete odebrat $count$ položek z černé listiny?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -174,13 +174,13 @@
         }
     },
     "unmutedHeader": {
-        "message": "Annonceurs non muets"
+        "message": "Neztlumení inzerenti"
     },
     "muteBtn": {
-        "message": "Muter l'annonceur"
+        "message": "Ztlumit inzerenta"
     },
     "removeUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour \"$channelName$\" ?",
+        "message": "Opravdu chcete zrušit ztlumení u kanálu \"$channelName$\"?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -188,7 +188,7 @@
         }
     },
     "bulkRemoveUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour $count$ éléments ?",
+        "message": "Opravdu chcete zrušit ztlumení u $count$ položek?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -196,24 +196,16 @@
         }
     },
     "mutelistHeader": {
-        "message": "Annonceurs muets"
+        "message": "Ztlumení inzerenti"
     },
     "removeMuteBtn": {
-        "message": "Dé-muter l'annonceur"
+        "message": "Zrušit ztlumení inzerenta"
     },
     "removeMuteTooltip": {
-        "message": "Supprimer l'annonceur de la liste des annonceurs muets"
-    },
-    "removeMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste des annonceurs muets ?",
-        "placeholders": {
-            "channelName": {
-                "content": "$1"
-            }
-        }
+        "message": "Odebrat inzerenta ze seznamu ztlumených"
     },
     "bulkRemoveMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste des annonceurs muets ?",
+        "message": "Opravdu chcete odebrat $count$ položek ze seznamu ztlumených?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -221,46 +213,46 @@
         }
     },
     "resetBtn": {
-        "message": "Réinitialiser"
+        "message": "Resetovat"
     },
     "resetTooltip": {
-        "message": "Effacer tous les paramètres"
+        "message": "Vymazat všechna nastavení"
     },
     "emptyList": {
-        "message": "Vide"
+        "message": "Žádný"
     },
     "importBtn": {
-        "message": "Sélectionner un fichier..."
+        "message": "Vybrat soubor..."
     },
     "exportBtn": {
-        "message": "Télécharger"
+        "message": "Stáhnout"
     },
     "exportAltBtn": {
-        "message": "Exporter"
+        "message": "Exportovat"
     },
     "channelSearchHeader": {
-        "message": "Trouver des chaînes"
+        "message": "Najít kanály"
     },
     "adOptionsHeader": {
-        "message": "Options d'annonce"
+        "message": "Možnosti reklam"
     },
     "muteOption": {
-        "message": "Muter les annonces par défaut"
+        "message": "Ztlumit reklamy"
     },
     "overlaysOption": {
-        "message": "Masquer les annonces superposées"
+        "message": "Skrýt překrytí reklam"
     },
     "autoWhiteOption": {
-        "message": "Ajouter les chaines auxquelles vous êtes abonnés en liste blanche par défaut"
+        "message": "Přidat odebírané kanály na bílou listinu"
     },
     "autoWhiteTooltip": {
-        "message": "Cela peut entrainer des annonces pre-roll lors du premier chargement des pages"
+        "message": "Toto může mít za následek reklamy při prvním načtení stránek"
     },
     "limitAdsOption": {
-        "message": "Limiter les annonces par vidéo"
+        "message": "Omezit počet reklam na video"
     },
     "autoSkipOption": {
-        "message": "Ignorer automatiquement les annonces"
+        "message": "Automaticky přeskočit reklamy"
     },
     "autoSkipValue": {
         "message": "$number$s",
@@ -272,42 +264,42 @@
         }
     },
     "forceWlOption": {
-        "message": "Forcer la whitelist au premier chargement"
+        "message": "Vynutit bílou listinu při prvním načtení"
     },
     "forceWlOptionTooltip": {
-        "message": "Cela pourrait recharger la page si les publicités sont irréversiblement supprimées avant que les informations de la chaîne ne soient disponibles"
+        "message": "Toto může znovu načíst stránku, pokud budou reklamy nevratně odstraněny před načtením informací o kanálu"
     },
     "adErrorsOption": {
-        "message": "Ignorer les erreurs de lecture des annonces"
+        "message": "Přeskočit chyby přehrávání reklam"
     },
     "adErrorsOptionTooltip": {
-        "message": "Passe à la vidéo si l'annonce ne fonctionne pas, plutôt que d'afficher l'erreur \"Une erreur s'est produite\" avec l'animation de TV statique"
+        "message": "Přeskočit na video při selhání přehrání reklamy, namísto zobrazení \"Vyskytla se chyba\" se videem TV statiky"
     },
     "verifyWlOption": {
-        "message": "Vérifier le statut de la liste blanche"
+        "message": "Ověřit stav bílé listiny"
     },
     "verifyWlOptionTooltip": {
-        "message": "Confirme que les annonces ne sont pas bloquées sur les chaînes en liste blanche en simulant le chargement d'une annonce"
+        "message": "Potvrdí, že reklamy nejsou zablokovány na kanálech na bílé listině simulací načítání reklamy"
     },
     "adBlocked": {
-        "message": "Bloqué",
+        "message": "Blokovaný",
         "description": "Shown next to ads that were blocked"
     },
     "adAllowed": {
-        "message": "Autorisé",
+        "message": "Nepovolené",
         "description": "Shown next to ads that were allowed through"
     },
     "muteAdvertiserTooltip": {
-        "message": "Muter automatiquement toutes les annonces de cet annonceur"
+        "message": "Automaticky ztlumit všechny reklamy od tohoto inzerenta"
     },
     "blacklistAdvertiserTooltip": {
-        "message": "Bloquer toutes les annonces de cet annonceur"
+        "message": "Blokovat všechny reklamy od tohoto inzerenta"
     },
     "blacklistBtn": {
-        "message": "Bloquer cet annonceur"
+        "message": "Blokovat inzerenta"
     },
     "autoSkipTooltip": {
-        "message": "Ignorer dans $number$",
+        "message": "Přeskakuji za $number$",
         "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
@@ -316,48 +308,45 @@
         }
     },
     "skipBtn": {
-        "message": "Passer l'annonce"
+        "message": "Vynutit přeskočení"
     },
     "skipTooltip": {
-        "message": "Tente de forcer le passage de l'annonce"
+        "message": "Pokusit se přeskočit tuto reklamu"
     },
     "pauseAfterAdOption": {
-        "message": "Mode Anti-Sursaut"
+        "message": "Protilekací režim"
     },
     "pauseAfterAdTooltip": {
-        "message": "Si une annonce muette se termine, et que l'onglet n'est pas actuellement affiché, la vidéo est discrètement mise en pause jusqu'à ce que l'utilisateur y retourne"
+        "message": "Pokud skončí přehrávání ztlumené reklamy a karta není aktuálně ve fokusu, video se tiše pozastaví na pozadí, dokud se k němu uživatel nevrátí"
     },
     "keyboardSkipOption": {
-        "message": "Touche flèche droite pour ignorer une annonce de force"
+        "message": "Pravá šipka pro vynucení přeskočení reklam"
     },
     "permissionDesc": {
-        "message": "Une permission unique est nécessaire pour rechercher des chaînes YouTube"
-    },
-    "permissionBtn": {
-        "message": "Accorder l’autorisation"
+        "message": "Pro hledání YouTube kanálů je potřeba jednorázové oprávnění"
     },
     "searchDesc": {
-        "message": "Entrez du texte pour rechercher une chaîne ou",
+        "message": "Pište pro vyhledání YouTube kanálu nebo",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
     },
     "searchPlaceholder": {
-        "message": "Rechercher une chaîne...",
+        "message": "Název kanálu..",
         "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },
     "searching": {
-        "message": "Recherche en cours..."
+        "message": "Hledání..."
     },
     "searchFailed": {
-        "message": "Impossible de charger les résultats. Hors ligne ?"
+        "message": "Nepodařilo se načíst výsledky. Offline?"
     },
     "importSubsBtn": {
-        "message": "Importer depuis les Abonnements"
+        "message": "Importovat z odběrů"
     },
     "importSubsFailed": {
-        "message": "Impossible de récupérer les abonnements. Assurez-vous d'être connecté à YouTube."
+        "message": "Nepodařilo se načíst odběry. Ujistěte se, že jste přihlášeni do YouTube."
     },
     "importSubsConfirm": {
-        "message": "$total$ abonnements trouvés, dont $new$ ne sont pas dans la liste. Ajouter ces $new$ éléments à la liste blanche ?",
+        "message": "Nalezeno celkem $total$ odběrů, z kterých $new$ není na seznamu. Přidat $new$ položek na bílou listinu?",
         "placeholders": {
             "total": {
                 "content": "$1"
@@ -368,7 +357,7 @@
         }
     },
     "updateFailed": {
-        "message": "Impossible de définir les paramètres, erreur rencontrée : $error$",
+        "message": "Nepodařilo se načíst nastavení, došlo k chybě: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -376,7 +365,7 @@
         }
     },
     "wrongFormat": {
-        "message": "Le fichier doit être de type \"$expected$\", mais un fichier \"$encountered$\" a été détecté",
+        "message": "Soubor musí být typu \"$expected$\", místo toho detekováno \"$encountered$\"",
         "placeholders": {
             "expected": {
                 "content": "application/json"
@@ -387,13 +376,13 @@
         }
     },
     "parseFailed": {
-        "message": "Impossible d'analyser en tant que JSON. Le fichier n'est probablement pas en JSON, ou il est corrompu."
+        "message": "Nepodařilo se parsovat JSON. Soubor nejspíš není JSON nebo je poškozený."
     },
     "noNew": {
-        "message": "Aucun nouvel élément à ajouter"
+        "message": "Žádné nové položky k přidání"
     },
     "confirmImport": {
-        "message": "Ajouter $whitelisted$ éléments à la liste blanche, $blacklisted$ éléments à la liste noire, et $muted$ éléments à la liste des annonceurs mutés ?",
+        "message": "Přidat $whitelisted$ položek na bílou listinu, $blacklisted$ položek na černou listinu a $muted$ položek na seznam ztlumených?",
         "placeholders": {
             "whitelisted": {
                 "content": "$1"
@@ -407,12 +396,12 @@
         }
     },
     "skipWarning": {
-        "message": "Cela peut priver vos chaînes préférées de revenus"
+        "message": "Toto může připravit vaše oblíbené kanály o příjmy"
     },
     "copy": {
-        "message": "Copie"
+        "message": "Zkopírovat"
     },
     "copied": {
-        "message": "Copié"
+        "message": "Zkopírováno"
     }
 }

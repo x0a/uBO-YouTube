@@ -285,14 +285,6 @@
     "blacklistBtn": {
         "message": "광고주 차단"
     },
-    "autoSkipTooltip": {
-        "message": "$number초후 건너뛰기",
-        "placeholders": {
-            "number": {
-                "content": "$1"
-            }
-        }
-    },
     "skipBtn": {
         "message": "강제 건너뛰기"
     },

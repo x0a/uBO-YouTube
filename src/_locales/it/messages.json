@@ -174,13 +174,13 @@
         }
     },
     "unmutedHeader": {
-        "message": "Inserzionisti non mutati"
+        "message": "Inserzionisti non silenziati"
     },
     "muteBtn": {
         "message": "Silenzia inserzionista"
     },
     "removeUnmuteConfirm": {
-        "message": "Sei sicuro di voler riprendere il muting per \"$channelName$\"?",
+        "message": "Sei sicuro di voler riprendere il silenziamento per \"$channelName$\"?",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -199,10 +199,10 @@
         "message": "Inserzionisti silenziati"
     },
     "removeMuteBtn": {
-        "message": "Riattiva l'inserzionista"
+        "message": "Riattiva il suono per l'inserzionista"
     },
     "removeMuteTooltip": {
-        "message": "Rimuovi inserzionista dalla lista mute"
+        "message": "Rimuovi inserzionista dalla lista silenziati"
     },
     "removeMuteConfirm": {
         "message": "Sei sicuro di voler rimuovere \"$channelName$\" dalla lista mute?",
@@ -213,7 +213,7 @@
         }
     },
     "bulkRemoveMuteConfirm": {
-        "message": "Sei sicuro di voler rimuovere $count$ elementi dalla lista mute?",
+        "message": "Sei sicuro di voler rimuovere $count$ elementi dalla lista silenziati?",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -245,13 +245,13 @@
         "message": "Opzioni pubblicità"
     },
     "muteOption": {
-        "message": "Muta gli annunci per impostazione predefinita"
+        "message": "Silenzia gli annunci per impostazione predefinita"
     },
     "overlaysOption": {
         "message": "Nascondi le sovrapposizioni degli annunci"
     },
     "autoWhiteOption": {
-        "message": "Autorizza i canali a cui sei iscritto per prrdefinito"
+        "message": "Autorizza i canali a cui sei iscritto per predefinito"
     },
     "autoWhiteTooltip": {
         "message": "Questo può risultare in annunci pre-roll quando le pagine sono caricati per la prima volta"
@@ -271,11 +271,17 @@
             }
         }
     },
+    "forceWlOption": {
+        "message": "Forza la whitelist al primo caricamento"
+    },
+    "forceWlOptionTooltip": {
+        "message": "Potrebbe ricaricare la pagina se gli annunci sono stati rimossi prima di aver potuto ottenere le informazioni del canale"
+    },
     "adErrorsOption": {
         "message": "Salta gli errori di riproduzione dell'annuncio"
     },
     "adErrorsOptionTooltip": {
-        "message": "Passa al video se l'annuncio non riesce a riprodurrsi, invece di mostrare 'Si è verificato un errore' con la TV statica"
+        "message": "Passa al video se l'annuncio non riesce a venire riprodotto, invece di mostrare 'Si è verificato un errore' con l'effetto di \"nessun segnale\""
     },
     "verifyWlOption": {
         "message": "Verifica lo stato della whitelist"
@@ -316,13 +322,13 @@
         "message": "Tentativo di saltare questo anuncio"
     },
     "pauseAfterAdOption": {
-        "message": "Modalità Anti-Avvio"
+        "message": "Modalità Anti-Spavento"
     },
     "pauseAfterAdTooltip": {
-        "message": "Se un annuncio silenziato finisce la riproduzione, e la scheda non è attualmente in messa a fuoco, il video verrá silenziosamente in pausa in background fino a quando l'utente torna a quello"
+        "message": "Se un annuncio silenziato finisce la riproduzione, e la scheda non è attualmente in messa a fuoco, il video verrá silenziosamente messo in pausa in background fino a quando l'utente non ci torna"
     },
     "keyboardSkipOption": {
-        "message": "Tasto freccia destra per forzare gli annunci"
+        "message": "Il tasto freccia destra forza il salto degli annunci"
     },
     "permissionDesc": {
         "message": "È necessaria un'autorizzazione unica per cercare i canali YouTube"
@@ -345,13 +351,13 @@
         "message": "Impossibile caricare i risultati. Magari sei Offline?"
     },
     "importSubsBtn": {
-        "message": "Importa da Abbonamenti di Youtube"
+        "message": "Importa da Iscrizioni di Youtube"
     },
     "importSubsFailed": {
         "message": "Impossibile recuperare le iscrizioni. Assicurati di aver effettuato l'accesso a YouTube."
     },
     "importSubsConfirm": {
-        "message": "Trovati $total$ abbonamenti, di cui $new$ non sono nella lista. Aggiungere $new$ elementi alla whitelist?",
+        "message": "Trovate $total$ iscrizioni, di cui $new$ non sono nella lista. Aggiungere $new$ elementi alla whitelist?",
         "placeholders": {
             "total": {
                 "content": "$1"
@@ -387,7 +393,7 @@
         "message": "Nessun nuovo elemento da aggiungere"
     },
     "confirmImport": {
-        "message": "Aggiungere $whitelisted$ elementi alla whitelist, $blacklisted$ elementi alla blacklist e $muted$ elementi alla lista mute?",
+        "message": "Aggiungere $whitelisted$ elementi alla whitelist, $blacklisted$ elementi alla blacklist e $muted$ elementi alla lista silenziati?",
         "placeholders": {
             "whitelisted": {
                 "content": "$1"
@@ -399,5 +405,14 @@
                 "content": "$3"
             }
         }
+    },
+    "skipWarning": {
+        "message": "Questa scelta potrebbe privare del guadagno i tuoi canali preferiti"
+    },
+    "copy": {
+        "message": "Copia"
+    },
+    "copied": {
+        "message": "Copiato"
     }
 }

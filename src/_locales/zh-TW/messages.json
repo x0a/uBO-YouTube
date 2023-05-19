@@ -1,21 +1,21 @@
 {
     "okBtn": {
-        "message": "OK",
+        "message": "確認",
         "description": "Appears as button in confirmation dialog"
     },
     "cancelBtn": {
-        "message": "Annuler",
+        "message": "取消",
         "description": "Appears as button in confirmation dialog"
     },
     "optionsBtn": {
-        "message": "Options",
+        "message": "選項",
         "description": "For a button in the popup page, when clicked opens the full settings page"
     },
     "adOptionsDefaultTooltip": {
-        "message": "Options pour cet annonceur"
+        "message": "此廣告商的選項"
     },
     "adOptionsTooltip": {
-        "message": "Gérer les annonces provenant de \"$title$\"",
+        "message": "管理來自 \"$title$\" 的廣告",
         "placeholders": {
             "title": {
                 "content": "$1"
@@ -23,96 +23,96 @@
         }
     },
     "reset": {
-        "message": "Restaurer les paramètres par défaut"
+        "message": "重置為預設值"
     },
     "import": {
-        "message": "Importer les réglages depuis un fichier"
+        "message": "從文件導入設定"
     },
     "export": {
-        "message": "Exporter les réglages vers un fichier"
+        "message": "匯出設定到文件"
     },
     "resetConfirm": {
-        "message": "Ceci effacera tous les éléments de la liste blanche, les options d'annonce et les préférences. Si vous ne voulez pas perdre vos paramètres, annulez et cliquez d'abord sur \"Télécharger\"."
+        "message": "這將刪除所有的白名單、廣告和偏好設定。如果您不想丟失您的設定，請先取消並點擊“下載”按鈕。"
     },
     "whitelistTabTitle": {
-        "message": "Liste blanche",
+        "message": "白名單",
         "description": "Appears as title for tab in options page"
     },
     "whitelistTooltip": {
-        "message": "Activer les annonces pour cette chaîne"
+        "message": "允許此頻道的廣告"
     },
     "whitelistedTooltip": {
-        "message": "Annonces activées pour cette chaîne"
+        "message": "成功允許此頻道的廣告"
     },
     "adsTabTitle": {
-        "message": "Annonces",
+        "message": "廣告",
         "description": "Appears as title for tab in options page"
     },
     "adsEnableBtn": {
-        "message": "Annonces",
+        "message": "廣告",
         "description": "Shown next to channels, short for 'Enable ads for this channel'"
     },
     "miscTabTitle": {
-        "message": "Divers",
+        "message": "其它",
         "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
     },
     "channelColumn": {
-        "message": "Chaîne",
+        "message": "頻道",
         "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
     },
     "advertiserColumn": {
-        "message": "Annonceur",
+        "message": "廣告商",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
     },
     "videoColumn": {
-        "message": "Vidéo",
+        "message": "影片",
         "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
     },
     "statusColumn": {
-        "message": "État",
+        "message": "狀態",
         "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
     },
     "actionColumn": {
-        "message": "Action",
+        "message": "操作",
         "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
     },
     "addBtn": {
-        "message": "Ajouter",
+        "message": "新增",
         "description": "Button shown next to channel name, for adding to whitelist"
     },
     "addedBtn": {
-        "message": "Ajouté",
+        "message": "添加成功",
         "description": "Shown next to channel search results that are already in whitelist"
     },
     "removeBtn": {
-        "message": "Supprimer"
+        "message": "移除"
     },
     "bulkRemoveBtn": {
-        "message": "Supprimer les éléments sélectionnés"
+        "message": "移除選取項目"
     },
     "adsStillBlocked": {
-        "message": "Les annonces peuvent toujours être bloquées, assurez-vous d'avoir ajouté la règle suivante à votre liste blanche d'uBlock Origin"
+        "message": "廣告仍可能被阻擋，請確認您已經將以下規則添加到您的 uBlock Origin 白名單"
     },
     "adsHeaderLong": {
-        "message": "Annonceurs récemment détectés"
+        "message": "最近被檢測到的廣告商"
     },
     "adsHeaderShort": {
-        "message": "Annonces récentes"
+        "message": "最近的廣告"
     },
     "whitelistHeader": {
-        "message": "Chaînes dans la Liste Blanche"
+        "message": "將頻道列入白名單"
     },
     "excludeHeader": {
-        "message": "Exclure de la liste blanche"
+        "message": "從白名單移除"
     },
     "removeWhitelistTooltip": {
-        "message": "Enlever la chaîne de la liste blanche"
+        "message": "將頻道從白名單移除"
     },
     "removeExcludeTooltip": {
-        "message": "Réautoriser la chaine à être mise en liste blanche si vous êtes abonnés"
+        "message": "如果頻道已被訂閱，重新允許將頻道加入白名單"
     },
     "removeFailed": {
-        "message": "Impossible de supprimer les éléments demandés : $error$",
+        "message": "無法移除此項目： $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -120,7 +120,7 @@
         }
     },
     "removeExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$channelName$\" à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "您確定要允許 \"$channelName$\" 自動加入白名單嗎(假如已經訂閱)？",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -128,7 +128,7 @@
         }
     },
     "removeWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "您確定要從此清單移除 \"$channelName$\" 嗎？",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -136,7 +136,7 @@
         }
     },
     "bulkRemoveWhitelistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "您確定要從白名單移除 \"$count$\" 嗎？",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -144,7 +144,7 @@
         }
     },
     "bulkRemoveExcludeConfirm": {
-        "message": "Êtes-vous sûr de vouloir autoriser \"$count$\" objets à être automatiquement mis en liste blanche (si vous êtes abonnés) ?",
+        "message": "您確定要允許 \"$count$\" 自動加入白名單嗎(假如已經訂閱)？",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -152,13 +152,13 @@
         }
     },
     "blacklistHeader": {
-        "message": "Liste noire d'Annonceurs"
+        "message": "黑名單廣告商"
     },
     "removeBlacklistTooltip": {
-        "message": "Enlever la chaîne de la liste noire"
+        "message": "將頻道從黑名單移除"
     },
     "removeBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste blanche ?",
+        "message": "您確定要從黑名單移除 \"$channelName$\" 嗎？",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -166,7 +166,7 @@
         }
     },
     "bulkRemoveBlacklistConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste blanche ?",
+        "message": "您確定要從黑名單移除 \"$count$\" 嗎？",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -174,13 +174,13 @@
         }
     },
     "unmutedHeader": {
-        "message": "Annonceurs non muets"
+        "message": "未靜音的廣告商"
     },
     "muteBtn": {
-        "message": "Muter l'annonceur"
+        "message": "靜音此廣告商"
     },
     "removeUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour \"$channelName$\" ?",
+        "message": "您確定要恢復靜音 “$channelName$ ” 嗎？",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -188,7 +188,7 @@
         }
     },
     "bulkRemoveUnmuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir ré-activer le son pour $count$ éléments ?",
+        "message": "您確定要恢復靜音 “$count$ ” 嗎？",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -196,16 +196,16 @@
         }
     },
     "mutelistHeader": {
-        "message": "Annonceurs muets"
+        "message": "已靜音的廣告商"
     },
     "removeMuteBtn": {
-        "message": "Dé-muter l'annonceur"
+        "message": "解除靜音此廣告商"
     },
     "removeMuteTooltip": {
-        "message": "Supprimer l'annonceur de la liste des annonceurs muets"
+        "message": "從靜音名單中移除此廣告商"
     },
     "removeMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer \"$channelName$\" de la liste des annonceurs muets ?",
+        "message": "您確定要從靜音名單移除 \"$channelName$\" 嗎？",
         "placeholders": {
             "channelName": {
                 "content": "$1"
@@ -213,7 +213,7 @@
         }
     },
     "bulkRemoveMuteConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer $count$ éléments de la liste des annonceurs muets ?",
+        "message": "您確定要從靜音名單移除 \"$count$\" 嗎？",
         "placeholders": {
             "count": {
                 "content": "$1"
@@ -221,49 +221,49 @@
         }
     },
     "resetBtn": {
-        "message": "Réinitialiser"
+        "message": "重置"
     },
     "resetTooltip": {
-        "message": "Effacer tous les paramètres"
+        "message": "刪除所有設定"
     },
     "emptyList": {
-        "message": "Vide"
+        "message": "未設定"
     },
     "importBtn": {
-        "message": "Sélectionner un fichier..."
+        "message": "選擇檔案..."
     },
     "exportBtn": {
-        "message": "Télécharger"
+        "message": "下載"
     },
     "exportAltBtn": {
-        "message": "Exporter"
+        "message": "匯出"
     },
     "channelSearchHeader": {
-        "message": "Trouver des chaînes"
+        "message": "尋找頻道"
     },
     "adOptionsHeader": {
-        "message": "Options d'annonce"
+        "message": "廣告選項"
     },
     "muteOption": {
-        "message": "Muter les annonces par défaut"
+        "message": "默認靜音廣告"
     },
     "overlaysOption": {
-        "message": "Masquer les annonces superposées"
+        "message": "隱藏重疊廣告"
     },
     "autoWhiteOption": {
-        "message": "Ajouter les chaines auxquelles vous êtes abonnés en liste blanche par défaut"
+        "message": "默認情況下白名單訂閱頻道"
     },
     "autoWhiteTooltip": {
-        "message": "Cela peut entrainer des annonces pre-roll lors du premier chargement des pages"
+        "message": "首次加載頁面可能導致觀看的影片開始之前播放廣告"
     },
     "limitAdsOption": {
-        "message": "Limiter les annonces par vidéo"
+        "message": "限制每個影片的廣告"
     },
     "autoSkipOption": {
-        "message": "Ignorer automatiquement les annonces"
+        "message": "自動跳過廣告"
     },
     "autoSkipValue": {
-        "message": "$number$s",
+        "message": "$number$秒",
         "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
         "placeholders": {
             "number": {
@@ -272,42 +272,42 @@
         }
     },
     "forceWlOption": {
-        "message": "Forcer la whitelist au premier chargement"
+        "message": "首次啟動時強制加入白名單"
     },
     "forceWlOptionTooltip": {
-        "message": "Cela pourrait recharger la page si les publicités sont irréversiblement supprimées avant que les informations de la chaîne ne soient disponibles"
+        "message": "如果廣告在頻道信息可用之前被刪除可能會導致重新加載頁面"
     },
     "adErrorsOption": {
-        "message": "Ignorer les erreurs de lecture des annonces"
+        "message": "跳過廣告播放錯誤"
     },
     "adErrorsOptionTooltip": {
-        "message": "Passe à la vidéo si l'annonce ne fonctionne pas, plutôt que d'afficher l'erreur \"Une erreur s'est produite\" avec l'animation de TV statique"
+        "message": "如果廣告未能播放則跳到影片，而不是以靜態地顯示“發生錯誤”"
     },
     "verifyWlOption": {
-        "message": "Vérifier le statut de la liste blanche"
+        "message": "驗證白名單狀態"
     },
     "verifyWlOptionTooltip": {
-        "message": "Confirme que les annonces ne sont pas bloquées sur les chaînes en liste blanche en simulant le chargement d'une annonce"
+        "message": "通過模擬加載廣告來確認廣告不是在白名單頻道上被阻擋的"
     },
     "adBlocked": {
-        "message": "Bloqué",
+        "message": "已屏蔽",
         "description": "Shown next to ads that were blocked"
     },
     "adAllowed": {
-        "message": "Autorisé",
+        "message": "已允許",
         "description": "Shown next to ads that were allowed through"
     },
     "muteAdvertiserTooltip": {
-        "message": "Muter automatiquement toutes les annonces de cet annonceur"
+        "message": "自動靜音來自此廣告商的所有廣告"
     },
     "blacklistAdvertiserTooltip": {
-        "message": "Bloquer toutes les annonces de cet annonceur"
+        "message": "屏蔽此廣告商的所有廣告"
     },
     "blacklistBtn": {
-        "message": "Bloquer cet annonceur"
+        "message": "屏蔽廣告商"
     },
     "autoSkipTooltip": {
-        "message": "Ignorer dans $number$",
+        "message": "在 $number$ 後跳過",
         "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
         "placeholders": {
             "number": {
@@ -316,48 +316,48 @@
         }
     },
     "skipBtn": {
-        "message": "Passer l'annonce"
+        "message": "強制跳過"
     },
     "skipTooltip": {
-        "message": "Tente de forcer le passage de l'annonce"
+        "message": "嘗試跳過這個廣告"
     },
     "pauseAfterAdOption": {
-        "message": "Mode Anti-Sursaut"
+        "message": "廣告結束後自動暫停影片"
     },
     "pauseAfterAdTooltip": {
-        "message": "Si une annonce muette se termine, et que l'onglet n'est pas actuellement affiché, la vidéo est discrètement mise en pause jusqu'à ce que l'utilisateur y retourne"
+        "message": "如果一個靜音的廣告完成播放，且標籤當前未被聚焦， 在後台靜音暫停，直到用戶返回它"
     },
     "keyboardSkipOption": {
-        "message": "Touche flèche droite pour ignorer une annonce de force"
+        "message": "右箭箭頭強制跳過廣告"
     },
     "permissionDesc": {
-        "message": "Une permission unique est nécessaire pour rechercher des chaînes YouTube"
+        "message": "搜索您的YouTube頻道需要一次性授權"
     },
     "permissionBtn": {
-        "message": "Accorder l’autorisation"
+        "message": "授權"
     },
     "searchDesc": {
-        "message": "Entrez du texte pour rechercher une chaîne ou",
+        "message": "輸入搜索Youtube頻道或",
         "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
     },
     "searchPlaceholder": {
-        "message": "Rechercher une chaîne...",
+        "message": "頻道名稱...",
         "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
     },
     "searching": {
-        "message": "Recherche en cours..."
+        "message": "搜索中..."
     },
     "searchFailed": {
-        "message": "Impossible de charger les résultats. Hors ligne ?"
+        "message": "無法加載結果。您是否連上網路？"
     },
     "importSubsBtn": {
-        "message": "Importer depuis les Abonnements"
+        "message": "從訂閱導入"
     },
     "importSubsFailed": {
-        "message": "Impossible de récupérer les abonnements. Assurez-vous d'être connecté à YouTube."
+        "message": "無法獲取訂閱。請確認您已登錄YouTube。"
     },
     "importSubsConfirm": {
-        "message": "$total$ abonnements trouvés, dont $new$ ne sont pas dans la liste. Ajouter ces $new$ éléments à la liste blanche ?",
+        "message": "找到 $total$ 個訂閱，列表中不包含 $new$ 個訂閱。要添加 $new$ 個項目到白名單嗎？",
         "placeholders": {
             "total": {
                 "content": "$1"
@@ -368,7 +368,7 @@
         }
     },
     "updateFailed": {
-        "message": "Impossible de définir les paramètres, erreur rencontrée : $error$",
+        "message": "無法完成設定，遇到錯誤: $error$",
         "placeholders": {
             "error": {
                 "content": "$1"
@@ -376,7 +376,7 @@
         }
     },
     "wrongFormat": {
-        "message": "Le fichier doit être de type \"$expected$\", mais un fichier \"$encountered$\" a été détecté",
+        "message": "文件需要類型 \"$expected$\", 檢測到 \"$encountered$\" 而不是",
         "placeholders": {
             "expected": {
                 "content": "application/json"
@@ -387,13 +387,13 @@
         }
     },
     "parseFailed": {
-        "message": "Impossible d'analyser en tant que JSON. Le fichier n'est probablement pas en JSON, ou il est corrompu."
+        "message": "解析JSON 失敗。文件可能不是 JSON 或損壞。"
     },
     "noNew": {
-        "message": "Aucun nouvel élément à ajouter"
+        "message": "沒有要添加的新項目"
     },
     "confirmImport": {
-        "message": "Ajouter $whitelisted$ éléments à la liste blanche, $blacklisted$ éléments à la liste noire, et $muted$ éléments à la liste des annonceurs mutés ?",
+        "message": "添加 $whitelisted$ 個物品到白名單, $blacklisted$ 個物品到黑名單, $muted$ 個物品到靜音名單？",
         "placeholders": {
             "whitelisted": {
                 "content": "$1"
@@ -407,12 +407,12 @@
         }
     },
     "skipWarning": {
-        "message": "Cela peut priver vos chaînes préférées de revenus"
+        "message": "這可能會減少您最喜歡的頻道收入"
     },
     "copy": {
-        "message": "Copie"
+        "message": "複製"
     },
     "copied": {
-        "message": "Copié"
+        "message": "已複製"
     }
 }

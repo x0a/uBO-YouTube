@@ -1,0 +1,75 @@
+{
+    "okBtn": {
+        "message": "Ok",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Avbryt",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Innstillinger",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "import": {
+        "message": "Importer innstillinger fra fil"
+    },
+    "whitelistTabTitle": {
+        "message": "Hviteliste",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "Tillatt reklamer på denne kanalen"
+    },
+    "channelColumn": {
+        "message": "Kanal",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Annonsør",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Videoer",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "actionColumn": {
+        "message": "Valg",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "removeBtn": {
+        "message": "Fjern"
+    },
+    "bulkRemoveBtn": {
+        "message": "Fjern valgte"
+    },
+    "resetBtn": {
+        "message": "Tilbakestill"
+    },
+    "emptyList": {
+        "message": "Ingen"
+    },
+    "importBtn": {
+        "message": "Velg fil..."
+    },
+    "exportBtn": {
+        "message": "Last ned"
+    },
+    "channelSearchHeader": {
+        "message": "Finn kanaler"
+    },
+    "adBlocked": {
+        "message": "Blokkert",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "Tillatt",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "permissionBtn": {
+        "message": "Gi tilgang"
+    },
+    "searching": {
+        "message": "Søker..."
+    }
+}

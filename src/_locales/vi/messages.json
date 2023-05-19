@@ -1,0 +1,303 @@
+{
+    "okBtn": {
+        "message": "Đồng ý",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Huỷ",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Thiết lập",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "adOptionsDefaultTooltip": {
+        "message": "Tùy chọn cho quảng cáo này"
+    },
+    "adOptionsTooltip": {
+        "message": "Quản lý quảng cáo cho \"$title$\"",
+        "placeholders": {
+            "title": {
+                "content": "$1"
+            }
+        }
+    },
+    "reset": {
+        "message": "Đặt lại về chủ đề mặc định"
+    },
+    "import": {
+        "message": "Nhập tài khoản từ tập tin"
+    },
+    "export": {
+        "message": "Xuất các cài đặt sang tệp"
+    },
+    "resetConfirm": {
+        "message": "Điều này sẽ xóa bỏ danh sách trắng và các tùy chọn quảng cáo. Nếu bạn không muốn mất các thiết lập của bạn, hủy và bấm \"Tải xuống\" trước."
+    },
+    "whitelistTabTitle": {
+        "message": "Danh sách cho phép",
+        "description": "Appears as title for tab in options page"
+    },
+    "whitelistTooltip": {
+        "message": "Chặn quảng cáo trên kênh này"
+    },
+    "whitelistedTooltip": {
+        "message": "Chặn quảng cáo trên kênh này"
+    },
+    "adsTabTitle": {
+        "message": "Quảng cáo",
+        "description": "Appears as title for tab in options page"
+    },
+    "adsEnableBtn": {
+        "message": "Quản cáo",
+        "description": "Shown next to channels, short for 'Enable ads for this channel'"
+    },
+    "miscTabTitle": {
+        "message": "Khác",
+        "description": "Appears as title for tab in options page, for all other items such as importing/exporting/support, etc."
+    },
+    "channelColumn": {
+        "message": "Kênh",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Nhà quảng cáo",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Video",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "Trạng thái",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "Hành động",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "Thêm",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "Đã thêm thành công",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "bulkRemoveBtn": {
+        "message": "Xóa mục đã chọn"
+    },
+    "excludeHeader": {
+        "message": "Xóa khỏi danh sách trắng"
+    },
+    "removeFailed": {
+        "message": "Không thể xóa những danh mục đã chọn: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "removeExcludeConfirm": {
+        "message": "Bạn có chắc chắn mình muốn $channelName$ sẽ tự động được thêm vào danh sách cho phép (nếu bạn đăng ký kênh) không ?",
+        "placeholders": {
+            "channelName": {
+                "content": "$1"
+            }
+        }
+    },
+    "bulkRemoveExcludeConfirm": {
+        "message": "Bạn có chắc chắn cho phép $count$ danh mục sẽ tự động được thêm vào danh sách (nếu đã đăng ký) không?",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetTooltip": {
+        "message": "Xóa tất cả cài đặt"
+    },
+    "emptyList": {
+        "message": "Danh sách rỗng"
+    },
+    "importBtn": {
+        "message": "Chọn tệp tin..."
+    },
+    "exportBtn": {
+        "message": "Tải về"
+    },
+    "exportAltBtn": {
+        "message": "Xuất ra"
+    },
+    "channelSearchHeader": {
+        "message": "Tìm kênh"
+    },
+    "adOptionsHeader": {
+        "message": "Tùy chọn quảng cáo"
+    },
+    "muteOption": {
+        "message": "Tắt tất cả quảng cáo"
+    },
+    "overlaysOption": {
+        "message": "Ẩn lớp quảng cáo ngầm"
+    },
+    "autoWhiteOption": {
+        "message": "Cho các kênh đã đăng ký vào danh sách trắng theo mặc định"
+    },
+    "autoWhiteTooltip": {
+        "message": "Điều này có thể dẫn đến các quảng cáo ở đầu video khi trang được tải lần đầu"
+    },
+    "limitAdsOption": {
+        "message": "Giới hạn số lượng quảng cáo cho mỗi video"
+    },
+    "autoSkipOption": {
+        "message": "Tự động bỏ qua quảng cáo"
+    },
+    "autoSkipValue": {
+        "message": "$number$ giây",
+        "description": "For the user to select after how many seconds to skip an ad. For example if $number$ is 30, then this will show 30s. The shorter the better",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "adErrorsOption": {
+        "message": "Bỏ qua lỗi phát quảng cáo"
+    },
+    "adErrorsOptionTooltip": {
+        "message": "Chuyển sang video nếu quảng cáo không phảt được thay vì hiện thông báo 'Đã xảy ra lỗi' với màn hình TV nhiễu"
+    },
+    "verifyWlOption": {
+        "message": "Xác minh trạng thái danh sách trắng"
+    },
+    "verifyWlOptionTooltip": {
+        "message": "Xác nhận rằng quảng cáo không bị chặn trên các kênh có trong danh sách trắng bằng cách mô phỏng tải quản cáo"
+    },
+    "adBlocked": {
+        "message": "Đã chặn",
+        "description": "Shown next to ads that were blocked"
+    },
+    "adAllowed": {
+        "message": "Đã cho phép",
+        "description": "Shown next to ads that were allowed through"
+    },
+    "muteAdvertiserTooltip": {
+        "message": "Tự động tắt tiếng tất cả các quảng cáo từ nhà quảng cáo này"
+    },
+    "blacklistAdvertiserTooltip": {
+        "message": "Chặn tất cả quảng cáo từ nhà quảng cáo này"
+    },
+    "blacklistBtn": {
+        "message": "Chặn nhà quảng cáo"
+    },
+    "autoSkipTooltip": {
+        "message": "Bỏ qua sau $number$",
+        "description": "This is for the autoSkip feature. A small popup on ads will say \"Skipping in $number$\", where $number is seconds",
+        "placeholders": {
+            "number": {
+                "content": "$1"
+            }
+        }
+    },
+    "skipBtn": {
+        "message": "Buộc bỏ qua"
+    },
+    "skipTooltip": {
+        "message": "Thử bỏ qua quảng cáo này"
+    },
+    "pauseAfterAdOption": {
+        "message": "Chế độ Chống giật mình"
+    },
+    "pauseAfterAdTooltip": {
+        "message": "Nếu một quảng cáo được tắt tiếng đã phát xong và thẻ hiện tại không được chú ý, video sẽ tạm dừng trong nền cho đến khi người dùng quay trở lại"
+    },
+    "keyboardSkipOption": {
+        "message": "Phím mũi tên phải để buộc bỏ qua quảng cáo"
+    },
+    "permissionDesc": {
+        "message": "Cần cấp quyền một lần để tìm kiếm các kênh YouTube"
+    },
+    "permissionBtn": {
+        "message": "Cấp quyền"
+    },
+    "searchDesc": {
+        "message": "Nhập để tìm kiếm kênh youtube hoặc",
+        "description": "Next to this phrase will be a button labeled 'Import from Channels', which is why the 'or' is here"
+    },
+    "searchPlaceholder": {
+        "message": "Tên kênh..",
+        "description": "Temporary placeholder text inside textbox where user will type a channel name to search for"
+    },
+    "searching": {
+        "message": "Đang tìm kiếm..."
+    },
+    "searchFailed": {
+        "message": "Không thẻ tải kết quả. Ngoại tuyến?"
+    },
+    "importSubsBtn": {
+        "message": "Nhập các kênh đã đăng ký"
+    },
+    "importSubsFailed": {
+        "message": "Không thể tìm nạp các kênh đăng ký. Hãy chắc chắn rằng bạn đã đăng nhập vào YouTube."
+    },
+    "importSubsConfirm": {
+        "message": "Tìm thấy $total$ kênh đã đăng ký, $new$ kênh không nằm trong danh sách. Thêm $new$ kênh này vào danh sách trắng?",
+        "placeholders": {
+            "total": {
+                "content": "$1"
+            },
+            "new": {
+                "content": "$2"
+            }
+        }
+    },
+    "updateFailed": {
+        "message": "Không thể thay đổi các thiết đặt, lỗi: $error$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "wrongFormat": {
+        "message": "Tệp cần ở định dạng \"$expected$\", trong khi đó thấy \"$encountered$\"",
+        "placeholders": {
+            "expected": {
+                "content": "application/json"
+            },
+            "encountered": {
+                "content": "$1"
+            }
+        }
+    },
+    "parseFailed": {
+        "message": "Không thể phân tích JSON. Tệp có thể không phải JSON hoặc đã bị hỏng."
+    },
+    "noNew": {
+        "message": "Không có mục mới để thêm"
+    },
+    "confirmImport": {
+        "message": "Thêm $whitelisted$ mục vào danh sách trắng, $blacklisted$ mục vào danh sách đen, và $muted$ mục vào danh sách tắt tiếng?",
+        "placeholders": {
+            "whitelisted": {
+                "content": "$1"
+            },
+            "blacklisted": {
+                "content": "$2"
+            },
+            "muted": {
+                "content": "$3"
+            }
+        }
+    },
+    "skipWarning": {
+        "message": "Điều này có thể làm mất doanh thu của các kênh yêu thích của bạn"
+    },
+    "copy": {
+        "message": "Sao chép"
+    },
+    "copied": {
+        "message": "Đã sao chép"
+    }
+}

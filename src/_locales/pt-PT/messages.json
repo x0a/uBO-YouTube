@@ -1,0 +1,51 @@
+{
+    "okBtn": {
+        "message": "Ok",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "cancelBtn": {
+        "message": "Cancelar",
+        "description": "Appears as button in confirmation dialog"
+    },
+    "optionsBtn": {
+        "message": "Opções",
+        "description": "For a button in the popup page, when clicked opens the full settings page"
+    },
+    "channelColumn": {
+        "message": "Canal",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents a channel"
+    },
+    "advertiserColumn": {
+        "message": "Anunciante",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an advertiser"
+    },
+    "videoColumn": {
+        "message": "Vídeo",
+        "description": "Appears at top of a table, indicating that the following columns contains a link to a video"
+    },
+    "statusColumn": {
+        "message": "Estado",
+        "description": "Appears at the top of a table, indicating that each of the following columns represents an action taken against an ad"
+    },
+    "actionColumn": {
+        "message": "Ação",
+        "description": "Appears at the top of a table, indicating that each of the following columns contains actions to take against an advertiser"
+    },
+    "addBtn": {
+        "message": "Adicionar",
+        "description": "Button shown next to channel name, for adding to whitelist"
+    },
+    "addedBtn": {
+        "message": "Adicionado",
+        "description": "Shown next to channel search results that are already in whitelist"
+    },
+    "removeBtn": {
+        "message": "Remover"
+    },
+    "bulkRemoveBtn": {
+        "message": "Remover selecionados"
+    },
+    "adsStillBlocked": {
+        "message": "Os anúncios ainda podem estar bloqueados, certifique-se de que adicionou a seguinte regra à sua lista branca no uBlock Origin"
+    }
+}
