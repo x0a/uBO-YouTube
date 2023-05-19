@@ -28,7 +28,6 @@ const MainContentAPI: ContentAPI = {
         el.setAttribute('href', browser.runtime.getURL('userscript.css'));
         return el;
     },
-
     sendMessage<T = any>(action: string, subaction: string, param?: any): Promise<T> {
         return browser.runtime.sendMessage({ action, subaction, param })
             .then((response: any) => {

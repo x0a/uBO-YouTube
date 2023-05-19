@@ -157,7 +157,8 @@ export const main = (api: ContentAPI) => {
         .on('recent-ad', () => api.sendMessage('tab', 'last-ad'))
         .on('echo-ad', ad => api.sendMessage('tab', 'echo-ad', ad))
         .on('mute-tab', (shouldMute: boolean) => api.sendMessage('tab', 'mute', shouldMute || false))
-        .on('highlight-tab', () => api.sendMessage('tab', 'highlight'));
+        .on('highlight-tab', () => api.sendMessage('tab', 'highlight'))
+        .on('css', () => api.sendMessage('tab', 'css'));
 
     hookReload();
     hook.inject();

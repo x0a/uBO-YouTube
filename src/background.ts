@@ -86,7 +86,7 @@ class SettingsManager {
         const store = await browser.storage.sync.get(null);
 
         if (throwOnOrigin && (!store.instance || store.instance === instance)) throw 'The changes originated from same instance or are incomplete';
-        
+
         const parsedStore = this.decompress(store);
         const parsedSubscriptions = JSON.parse(localStorage?.getItem('subscriptions') || '[]');
 
@@ -620,6 +620,11 @@ SettingsManager.getSettings()
                     active: true
                 })
                     .then(() => browser.tabs.remove(sender.tab.id)))
+            .on('css', sender => browser.tabs.insertCSS(sender.tab.id, {
+                code: '#container .ad-showing > .html5-video-container { display: block !important; }',
+                allFrames: true,
+                cssOrigin: 'user'
+            }))
             .on('mute', (sender, shouldMute: boolean) => browser.tabs.update(sender.tab.id, { muted: shouldMute }))
             .on('last-ad', sender => ads.getLastAdFromTab(sender.tab.id))
             .on('echo-ad', (sender, ad) => ads.echo(sender.tab.id, ad))

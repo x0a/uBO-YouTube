@@ -1300,6 +1300,7 @@ agent
     .then(response => {
         log('uBO-YT', 'Initiated with the following settings', response)
         agent.send('mute-tab', false) // reset
+        agent.send('css');
         settings = new Settings(response.settings);
         subscriptions = new Channels(response.subscriptions, 'subscriptions', 'cache');
         AdOptions.uboIcon = response.accessURLs.ICO;
