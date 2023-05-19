@@ -621,8 +621,8 @@ class ChannelPage extends Component {
     mounted: boolean;
 
     constructor() {
-        super((url) => /youtube.com\/(channel|c|user)\//.test(url));
-        this.onTree('#edit-buttons', this.onWlContainer.bind(this));
+        super((url) => /youtube.com\/((channel|c|user)(\/|$)|@(\/|[^\/]*$))/.test(url));
+        this.onTree('div#inner-header-container #buttons', this.onWlContainer.bind(this));
         this.onTree('ytd-page-manager', this.onPageManager.bind(this));
         this.onAll('div#header ytd-subscribe-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed']);
         this.onAll('div#inner-header-container ytd-subscribe-button-renderer tp-yt-paper-button', this.onSubscribeBtn.bind(this), ['subscribed'])
